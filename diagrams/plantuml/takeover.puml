@@ -1,0 +1,62 @@
+@startuml takeover
+skinparam BackgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #0D47A1
+    LifeLineBorderColor #1565C0
+    LifeLineBackgroundColor #E3F2FD
+    ParticipantBorderColor #1565C0
+    ParticipantBackgroundColor #E3F2FD
+    ParticipantFontColor #000000
+    DatabaseBorderColor #1565C0
+    DatabaseBackgroundColor #E3F2FD
+    DatabaseFontColor #000000
+}
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #FBC02D
+    FontColor #000000
+}
+
+title Graceful and Force Takeover Sequence
+
+participant "Destination Host\n(New Owner)" as Dest
+participant "Mesh Network\n(Tailscale/SSH)" as Mesh
+participant "Source Host\n(Old Owner)" as Src
+database "Immutable\nRecords & Blobs" as Store
+
+== Graceful Takeover ==
+Dest -> Src: Request graceful takeover
+Src -> Src: Wait for provider safe-turn boundary
+Src -> Src: Quiesce input
+Src -> Store: Fresh checkpoint
+Src -> Store: Final bulk workspace/provider/task-board sync
+Dest -> Store: Destination stage & validation
+Src -> Src: Gracefully stop old owner
+Src -> Store: Closure-delta sync (optional)
+Dest -> Store: materialize.prepare / commit
+Dest -> Store: Advance lease epoch (acquire exactly one destination lease)
+Dest -> Store: Winning-lease verification
+Dest -> Dest: Resume / finalize
+Dest -> Store: Source replica and event publication
+note right of Src: Old host becomes a replica
+
+== Force Takeover (Recovery) ==
+Dest -> Store: Inert stage & validation
+Dest -> Store: Capability / auth / profile checks
+Dest -> Dest: Explicit split-brain confirmation
+Dest -> Store: Advance lease epoch (acquire force)
+Dest -> Store: Mark previous owner stale
+Dest -> Store: materialize.prepare / commit
+note left of Dest: Warn split-brain risk.\nPreserve divergent history\nfor reconciliation.
+Dest -> Dest: Exact resume / finalize
+Dest -> Store: Fencing / preservation
+Src -> Store: Attempt sync/resume
+Store -->> Src: Fenced! (Stale lease)
+note right of Src: Fenced from syncing/resuming
+
+== Fork (Independent) ==
+Dest -> Store: Clone from checkpoint
+Dest -> Store: Create new logical session\nand workspace identity
+Dest -> Dest: Independent ownership and history
+note left of Dest: No change to original ownership
+@enduml

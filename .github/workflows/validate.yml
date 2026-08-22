@@ -1,0 +1,86 @@
+name: Validate Specification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '26.0.1'
+
+      - name: Install documentation tools (pinned)
+        run: |
+          set -euo pipefail
+          echo "Installing pinned documentation tools..."
+          echo "  structurizr-cli 2025.11.09 / structurizr-java 5.0.2"
+          echo "  plantuml 1.2026.6"
+          echo "  graphviz (distro)"
+
+          sudo apt-get update
+          sudo apt-get install -y graphviz wget unzip
+
+          # Structurizr CLI 2025.11.09 — install complete distribution under one pinned directory
+          STRUCTURIZR_VERSION="2025.11.09"
+          STRUCTURIZR_SHA256="f5365a463fc44d539ed19bec00c48ba1e1ecda0ccfd1ba40d2e7472d264eb79a"
+          STRUCTURIZR_DIR="/opt/structurizr-cli-${STRUCTURIZR_VERSION}"
+          sudo rm -rf "$STRUCTURIZR_DIR"
+          wget -q "https://github.com/structurizr/cli/releases/download/v${STRUCTURIZR_VERSION}/structurizr-cli.zip" -O /tmp/structurizr-cli.zip
+          echo "${STRUCTURIZR_SHA256}  /tmp/structurizr-cli.zip" | sha256sum -c -
+          sudo unzip -q /tmp/structurizr-cli.zip -d "$STRUCTURIZR_DIR"
+          sudo chmod +x "$STRUCTURIZR_DIR/structurizr.sh"
+          # Expose via a fixed-path wrapper; keep the distribution intact so
+          # structurizr.sh resolves every relative library from its own directory.
+          cat <<'WRAP' | sudo tee /usr/local/bin/structurizr-cli >/dev/null
+          #!/bin/bash
+          exec /opt/structurizr-cli-2025.11.09/structurizr.sh "$@"
+          WRAP
+          sudo chmod +x /usr/local/bin/structurizr-cli
+          echo "Structurizr installed at $STRUCTURIZR_DIR"
+          ls -la "$STRUCTURIZR_DIR" | head -n 20
+          structurizr-cli validate --help 2>&1 | head -n 5
+          structurizr-cli version 2>&1 | head -n 10
+
+          # PlantUML 1.2026.6 — pinned jar with wrapper (not distro unpinned package)
+          PLANTUML_VERSION="1.2026.6"
+          PLANTUML_SHA256="89948f14c93756c7a3fb7b69078ff37e8489fd79dd430c582b931e2f65358690"
+          PLANTUML_JAR="/opt/plantuml-${PLANTUML_VERSION}.jar"
+          PLANTUML_DOWNLOAD="/tmp/plantuml-${PLANTUML_VERSION}.jar"
+          wget -q "https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar" -O "$PLANTUML_DOWNLOAD"
+          echo "${PLANTUML_SHA256}  $PLANTUML_DOWNLOAD" | sha256sum -c -
+          sudo install -m 0644 "$PLANTUML_DOWNLOAD" "$PLANTUML_JAR"
+          # Wrapper that mimics distro plantuml command
+          cat <<'WRAP' | sudo tee /usr/local/bin/plantuml >/dev/null
+          #!/bin/bash
+          exec java -jar /opt/plantuml-1.2026.6.jar "$@"
+          WRAP
+          sudo chmod +x /usr/local/bin/plantuml
+          echo "PlantUML installed at $PLANTUML_JAR"
+          plantuml -version 2>&1 | head -n 5
+
+          echo "Tool versions:"
+          python3 --version
+          java --version 2>&1 | head -n 3
+          structurizr-cli version 2>&1 | head -n 5
+          plantuml -version 2>&1 | head -n 5
+
+      - name: Run validation (single entry point)
+        run: ./run_validation.sh
+
+      - name: Run expected-red mutation suite
+        run: ./scripts/test_expected_red.sh

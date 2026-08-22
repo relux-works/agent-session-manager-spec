@@ -1,0 +1,94 @@
+@startuml mesh_deployment
+skinparam BackgroundColor #FFFFFF
+skinparam node {
+    BackgroundColor #F5F5F5
+    BorderColor #9E9E9E
+    FontColor #000000
+}
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+    FontColor #000000
+}
+skinparam database {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+    FontColor #000000
+}
+skinparam folder {
+    BackgroundColor #FFF9C4
+    BorderColor #FBC02D
+    FontColor #000000
+}
+skinparam cloud {
+    BackgroundColor #E0F7FA
+    BorderColor #00BCD4
+    FontColor #000000
+}
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #FBC02D
+    FontColor #000000
+}
+skinparam linetype ortho
+top to bottom direction
+
+title Mesh Deployment (Allowlisted Peers & Terminal Backends)
+
+node "macOS / Linux Host" as UnixHost {
+    component "ax Daemon\n(launchd/systemd)" as UnixDaemon
+    component "ax CLI" as UnixCli
+    database "Local SQLite\n(Derived Index)" as UnixSqlite
+    folder "Immutable Records/Blobs" as UnixStore
+    folder "Native Provider Stores" as UnixNative
+    
+    component "Terminal Backend\n(tmux)" as UnixTmux
+    component "Opaque Task-Board\n(Managed-Session Ownership Boundary)" as UnixTb
+    
+    UnixCli --> UnixSqlite
+    UnixCli --> UnixStore
+    UnixDaemon --> UnixSqlite
+    UnixDaemon --> UnixStore
+    UnixCli --> UnixTmux : pane wrapper
+    UnixCli --> UnixTb : Official Bridge Only\n(ax does not inspect)
+    UnixTb --> UnixNative : Private manager-owned\nprovider state
+}
+
+node "Windows Host" as WinHost {
+    node "WSL2" as Wsl2 {
+        component "ax Daemon (systemd)" as WslDaemon
+        component "Terminal Backend\n(tmux)" as WslTmux
+    }
+    
+    component "ax Daemon\n(Scheduled Task/Service)" as WinDaemon
+    component "ax CLI" as WinCli
+    database "Local SQLite\n(Derived Index)" as WinSqlite
+    folder "Immutable Records/Blobs" as WinStore
+    folder "Native Provider Stores" as WinNative
+    
+    component "Terminal Backend\n(ConPTY)" as WinPty
+    component "Opaque Task-Board\n(Managed-Session Ownership Boundary)" as WinTb
+
+    WinCli --> WinSqlite
+    WinCli --> WinStore
+    WinDaemon --> WinSqlite
+    WinDaemon --> WinStore
+    WinCli --> WinPty : pane wrapper
+    WinCli --> WinTb : Official Bridge Only\n(ax does not inspect)
+    WinTb --> WinNative : Private manager-owned\nprovider state
+}
+
+cloud "Tailscale / OpenSSH Mesh" as Mesh
+
+UnixCli <--> Mesh : SSH (rpc serve --stdio)
+WinCli <--> Mesh : SSH (rpc serve --stdio)
+WslDaemon <..> Mesh : (Sync)
+
+note right of Mesh
+  * Explicit peer allowlist only
+  * No public TCP listeners
+  * No replicated credentials/sockets/PIDs
+  * No default payload encryption
+end note
+
+@enduml

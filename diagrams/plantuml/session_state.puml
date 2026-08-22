@@ -1,0 +1,59 @@
+@startuml session_state
+skinparam BackgroundColor #FFFFFF
+skinparam state {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+    ArrowColor #0D47A1
+    FontColor #000000
+}
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #FBC02D
+    FontColor #000000
+}
+
+title Logical Session Ownership State Machine
+
+state "Prepared / Materialized" as PreparedMaterialized
+state "Resume / Finalize" as ResumeFinalize
+state "Active Owner" as ActiveOwner
+state "Quiescing" as Quiescing
+state "Stopped / Checkpointed" as StoppedCheckpointed
+state "Replica" as Replica
+state "Fenced (Stale)" as Fenced
+state "Forked Session" as Forked
+
+[*] --> PreparedMaterialized : Create Session
+PreparedMaterialized --> ResumeFinalize : Resume Request / Acquire Lease
+ResumeFinalize --> ActiveOwner : Finalize
+
+ActiveOwner --> Quiescing : Graceful Takeover / Stop Request
+Quiescing --> StoppedCheckpointed : Provider safe-turn stop
+StoppedCheckpointed --> Replica : Source Demoted (After Dest Lease)
+
+Replica --> PreparedMaterialized : Graceful Takeover (Prepare Materialization)
+Replica --> PreparedMaterialized : Force Takeover (Prepare Materialization)
+StoppedCheckpointed --> PreparedMaterialized : Local Resume
+
+ActiveOwner --> Fenced : Lease stolen (Force Takeover)
+Quiescing --> Fenced : Lease stolen
+StoppedCheckpointed --> Fenced : Lease stolen
+Fenced --> [*] : Preserves divergent history
+
+ActiveOwner --> Forked : Fork
+Replica --> Forked : Fork
+Forked : New logical session identity
+
+note right of ActiveOwner
+  One deterministic winning active owner
+  for the logical session. Stale/same-epoch
+  losing leases do not permit another owner.
+end note
+
+note left of Replica
+  Never allowed to resume
+  without explicit handoff,
+  force-takeover, or fork.
+end note
+
+@enduml

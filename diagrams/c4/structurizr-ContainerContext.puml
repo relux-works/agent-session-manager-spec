@@ -1,0 +1,111 @@
+@startuml
+title <size:24>Container View: Agent Session Manager (ax)</size>\n<size:24>Container diagram for Agent Session Manager.</size>
+
+set separator none
+top to bottom direction
+skinparam ranksep 60
+skinparam nodesep 30
+hide stereotype
+
+<style>
+  root {
+    BackgroundColor: #ffffff;
+    FontColor: #444444;
+  }
+  // Element,Container
+  .Element-RWxlbWVudCxDb250YWluZXI= {
+    BackgroundColor: #438dd5;
+    LineColor: #2e6295;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Element,Container,Database
+  .Element-RWxlbWVudCxDb250YWluZXIsRGF0YWJhc2U= {
+    BackgroundColor: #438dd5;
+    LineColor: #2e6295;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Element,Person
+  .Element-RWxlbWVudCxQZXJzb24= {
+    BackgroundColor: #08427b;
+    LineColor: #052e56;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Element,Software System
+  .Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0= {
+    BackgroundColor: #1168bd;
+    LineColor: #0b4884;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Relationship
+  .Relationship-UmVsYXRpb25zaGlw {
+    LineThickness: 2;
+    LineStyle: 10-10;
+    LineColor: #444444;
+    FontColor: #444444;
+    FontSize: 24;
+  }
+  // Agent Session Manager (ax)
+  .Boundary-QWdlbnQgU2Vzc2lvbiBNYW5hZ2VyIChheCk= {
+    BackgroundColor: #ffffff;
+    LineColor: #0b4884;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+  }
+</style>
+
+person "==Operator\n<size:16>[Person]</size>\n\nSoftware developer running AI agents." <<Element-RWxlbWVudCxQZXJzb24=>> as Operator
+rectangle "==Task-Board / Session Manager\n<size:16>[Software System]</size>\n\nDistinct persistence and ownership boundary for AI agents." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as TaskBoardSessionManager
+rectangle "==Mesh Network\n<size:16>[Software System]</size>\n\nTailscale / OpenSSH trusted mesh transport." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as MeshNetwork
+rectangle "==Native Provider Stores\n<size:16>[Software System]</size>\n\ne.g., ~/.claude/projects, ~/.codex/sessions." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as NativeProviderStores
+
+rectangle "Agent Session Manager (ax)\n<size:16>[Software System]</size>" <<Boundary-QWdlbnQgU2Vzc2lvbiBNYW5hZ2VyIChheCk=>> {
+  rectangle "==ax CLI\n<size:16>[Container: Go]</size>\n\nMain Go CLI for session launch, sync, attach, takeover." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.axCLI
+  rectangle "==ax Daemon\n<size:16>[Container: Go]</size>\n\nUser service (launchd/systemd/Scheduled Task) for periodic sync/health." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.axDaemon
+  rectangle "==Provider Plugins\n<size:16>[Container: Binary]</size>\n\nExecutable plugins (ax-provider-<id>) via JSON-over-stdio." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.ProviderPlugins
+  rectangle "==Terminal Backend\n<size:16>[Container: System]</size>\n\ntmux (macOS/Linux/WSL2) or process/ConPTY (Windows)." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.TerminalBackend
+  database "==Local Index\n<size:16>[Container: SQLite]</size>\n\nDerived transactional index of immutable records." <<Element-RWxlbWVudCxDb250YWluZXIsRGF0YWJhc2U=>> as AgentSessionManagerax.LocalIndex
+  database "==Immutable Storage\n<size:16>[Container: File System]</size>\n\nContent-addressed blobs and identity-addressed records." <<Element-RWxlbWVudCxDb250YWluZXIsRGF0YWJhc2U=>> as AgentSessionManagerax.ImmutableStorage
+}
+
+Operator --> AgentSessionManagerax.axCLI <<Relationship-UmVsYXRpb25zaGlw>> : "Runs commands (launch, attach, takeover, fork, sync)"
+AgentSessionManagerax.axCLI --> AgentSessionManagerax.LocalIndex <<Relationship-UmVsYXRpb25zaGlw>> : "Reads/writes index"
+AgentSessionManagerax.axCLI --> AgentSessionManagerax.ImmutableStorage <<Relationship-UmVsYXRpb25zaGlw>> : "Reads/writes records and blobs"
+AgentSessionManagerax.axDaemon --> AgentSessionManagerax.LocalIndex <<Relationship-UmVsYXRpb25zaGlw>> : "Reads/writes index"
+AgentSessionManagerax.axDaemon --> AgentSessionManagerax.ImmutableStorage <<Relationship-UmVsYXRpb25zaGlw>> : "Syncs records and blobs"
+AgentSessionManagerax.axCLI --> AgentSessionManagerax.TerminalBackend <<Relationship-UmVsYXRpb25zaGlw>> : "Runs 'ax pane' wrapper in durable pane"
+TaskBoardSessionManager --> AgentSessionManagerax.TerminalBackend <<Relationship-UmVsYXRpb25zaGlw>> : "Provides task-board abstraction inside terminal"
+AgentSessionManagerax.axCLI --> TaskBoardSessionManager <<Relationship-UmVsYXRpb25zaGlw>> : "Imports/exports opaque session bundles (Bridge Contract)"
+AgentSessionManagerax.axCLI --> AgentSessionManagerax.ProviderPlugins <<Relationship-UmVsYXRpb25zaGlw>> : "Launches and orchestrates transactions via JSON-over-stdio"
+AgentSessionManagerax.ProviderPlugins --> NativeProviderStores <<Relationship-UmVsYXRpb25zaGlw>> : "Materializes native state as directed by ax"
+AgentSessionManagerax.axCLI --> MeshNetwork <<Relationship-UmVsYXRpb25zaGlw>> : "Executes RPC (ax rpc serve --stdio) via SSH"
+AgentSessionManagerax.axDaemon --> MeshNetwork <<Relationship-UmVsYXRpb25zaGlw>> : "Periodically synchronizes across mesh"
+
+@enduml
