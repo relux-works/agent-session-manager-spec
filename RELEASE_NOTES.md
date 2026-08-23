@@ -1,6 +1,17 @@
-# Agent Session Manager (`ax`) Specification v0.1.0
+# Agent Session Manager (`ax`) Specification v0.2.0
 
-This is the initial specification release of the Agent Session Manager (`ax`) architecture and normative protocol contract.
+This release supersedes `v0.1.0` without moving or rewriting that tag. It
+corrects independently reviewed crash-recovery and conformance defects before
+implementation begins.
+
+## Critical Corrections
+
+- Mesh `materialize.prepare` uses caller-stable IDs and a durable request receipt, so a lost response cannot create a second materialization.
+- Provider `materialize-status` is an evolving read rather than a byte-identical mutation receipt.
+- Provider protocol, Mesh RPC, and Materialization recovery state are versioned `2.0.0`; their published `1.0.0` shapes are not wire-compatible with these corrections.
+- All normative strict-JSON `jsonc` fixtures are parsed and identity-checked.
+- JCS property ordering follows RFC 8785 UTF-16 code units, including non-BMP keys.
+- Recovery state represents the full 65,536-entry materialization closure.
 
 **Status Caveat:** This release publishes **specification artifacts only**. It does not contain an executable `ax` product binary, and no runtime product validation is implied by this release.
 
@@ -22,11 +33,11 @@ Capabilities are gated and reported per-provider and per-platform:
 
 ## Security Boundary
 The system assumes an explicitly allowlisted trusted mesh.
-- No payload encryption at rest is provided in v0.1.0 (`mesh.payload_encryption` MUST be `none`).
+- No payload encryption at rest is provided in v0.2.0 (`mesh.payload_encryption` MUST be `none`).
 - Transport uses standard Tailscale SSH or OpenSSH.
 - Secrets, active sockets, tmux servers, and live database files are explicitly excluded from replication.
 
 ## Known Limitations
 - Network split-brain scenarios must be explicitly managed by force takeover, retaining both histories for manual resolution.
 - Workspace conflict resolution is fail-closed, prioritizing explicit user choices (copy, worktree, or verified replace) over automated merges.
-- v0.1.0 does not specify Byzantine consensus or isolate hostile peers.
+- v0.2.0 does not specify Byzantine consensus or isolate hostile peers.

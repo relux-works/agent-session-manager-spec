@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Expected-red mutation suite for v0.1.0 specification validation ==="
+echo "=== Expected-red mutation suite for v0.2.0 specification validation ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -154,7 +154,7 @@ python3 -c "
 import pathlib
 p=pathlib.Path('$FIX/SPEC.md')
 t=p.read_text()
-t=t.replace('there is no v0.1.0 direct <code>ax-provider-qwen</code> claim.','ax-provider-qwen is available for direct use.')
+t=t.replace('there is no v0.2.0 direct <code>ax-provider-qwen</code> claim.','ax-provider-qwen is available for direct use.')
 p.write_text(t)
 "
 expect_fail "forbidden qwen direct claim" "forbidden" "$FIX"
@@ -455,7 +455,7 @@ expect_fail "retained prohibition plus live SQLite replication claim" "live SQLi
 echo ""
 echo "Mutation 39: Qwen works without task-board while task-board-only caveat remains"
 FIX=$(fixture_copy "contradictory-qwen-without-task-board")
-printf '\nQwen works without task-board in v0.1.0.\n' >> "$FIX/README.md"
+printf '\nQwen works without task-board in v0.2.0.\n' >> "$FIX/README.md"
 expect_fail "retained caveat plus without-task-board Qwen claim" "without-task-board Qwen" "$FIX" "./run_validation.sh"
 
 echo ""
@@ -485,7 +485,7 @@ expect_fail "live SQLite replication remains positive despite without-staging qu
 echo ""
 echo "Mutation 44: Qwen task-board independence claim"
 FIX=$(fixture_copy "qwen-independent-of-task-board")
-printf '\nQwen works independently of task-board in v0.1.0.\n' >> "$FIX/README.md"
+printf '\nQwen works independently of task-board in v0.2.0.\n' >> "$FIX/README.md"
 expect_fail "Qwen task-board independence wording" "direct/native/without-task-board Qwen" "$FIX" "./run_validation.sh"
 
 echo ""
@@ -498,31 +498,178 @@ echo ""
 echo "Mutation 46: Active default-encryption wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-encryption-active")
 printf '\nBy default, all session snapshots receive at-rest encryption.\n' >> "$FIX/SPEC.md"
-expect_fail "frozen release baseline rejects active default-encryption wording" "SPEC.md: frozen v0.1.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active default-encryption wording" "SPEC.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.1.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.1.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
-printf '\nQwen sessions do not need task-board in v0.1.0.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.1.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+printf '\nQwen sessions do not need task-board in v0.2.0.\n' >> "$FIX/README.md"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.1.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+
+echo ""
+echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
+FIX=$(fixture_copy "rpc-prepare-without-operation-id")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+start=t.index('### 11.3 RPC operations')
+row=t.index('| <code>materialize.prepare</code> | Tagged <code>{', start)
+t=t[:row] + t[row:].replace('initiator_host_id:UUIDv7,operation_id:UUIDv7,materialization_id:UUIDv7', 'initiator_host_id:UUIDv7,materialization_id:UUIDv7', 1)
+p.write_text(t)
+"
+expect_fail "prepare request without caller operation ID" "materialize.prepare request must carry caller-stable operation_id and materialization_id" "$FIX"
+
+echo ""
+echo "Mutation 52: Provider status is incorrectly made a mutation receipt"
+FIX=$(fixture_copy "provider-status-with-operation-id")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+t=t.replace(
+    '<code>{materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority}</code> | <code>ProviderTransactionStatus</code>',
+    '<code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority}</code> | <code>ProviderTransactionStatus</code>',
+    1,
+)
+p.write_text(t)
+"
+expect_fail "provider status carries forbidden operation ID" "provider materialize-status must be an evolving read" "$FIX"
+
+echo ""
+echo "Mutation 53: Strict JSONC fixture is malformed"
+FIX=$(fixture_copy "bad-jsonc")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+start=t.index('~~~jsonc')
+tail=t[start:]
+q=chr(34)
+old=q+'schema'+q+': '+q+'urn:ax:schema:materialization-plan'+q
+new=q+'schema'+q+': urn:ax:schema:materialization-plan'
+assert old in tail
+tail=tail.replace(old, new, 1)
+p.write_text(t[:start] + tail)
+"
+expect_fail "malformed strict JSONC fixture" "JSONC block" "$FIX"
+
+echo ""
+echo "Mutation 54: Canonicalizer regresses to Unicode code-point ordering"
+FIX=$(fixture_copy "jcs-codepoint-ordering")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/scripts/validate_spec.py')
+t=p.read_text()
+q=chr(34)
+old='keys = sorted(value, key=lambda key: key.encode('+q+'utf-16-be'+q+'))'
+assert old in t
+t=t.replace(old, 'keys = sorted(value)', 1)
+p.write_text(t)
+"
+expect_fail "JCS canonicalizer uses code-point ordering" "RFC 8785 UTF-16 ordering" "$FIX"
+
+echo ""
+echo "Mutation 55: Recovery journal cannot represent a maximum-size closure"
+FIX=$(fixture_copy "journal-cardinality-regression")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+t=t.replace(
+    '<code>verified_blob_ids</code> | sorted unique digest[0..65536]',
+    '<code>verified_blob_ids</code> | sorted unique digest[0..4096]',
+    1,
+)
+p.write_text(t)
+"
+expect_fail "journal verified blob cardinality regresses" "materialization recovery cardinality mismatch" "$FIX"
+
+echo ""
+echo "Mutation 56: Prepare request digest is not persisted"
+FIX=$(fixture_copy "journal-without-prepare-digest")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+lines=p.read_text().splitlines()
+lines=[line for line in lines if not line.startswith('| <code>prepare_request_digest</code> |')]
+p.write_text('\n'.join(lines) + '\n')
+"
+expect_fail "journal omits prepare request digest" "Materialization Journal missing durable prepare receipt field prepare_request_digest" "$FIX"
+
+echo ""
+echo "Mutation 57: Breaking provider shape is mislabeled as protocol 1.0.0"
+FIX=$(fixture_copy "provider-contract-version-regression")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code> |'
+new='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>1.0.0</code> |'
+assert old in t
+p.write_text(t.replace(old, new, 1))
+"
+expect_fail "breaking provider shape keeps old major" "critical contract version mismatch" "$FIX"
+
+echo ""
+echo "Mutation 58: Active provider semantics regress to a protocol-v1 label"
+FIX=$(fixture_copy "provider-active-version-label-regression")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='single Provider protocol 2.0.0 idempotency key'
+new='single protocol-v1 idempotency key'
+assert old in t
+p.write_text(t.replace(old, new, 1))
+"
+expect_fail "active provider semantics use stale major label" "critical active contract version label missing or regressed" "$FIX"
+
+echo ""
+echo "Mutation 59: Active Mesh RPC operation table regresses to Version 1"
+FIX=$(fixture_copy "rpc-active-version-label-regression")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Mesh RPC 2.0.0 operations are:'
+new='Version 1 operations are:'
+assert old in t
+p.write_text(t.replace(old, new, 1))
+"
+expect_fail "active Mesh RPC operation table uses stale major label" "critical active contract version label missing or regressed" "$FIX"
+
+echo ""
+echo "Mutation 60: Active Mesh RPC anti-entropy fixtures regress to protocol 1.0.0"
+FIX=$(fixture_copy "rpc-fixture-version-label-regression")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='These Mesh RPC 2.0.0 fixtures are normative.'
+new='These protocol-1.0.0 fixtures are normative.'
+assert old in t
+p.write_text(t.replace(old, new, 1))
+"
+expect_fail "active Mesh RPC fixtures use stale major label" "critical active contract version label missing or regressed" "$FIX"
 
 echo ""
 echo "=========================================="

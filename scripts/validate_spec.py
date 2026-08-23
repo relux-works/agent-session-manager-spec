@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for the normative ax v0.1.0 specification.
+"""Public, repository-only validation for the normative ax v0.2.0 specification.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
-and adds publication/metadata, anchor, matrix, and security closure for v0.1.0.
+and adds publication/metadata, anchor, matrix, and security closure for v0.2.0.
 Repository-only: no ax binary, provider CLI, or task-board runtime required.
 """
 
@@ -27,16 +27,16 @@ LICENSE_FILE = ROOT / "LICENSE"
 CHANGELOG = ROOT / "CHANGELOG.md"
 RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen v0.1.0 publication prose. Hashes use UTF-8 text with all line endings
+# Frozen v0.2.0 publication prose. Hashes use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. Future
 # specification releases must deliberately replace this bounded map after the
 # semantic checks and expected-red suite have been reviewed for the new prose.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "4aacf77fcbdc036396bc3713936560d23a84de41071fc00de1bfaad96a2e628b",
-    "README.md": "47b3917de0a327398c56aa4619d1a5c10a8ca8a71ce5faa945184d8e6c0b245e",
-    "CONTRIBUTING.md": "64ffa959a6b2864f22d2ca816e64a97e10f7adf06842277170925d6ee88ada17",
-    "CHANGELOG.md": "e79b746dfe1e11089425023525a575fe500d911ad0b2e5e78647b1d7a7634ef7",
-    "RELEASE_NOTES.md": "d2a27edd175242459448c358d5d30bcb9d70651206c0e0aacf77dcda7735363a",
+    "SPEC.md": "f40f6be201576ee1289f4e9a113b2681dea8b4fc5c835c9eb4295de8c30b0086",
+    "README.md": "040a157a667d59e88b789ad105c9d2862276754d97eed8428ba7479c23efe711",
+    "CONTRIBUTING.md": "9444e8332f9013459ca01b2f900e8f2947f04ebc283efeb618c2ce9071cc0be9",
+    "CHANGELOG.md": "cdc90658383cad5e8d04c6647d50e03ea2151fc3a49686c88052768717eeea47",
+    "RELEASE_NOTES.md": "76f6c1518809fba811815ad8ccc4d794497d79024bd500cff6c99c87b9b22927",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -110,13 +110,65 @@ def walk(value: object, path: str = "$") -> Iterator[tuple[str, dict[str, object
 
 
 def canonical(value: object) -> bytes:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        allow_nan=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
+    """Serialize the specification's integer-only data model as RFC 8785 JCS.
+
+    Python's ``sort_keys=True`` orders Unicode code points. RFC 8785 instead
+    inherits ECMAScript's lexicographic UTF-16 code-unit ordering, which differs
+    for some non-BMP property names. Floats are forbidden by the ax data model,
+    so the otherwise difficult ECMAScript number conversion is intentionally
+    outside this serializer's accepted domain.
+    """
+
+    if value is None or isinstance(value, bool):
+        return json.dumps(value, separators=(",", ":")).encode("utf-8")
+    if isinstance(value, int):
+        if not -SAFE_INTEGER <= value <= SAFE_INTEGER:
+            raise ValueError(f"unsafe JSON integer {value}")
+        return str(value).encode("ascii")
+    if isinstance(value, float):
+        raise ValueError("floating-point numbers are forbidden")
+    if isinstance(value, str):
+        try:
+            value.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise ValueError("lone surrogate code point is forbidden") from exc
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    if isinstance(value, list):
+        return b"[" + b",".join(canonical(item) for item in value) + b"]"
+    if isinstance(value, dict):
+        if not all(isinstance(key, str) for key in value):
+            raise ValueError("non-string map key is forbidden")
+        try:
+            keys = sorted(value, key=lambda key: key.encode("utf-16-be"))
+        except UnicodeEncodeError as exc:
+            raise ValueError("lone surrogate code point is forbidden") from exc
+        members = (canonical(key) + b":" + canonical(value[key]) for key in keys)
+        return b"{" + b",".join(members) + b"}"
+    raise ValueError(f"unsupported canonical JSON type: {type(value).__name__}")
+
+
+def check_jcs_canonicalizer(errors: list[str]) -> None:
+    fixture = {"\ue000": 1, "\U00010000": 2}
+    expected = '{"\U00010000":2,"\ue000":1}'.encode("utf-8")
+    actual = canonical(fixture)
+    if actual != expected:
+        errors.append(
+            "RFC 8785 UTF-16 ordering mismatch for JCS-UTF16-ORDER: "
+            f"expected {expected!r}, got {actual!r}"
+        )
+    expected_digest = "9d4cdc71dda603c42f9b21d88d0c2ffc31a76cd1bd461d7359406cf169845f1e"
+    actual_digest = hashlib.sha256(actual).hexdigest()
+    if actual_digest != expected_digest:
+        errors.append(
+            "RFC 8785 UTF-16 ordering digest mismatch for JCS-UTF16-ORDER: "
+            f"expected {expected_digest}, got {actual_digest}"
+        )
+    try:
+        canonical({"\ud800": 1})
+    except ValueError:
+        pass
+    else:
+        errors.append("RFC 8785 canonicalizer accepted a lone surrogate property name")
 
 
 def validate_numbers(value: object, location: str, errors: list[str]) -> None:
@@ -198,7 +250,7 @@ def normalized_release_document_sha256(path: pathlib.Path) -> str:
 
 
 def check_frozen_release_baseline(errors: list[str]) -> None:
-    """Protect the reviewed v0.1.0 claim prose without pretending to parse English."""
+    """Protect the reviewed v0.2.0 claim prose without pretending to parse English."""
     expected_names = {path.name for path in PUBLIC_CLAIM_DOCUMENTS}
     configured_names = set(FROZEN_RELEASE_DOCUMENT_SHA256)
     if configured_names != expected_names:
@@ -215,7 +267,7 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual = normalized_release_document_sha256(document)
         if actual != expected:
             errors.append(
-                f"{document.name}: frozen v0.1.0 release baseline mismatch "
+                f"{document.name}: frozen v0.2.0 release baseline mismatch "
                 f"(expected LF-normalized SHA-256 {expected}, got {actual}); "
                 "review the prose and update FROZEN_RELEASE_DOCUMENT_SHA256 only for an intentional release revision"
             )
@@ -251,8 +303,8 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
 def check_publication_metadata(errors: list[str]) -> None:
     if VERSION_FILE.exists():
         v = VERSION_FILE.read_text(encoding="utf-8").strip()
-        if v != "0.1.0":
-            errors.append(f"VERSION must be exactly '0.1.0', got {v!r}")
+        if v != "0.2.0":
+            errors.append(f"VERSION must be exactly '0.2.0', got {v!r}")
     if LICENSE_FILE.exists():
         lic = LICENSE_FILE.read_text(encoding="utf-8")
         canonical_mit = """MIT License
@@ -281,16 +333,15 @@ SOFTWARE.
             errors.append("LICENSE differs from the complete canonical MIT text for Copyright (c) 2026 Ivan Oparin")
     if CHANGELOG.exists():
         cl = CHANGELOG.read_text(encoding="utf-8")
-        if "v0.1.0" not in cl:
-            errors.append("CHANGELOG.md missing v0.1.0 entry")
-        if "2026-08-22" not in cl:
-            errors.append("CHANGELOG.md missing release date 2026-08-22")
+        for required in ("## [v0.2.0] - 2026-08-23", "## [v0.1.0] - 2026-08-22"):
+            if required not in cl:
+                errors.append(f"CHANGELOG.md missing release history entry {required!r}")
         # Caveats in CHANGELOG or RELEASE_NOTES
         # CHANGELOG must at least mention qwen prohibition (already checked), but also we check RELEASE_NOTES for full set
     if RELEASE_NOTES.exists():
         rn = RELEASE_NOTES.read_text(encoding="utf-8")
-        if "v0.1.0" not in rn:
-            errors.append("RELEASE_NOTES.md missing v0.1.0")
+        if "v0.2.0" not in rn:
+            errors.append("RELEASE_NOTES.md missing v0.2.0")
         if "specification" not in rn.lower():
             errors.append("RELEASE_NOTES.md missing specification disclosure")
         if "specification artifacts only" not in rn.lower() and "specification only" not in rn.lower():
@@ -416,8 +467,8 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         txt = doc.read_text(encoding="utf-8")
         if "relux-works/agent-session-manager-spec" not in txt:
             errors.append(f"{doc.name}: missing repository identity relux-works/agent-session-manager-spec")
-        if "v0.1.0" not in txt and "0.1.0" not in txt:
-            errors.append(f"{doc.name}: missing version v0.1.0/0.1.0")
+        if "v0.2.0" not in txt and "0.2.0" not in txt:
+            errors.append(f"{doc.name}: missing version v0.2.0/0.2.0")
     for doc in [SPEC, README, CONTRIBUTING]:
         if doc.exists():
             txt = doc.read_text(encoding="utf-8")
@@ -560,43 +611,53 @@ def check_balanced_fences(errors: list[str]) -> None:
             errors.append(f"{doc.name}: unbalanced Markdown fence {fence_stack[-1]!r} (unclosed fence)")
 
 
-def check_json_toml_examples(text: str, errors: list[str]) -> tuple[int, int, int, list[dict[str, object]], dict[str, object] | None]:
+def check_json_toml_examples(text: str, errors: list[str]) -> tuple[int, int, int, int, list[dict[str, object]], dict[str, object] | None]:
     json_count = 0
+    jsonc_count = 0
     toml_count = 0
     identity_count = 0
     objects: list[dict[str, object]] = []
     git_fixture: dict[str, object] | None = None
-    for line, source in blocks(text, "json"):
-        json_count += 1
-        try:
-            value = json.loads(source)
-        except json.JSONDecodeError as exc:
-            errors.append(f"JSON block at line {line}: {exc}")
-            continue
-        validate_numbers(value, f"line {line}", errors)
-        for object_path, candidate in walk(value):
-            if isinstance(candidate, dict):
-                objects.append(candidate)
-            if isinstance(candidate, dict) and candidate.get("fixture") == "ax-git-workspace-v1":
-                if git_fixture is not None:
-                    errors.append("duplicate ax-git-workspace-v1 fixture")
-                git_fixture = candidate
-            if not isinstance(candidate, dict):
+    for language in ("json", "jsonc"):
+        for line, source in blocks(text, language):
+            if language == "json":
+                json_count += 1
+            else:
+                jsonc_count += 1
+            try:
+                value = json.loads(source)
+            except json.JSONDecodeError as exc:
+                errors.append(f"{language.upper()} block at line {line}: {exc}")
                 continue
-            schema = candidate.get("schema")
-            self_field = SELF_FIELDS.get(schema) if isinstance(schema, str) else None
-            if self_field is None:
-                continue
-            identity_count += 1
-            actual = candidate.get(self_field)
-            if not isinstance(actual, str):
-                errors.append(f"line {line} {object_path}: missing string {self_field}")
-                continue
-            payload = dict(candidate)
-            del payload[self_field]
-            expected = "sha256:" + hashlib.sha256(canonical(payload)).hexdigest()
-            if actual != expected:
-                errors.append(f"line {line} {object_path}: {self_field} {actual} != {expected}")
+            validate_numbers(value, f"line {line}", errors)
+            for object_path, candidate in walk(value):
+                if isinstance(candidate, dict):
+                    objects.append(candidate)
+                if isinstance(candidate, dict) and candidate.get("fixture") == "ax-git-workspace-v1":
+                    if git_fixture is not None:
+                        errors.append("duplicate ax-git-workspace-v1 fixture")
+                    git_fixture = candidate
+                if not isinstance(candidate, dict):
+                    continue
+                schema = candidate.get("schema")
+                self_field = SELF_FIELDS.get(schema) if isinstance(schema, str) else None
+                if (
+                    schema == "urn:ax:schema:materialization-journal"
+                    and candidate.get("document_kind") == "managed_replica_marker"
+                ):
+                    self_field = "marker_id"
+                if self_field is None:
+                    continue
+                identity_count += 1
+                actual = candidate.get(self_field)
+                if not isinstance(actual, str):
+                    errors.append(f"line {line} {object_path}: missing string {self_field}")
+                    continue
+                payload = dict(candidate)
+                del payload[self_field]
+                expected = "sha256:" + hashlib.sha256(canonical(payload)).hexdigest()
+                if actual != expected:
+                    errors.append(f"line {line} {object_path}: {self_field} {actual} != {expected}")
     for line, source in blocks(text, "toml"):
         toml_count += 1
         try:
@@ -607,7 +668,7 @@ def check_json_toml_examples(text: str, errors: list[str]) -> tuple[int, int, in
         errors.append("missing ax-git-workspace-v1 fixture")
     else:
         validate_git_fixture(git_fixture, objects, errors)
-    return json_count, toml_count, identity_count, objects, git_fixture
+    return json_count, jsonc_count, toml_count, identity_count, objects, git_fixture
 
 
 def validate_git_fixture(fixture: dict[str, object], objects: list[dict[str, object]], errors: list[str]) -> None:
@@ -963,6 +1024,135 @@ def check_exact_registries(text: str, errors: list[str]) -> dict[str, int]:
     return ledger
 
 
+def operation_cells(text: str, start: str, end: str, operation: str) -> tuple[str, ...] | None:
+    start_at = text.find(start)
+    end_at = text.find(end, start_at + len(start)) if start_at != -1 else -1
+    if start_at == -1 or end_at == -1:
+        return None
+    match: tuple[str, ...] | None = None
+    for line in text[start_at:end_at].splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = table_cells(line)
+        if cells and re.sub(r"</?code>", "", cells[0]) == operation:
+            match = cells
+    return match
+
+
+def check_critical_protocol_contracts(text: str, errors: list[str]) -> None:
+    """Protect the independently reviewed crash-recovery and size contracts."""
+
+    contract_versions = (
+        ("Provider protocol", "urn:ax:protocol:provider", "2.0.0"),
+        ("Mesh RPC", "urn:ax:protocol:rpc", "2.0.0"),
+        (
+            "Materialization recovery state (journal and managed-replica marker variants)",
+            "urn:ax:schema:materialization-journal",
+            "2.0.0",
+        ),
+    )
+    for name, identifier, version in contract_versions:
+        row = f"| {name} | <code>{identifier}</code> | <code>{version}</code> |"
+        if row not in text:
+            errors.append(
+                f"critical contract version mismatch: {name} must be {version} in v0.2.0"
+            )
+    for required in (
+        '<code>protocol_version = "2.0.0"</code>',
+        '<code>urn:ax:protocol:rpc</code> version <code>2.0.0</code>',
+        '<code>urn:ax:schema:materialization-journal</code> version\n<code>2.0.0</code>',
+        "The v0.2.0 correction is an explicit major-version boundary.",
+    ):
+        if required not in text:
+            errors.append(f"critical contract version boundary missing: {required!r}")
+
+    active_version_labels = (
+        "single Provider protocol 2.0.0 idempotency key",
+        "Mesh RPC 2.0.0 operations are:",
+        "These closed embedded types belong to Mesh RPC\n2.0.0:",
+        "No other mapping exists in Mesh RPC 2.0.0.",
+        "These Mesh RPC 2.0.0 fixtures are normative.",
+    )
+    for required in active_version_labels:
+        if required not in text:
+            errors.append(
+                "critical active contract version label missing or regressed: "
+                f"{required!r}"
+            )
+
+    provider_status = operation_cells(
+        text,
+        "The operation body registry is exact.",
+        "For <code>launch</code>",
+        "materialize-status",
+    )
+    expected_status_request = (
+        "<code>{materialization_id:UUIDv7, transaction_id:UUIDv7, "
+        "transaction:ProviderTransactionAuthority}</code>"
+    )
+    if provider_status is None or len(provider_status) < 3 or provider_status[1] != expected_status_request:
+        errors.append(
+            "provider materialize-status must be an evolving read located by materialization/transaction "
+            "IDs and authority, without operation_id"
+        )
+    provider_section_start = text.find("### 7.5 Required operations")
+    provider_section_end = text.find("### 7.6 Quiescence proof", provider_section_start)
+    provider_section = text[provider_section_start:provider_section_end]
+    provider_normalized = " ".join(provider_section.split())
+    for required in (
+        "Observational operations, including <code>materialize-status</code>, are evolving reads.",
+        "MUST NOT be stored as mutation receipts",
+        "PTX-STATUS-EVOLVES",
+    ):
+        if " ".join(required.split()) not in provider_normalized:
+            errors.append(f"provider evolving status contract missing: {required!r}")
+
+    rpc_prepare = operation_cells(
+        text,
+        "### 11.3 RPC operations",
+        "For <code>chunks.put</code>",
+        "materialize.prepare",
+    )
+    if rpc_prepare is None or len(rpc_prepare) < 3:
+        errors.append("materialize.prepare request/response registry row is missing")
+    else:
+        for cell_index, label in ((1, "request"), (2, "success")):
+            cell = rpc_prepare[cell_index]
+            if "operation_id:UUIDv7" not in cell or "materialization_id:UUIDv7" not in cell:
+                errors.append(
+                    f"materialize.prepare {label} must carry caller-stable operation_id and materialization_id"
+                )
+    for required in (
+        "Before the first destination mutation",
+        "digest of the complete canonical prepare body",
+        "<code>(materialize.prepare, operation_id)</code>",
+        "<code>materialize.status</code> is an evolving read",
+        "MJ-RPC-PREPARE-LOST",
+        "AC-MAT-004",
+    ):
+        if required not in text:
+            errors.append(f"lost-response-safe materialize.prepare contract missing: {required!r}")
+
+    journal_start = text.find("### 10.6 Materialization Journal")
+    journal_end = text.find("Provider Journal Transaction is a closed object", journal_start)
+    journal_section = text[journal_start:journal_end]
+    for field in ("prepare_operation_id", "prepare_request_digest"):
+        if f"| <code>{field}</code> |" not in journal_section:
+            errors.append(f"Materialization Journal missing durable prepare receipt field {field}")
+    cardinality_requirements = (
+        "<code>completed_blob_chunks</code> | map(digest,sorted unique uint32[0..32768])[0..65536]",
+        "<code>verified_blob_ids</code> | sorted unique digest[0..65536]",
+        "blob_chunks:map(digest,sorted unique uint32[0..32768])[0..65536]",
+        "created_paths:sorted unique absolute-path[0..65536]",
+        "merged_paths:sorted unique absolute-path[0..65536]",
+        "restored_paths:sorted unique absolute-path[0..65536]",
+        "removed_paths:sorted unique absolute-path[0..65536]",
+    )
+    for required in cardinality_requirements:
+        if required not in text:
+            errors.append(f"materialization recovery cardinality mismatch: missing {required!r}")
+
+
 def check_semantic_coverage(text: str, errors: list[str]) -> tuple[int, int, int, dict[str,int]]:
     # Run exact registry checks first
     ledger = check_exact_registries(text, errors)
@@ -988,7 +1178,7 @@ def check_semantic_coverage(text: str, errors: list[str]) -> tuple[int, int, int
     for provider in ["Codex", "Claude", "Gemini", "Muse", "Antigravity", "Pi"]:
         gate.has(f"provider {provider} row", provider)
     gate.normalized_has("Qwen task-board only", "Qwen through task-board")
-    gate.normalized_has("no direct qwen claim", "no v0.1.0 direct")
+    gate.normalized_has("no direct qwen claim", "no v0.2.0 direct")
     gate.has("ax-provider-qwen prohibited", "ax-provider-qwen")
     gate.normalized_has("Claude appserver unsupported", "appserver")
     gate.normalized_has("prompt_spawn capability", "prompt_spawn")
@@ -1129,6 +1319,8 @@ def main() -> int:
     check_ci_workflow(errors)
     check_markdown_links_and_anchors(errors)
     check_balanced_fences(errors)
+    check_jcs_canonicalizer(errors)
+    check_critical_protocol_contracts(text, errors)
 
     lines = text.splitlines()
     headings = sum(1 for line in lines if re.match(r"^#{1,6} ", line))
@@ -1160,9 +1352,11 @@ def main() -> int:
     if table_rows < 700:
         errors.append(f"too few table rows: {table_rows} (expected >= 700)")
 
-    json_count, toml_count, identity_count, objects, git_fixture = check_json_toml_examples(text, errors)
+    json_count, jsonc_count, toml_count, identity_count, objects, git_fixture = check_json_toml_examples(text, errors)
     if json_count < 20:
         errors.append(f"too few JSON blocks: {json_count} (expected >= 20, accepted 59)")
+    if jsonc_count < 6:
+        errors.append(f"too few strict JSONC fixture blocks: {jsonc_count} (expected >= 6)")
     if toml_count < 1:
         errors.append(f"too few TOML blocks: {toml_count} (expected >= 1)")
     if identity_count < 10:
@@ -1190,7 +1384,10 @@ def main() -> int:
         return 1
 
     print(f"All task-scoped specification structure and identity checks passed.")
-    print(f"  JSON blocks: {json_count}, TOML blocks: {toml_count}, identities: {identity_count}")
+    print(
+        f"  JSON blocks: {json_count}, strict JSONC blocks: {jsonc_count}, "
+        f"TOML blocks: {toml_count}, identities: {identity_count}"
+    )
     print(f"  Headings: {headings}, numbered: {len(numbered_headings)}, refs: {ref_count}, tables: {tables}, rows: {table_rows}")
     print(f"  Local links: {local_link_count}")
     print(f"  Semantic checks: {checks} total, {passed} passed, {failed} failed")

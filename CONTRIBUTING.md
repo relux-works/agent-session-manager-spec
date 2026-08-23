@@ -1,19 +1,22 @@
 # Contributing to the Agent Session Manager specification
 
-This guide is for contributors editing the `v0.1.0` specification in `relux-works/agent-session-manager-spec` (public, MIT, default branch `main`). It summarizes and links to the normative rules in [SPEC.md](SPEC.md) — it does not create a second contract. When this guide and [SPEC.md](SPEC.md) disagree, [SPEC.md](SPEC.md) wins.
+This guide is for contributors editing the `v0.2.0` specification in `relux-works/agent-session-manager-spec` (public, MIT, default branch `main`). It summarizes and links to the normative rules in [SPEC.md](SPEC.md) — it does not create a second contract. When this guide and [SPEC.md](SPEC.md) disagree, [SPEC.md](SPEC.md) wins.
 
 ## Scope and publication target
 
-The repository is **specification only** in `v0.1.0`. It does not contain an `ax` product binary, and publishing the spec does not claim that any future product acceptance matrix has passed. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20](SPEC.md#20-specification-publication-and-governance).
+The repository is **specification only** in `v0.2.0`. It does not contain an `ax` product binary, and publishing the spec does not claim that any future product acceptance matrix has passed. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20](SPEC.md#20-specification-publication-and-governance).
 
-The first specification release is `v0.1.0`. Every document, metadata file, and tag in that release must say `v0.1.0` consistently — see [Signing, release, and attribution](#signing-release-and-attribution).
+The first specification release was `v0.1.0`; the current corrected release is
+`v0.2.0`. Current release metadata and the new tag must say `v0.2.0`
+consistently without moving or rewriting `v0.1.0` — see
+[Signing, release, and attribution](#signing-release-and-attribution).
 
 ## Spec-change workflow
 
 ### 1 — Before editing
 
 - Read the settled product and architecture decisions (attached to `TASK-260819-1h306n` and summarized in [SPEC.md §1.4](SPEC.md#14-source-authority-and-evidence) and [Appendix A.1](SPEC.md#a1-settled-decision-traceability)). Preserve those decisions unless a contradiction makes implementation impossible; record any necessary refinement explicitly.
-- Read the accepted Muse and Antigravity evidence report at [`.research/260819_muse-antigravity-native-store-contracts.md`](.research/260819_muse-antigravity-native-store-contracts.md). Its retained unknowns must remain `unknown` or `unsupported` in `v0.1.0`.
+- Read the accepted Muse and Antigravity evidence report at [`.research/260819_muse-antigravity-native-store-contracts.md`](.research/260819_muse-antigravity-native-store-contracts.md). Its retained unknowns must remain `unknown` or `unsupported` in `v0.2.0`.
 - Check [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates) — the only intentionally unsettled facts. Do not invent parity for a gated cell.
 
 ### 2 — Making changes
@@ -42,13 +45,13 @@ All changes require an independent reviewer acceptance before publication. The `
 ### Sources
 
 - **C4**: `diagrams/c4/workspace.dsl` (includes `model.dsl`, `views.dsl`, `relationships.dsl`, `styles.dsl`). The required views are `SystemContext` and `ContainerContext` — see [SPEC.md §3.1](SPEC.md#31-required-components). The exported intermediaries `diagrams/c4/structurizr-*.puml` are generated from `workspace.dsl` and are not hand-edited.
-- **PlantUML**: `diagrams/plantuml/*.puml` — the three scoped diagrams for `v0.1.0` are `takeover.puml`, `session_state.puml`, and `mesh_deployment.puml`. Together they cover the ownership state machine, the takeover/force-takeover/fork flows, and the allowlisted mesh/terminal-backend deployment required by [SPEC.md §3](SPEC.md#3-architecture-and-durable-local-layout) and [§13](SPEC.md#13-end-to-end-lifecycle-flows). Do not claim a broader per-flow diagram set for `v0.1.0`; see the committed artefacts under `diagrams/artefacts/`.
+- **PlantUML**: `diagrams/plantuml/*.puml` — the three scoped diagrams for `v0.2.0` are `takeover.puml`, `session_state.puml`, and `mesh_deployment.puml`. Together they cover the ownership state machine, the takeover/force-takeover/fork flows, and the allowlisted mesh/terminal-backend deployment required by [SPEC.md §3](SPEC.md#3-architecture-and-durable-local-layout) and [§13](SPEC.md#13-end-to-end-lifecycle-flows). Do not claim a broader per-flow diagram set for `v0.2.0`; see the committed artefacts under `diagrams/artefacts/`.
 
 Committed `*.puml` and `*.dsl` sources are part of the spec artifact and must match [§3](SPEC.md#3-architecture-and-durable-local-layout) and [§13](SPEC.md#13-end-to-end-lifecycle-flows) semantically.
 
 ### Render rules
 
-- Render C4 via Structurizr and PlantUML via the PlantUML renderer. The rendered SVGs are committed under `diagrams/artefacts/` for review — see acceptance case `AC-DIAG-001` in [SPEC.md §19.4](SPEC.md#194-end-to-end-acceptance-cases). The expected committed SVGs for `v0.1.0` are `takeover.svg`, `session_state.svg`, `mesh_deployment.svg`, plus the four `structurizr-*.svg` files exported from the C4 model.
+- Render C4 via Structurizr and PlantUML via the PlantUML renderer. The rendered SVGs are committed under `diagrams/artefacts/` for review — see acceptance case `AC-DIAG-001` in [SPEC.md §19.4](SPEC.md#194-end-to-end-acceptance-cases). The expected committed SVGs for `v0.2.0` are `takeover.svg`, `session_state.svg`, `mesh_deployment.svg`, plus the four `structurizr-*.svg` files exported from the C4 model.
 - Committed SVGs must be visually inspected and must match [§3](SPEC.md#3-architecture-and-durable-local-layout) and [§13](SPEC.md#13-end-to-end-lifecycle-flows). A source change without a re-rendered and re-inspected SVG is incomplete.
 - The render step must use the same sources that are committed — do not render from a stale or patched copy. Record the exact render commands and tool versions in the PR/task evidence (see [Validation](#validation)).
 
@@ -86,7 +89,7 @@ The exact flags are `validate -w`, `export -w ... -format plantuml -output`, and
 
 ### What the publication validator does and does not do
 
-The accepted validation entry point checks spec structure, contract fixtures, links, JCS identity and numeric-boundary vectors, diagram presence, publication metadata, and the frozen `v0.1.0` content baseline for the five public claim documents. The baseline uses SHA-256 over UTF-8 text with line endings normalized to LF, making the check stable across supported checkout platforms. It is a bounded release-integrity control, not general natural-language theorem proving; for a future specification revision, update the digest map in `scripts/validate_spec.py` only after the changed prose and expected-red coverage have been reviewed. The validator **must not** require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) product-conformance result. Any validator that tries to execute product acceptance cases fails publication case `SPEC-PUB-001`. See [SPEC.md §20.2](SPEC.md#202-publication-gate).
+The accepted validation entry point checks spec structure, contract fixtures, links, JCS identity and numeric-boundary vectors, diagram presence, publication metadata, and the frozen `v0.2.0` content baseline for the five public claim documents. The baseline uses SHA-256 over UTF-8 text with line endings normalized to LF, making the check stable across supported checkout platforms. It is a bounded release-integrity control, not general natural-language theorem proving; for a future specification revision, update the digest map in `scripts/validate_spec.py` only after the changed prose and expected-red coverage have been reviewed. The validator **must not** require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) product-conformance result. Any validator that tries to execute product acceptance cases fails publication case `SPEC-PUB-001`. See [SPEC.md §20.2](SPEC.md#202-publication-gate).
 
 ### Exact commands
 
@@ -130,7 +133,7 @@ Observed after `TASK-260819-37heok` rework:
 | `structurizr-cli version` | `structurizr-cli 2025.11.09`, `structurizr-java 5.0.2` |
 | `plantuml -version` | `PlantUML 1.2026.6 / 6287b33` |
 
-Provider binaries are not required. Keep link, command, metadata, and terminology consistent with [SPEC.md](SPEC.md) — especially `v0.1.0` naming, repository `relux-works/agent-session-manager-spec`, default branch `main`, and capability values `available`/`conditional`/`unsupported`/`unknown`.
+Provider binaries are not required. Keep link, command, metadata, and terminology consistent with [SPEC.md](SPEC.md) — especially `v0.2.0` naming, repository `relux-works/agent-session-manager-spec`, default branch `main`, and capability values `available`/`conditional`/`unsupported`/`unknown`.
 
 ## Compatibility and versioning
 
@@ -151,11 +154,11 @@ The full gate is normative in [SPEC.md §20.2](SPEC.md#202-publication-gate). In
 1. Verify a clean checkout contains `SPEC.md`, `README.md`, `CONTRIBUTING.md`, diagram sources and rendered SVGs, `VERSION`, `CHANGELOG`, release notes, and `LICENSE` (MIT).
 2. Run the accepted validation entry point as a standalone process and retain its real exit code.
 3. Explicitly verify that the validator does not require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) result.
-4. Verify `VERSION`, document metadata, changelog, release notes, and tag all say `v0.1.0`.
+4. Verify `VERSION`, document metadata, changelog, release notes, and tag all say `v0.2.0`.
 5. Prepare the exact signed-commit command with author `Ivan Oparin <oparin@me.com>` and no AI trailer; hand it to the user for explicit review. Automation MUST NOT stage or commit before human approval.
-6. Prepare the exact signed annotated `v0.1.0` tag command; hand it to the user for explicit review. Automation MUST NOT create the tag before human approval.
+6. Prepare the exact signed annotated `v0.2.0` tag command; hand it to the user for explicit review. Automation MUST NOT create the tag before human approval.
 7. After the human creates the commit and tag, verify both signatures locally.
-8. Hand the exact `git push` commands for `main` and the `v0.1.0` tag to the user; automation MUST NOT push before explicit human approval and only after accepted validation/review.
+8. Hand the exact `git push` commands for `main` and the `v0.2.0` tag to the user; automation MUST NOT push before explicit human approval and only after accepted validation/review.
 9. Verify the public repository, default branch, license, commit signature, tag signature, and release URL.
 10. Attach publication evidence to the board.
 
@@ -164,13 +167,13 @@ No automation may publish, stage, commit, tag, or push before validation accepta
 ### Signing
 
 - **Author**: `Ivan Oparin <oparin@me.com>` — this is the commit author for the release commit. No AI `Co-Authored-By` trailer is included.
-- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Both the release commit and the annotated tag `v0.1.0` must be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
+- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Both the release commit and the annotated tag `v0.2.0` must be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
 - **Human commit gate**: Automation MUST NOT stage, commit, tag, or push. It MUST stop before those operations and hand the exact `git commit`, `git tag`, and `git push` commands to the user for explicit human execution.
 - Verify locally after the human signs:
 
 ```shell
 git log --show-signature -1
-git tag --verify v0.1.0
+git tag --verify v0.2.0
 ```
 
 ### AI attribution policy
@@ -192,7 +195,7 @@ scripts/test_expected_red.sh    # expected-red mutation suite (proves both valid
 run_validation.sh               # single public whole-package validation command (contracts + diagrams + freshness)
 .github/workflows/validate.yml  # CI path with pinned documentation-tool versions (single command + expected-red)
 diagrams/README.md              # diagram render quick-reference
-.research/                      # required public provider evidence for the v0.1.0 specification package
+.research/                      # required public provider evidence for the v0.2.0 specification package
 .planning/                      # public planning and audit evidence
 
 Local-only (not in clean checkout): .task-board/ (board data), task-board.config.json (board config)

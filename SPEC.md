@@ -1,8 +1,8 @@
-# Agent Session Manager (<code>ax</code>) v0.1.0 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.2.0 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.1.0</code> |
+| Specification release | <code>v0.2.0</code> |
 | Document status | Review candidate and implementation contract |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.1.0. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.2.0. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -46,7 +46,7 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
 8. stop a session without deleting its durable state; and
 9. resume a stopped session on its owner host.
 
-The v0.1.0 product is a Go CLI, optional per-user background service, provider
+The v0.2.0 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -88,7 +88,7 @@ The settled product and architecture decisions attached to
 accepted provider research from <code>TASK-260819-1ecd6x</code>, preserved in
 [the Muse and Antigravity evidence report](.research/260819_muse-antigravity-native-store-contracts.md),
 is the authority for those two adapters. Its retained unknowns MUST remain
-unknown or unsupported in v0.1.0.
+unknown or unsupported in v0.2.0.
 
 The Codex command and unrestricted profile facts in this specification are
 cross-checked against the
@@ -100,15 +100,15 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following versions are active in v0.1.0:
+The following versions are active in v0.2.0:
 
 | Contract | Schema identifier | Version |
 | --- | --- | --- |
 | Configuration | <code>urn:ax:schema:config</code> | <code>1.0.0</code> |
-| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>1.0.0</code> |
+| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code> |
 | Provider manifest | <code>urn:ax:schema:provider-manifest</code> | <code>1.0.0</code> |
 | Provider probe | <code>urn:ax:schema:provider-probe</code> | <code>1.0.0</code> |
-| Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>1.0.0</code> |
+| Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code> |
 | Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code> |
 | Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code> |
 | Lease record | <code>urn:ax:schema:lease</code> | <code>1.0.0</code> |
@@ -121,7 +121,7 @@ The following versions are active in v0.1.0:
 | Tombstone | <code>urn:ax:schema:tombstone</code> | <code>1.0.0</code> |
 | Tombstone acknowledgement | <code>urn:ax:schema:tombstone-ack</code> | <code>1.0.0</code> |
 | Materialization plan | <code>urn:ax:schema:materialization-plan</code> | <code>1.0.0</code> |
-| Materialization recovery state (journal and managed-replica marker variants) | <code>urn:ax:schema:materialization-journal</code> | <code>1.0.0</code> |
+| Materialization recovery state (journal and managed-replica marker variants) | <code>urn:ax:schema:materialization-journal</code> | <code>2.0.0</code> |
 | Task-board bridge | <code>urn:ax:protocol:task-board-bridge</code> | <code>1.0.0</code> |
 | Task-board bundle | <code>urn:ax:schema:task-board-bundle</code> | <code>1.0.0</code> |
 | Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code> |
@@ -131,8 +131,9 @@ The following versions are active in v0.1.0:
 No contract version is implied by the <code>ax</code> executable version.
 Section 17 defines compatibility and migration. Independent versioning means
 that a contract may release on its own cadence; an embedding protocol may
-still bind one exact version. Provider, bridge, and RPC major 1 bind Structured
-Error 1.0.0 as Section 15.1 specifies instead of negotiating it separately.
+still bind one exact version. Provider and RPC major 2 and bridge major 1 bind
+Structured Error 1.0.0 as Section 15.1 specifies instead of negotiating it
+separately.
 Embedded structures not listed here—including Git/non-Git member descriptors,
 capability entries, RPC operation bodies, and bundle members—inherit the
 version of their containing contract. They MUST NOT be negotiated or migrated
@@ -156,7 +157,7 @@ The common logical data model has these rules:
 - JSON integers MUST be mathematically integral and lie in the interoperable
   safe-integer interval <code>[-9007199254740991, 9007199254740991]</code>;
 - the type name <code>uint53</code> means a JSON integer in
-  <code>[0, 9007199254740991]</code>; protocol 1.0.0 does not use JSON numbers
+  <code>[0, 9007199254740991]</code>; the current contract set does not use JSON numbers
   for a wider unsigned domain;
 - a field explicitly typed <code>decimal_uint64</code> is instead a JSON string
   matching <code>0|[1-9][0-9]{0,19}</code> whose numeric value is at most
@@ -205,6 +206,14 @@ reject values outside the common logical data model and MUST produce the same
 canonical JSON digest. This rule prevents JSON and CBOR encodings of one object
 from creating two identities.
 
+JCS object property names MUST be ordered lexicographically by their UTF-16
+code units as required by RFC 8785 Section 3.2.3. An implementation whose native
+string ordering uses Unicode scalar values, UTF-8 bytes, locale collation, or
+another ordering MUST explicitly derive the UTF-16 ordering before hashing.
+The common logical data model forbids floating-point values, so the remaining
+JCS number surface is limited to the safe integers defined below. Decoders MUST
+reject lone surrogate code points before canonicalization.
+
 The safe-integer restriction is part of every 1.0.0 JSON, CBOR, identity, and
 wire contract. A decoder MUST reject a numeric literal at or beyond
 <code>2^53</code> even if its host language can represent it, and MUST reject a
@@ -221,6 +230,7 @@ continue. These language-neutral boundary fixtures are normative:
 | <code>NUM-U64-MAX</code> | <code>{"n":"18446744073709551615"}</code> | Accept only when <code>n</code> is typed <code>decimal_uint64</code>; SHA-256 <code>b0ec84c6bb6a7c030549f17dd482975d09c40ff9e5f83d4438ebeac12d3b6331</code> |
 | <code>NUM-U64-LEADING-ZERO</code> | <code>{"n":"01"}</code> | Reject for <code>decimal_uint64</code> |
 | <code>NUM-U64-OVERFLOW</code> | <code>{"n":"18446744073709551616"}</code> | Reject for <code>decimal_uint64</code> |
+| <code>JCS-UTF16-ORDER</code> | <code>{"𐀀":2,"":1}</code> | Accept in this exact property order; U+10000 sorts before U+E000 by UTF-16 code units; SHA-256 <code>9d4cdc71dda603c42f9b21d88d0c2ffc31a76cd1bd461d7359406cf169845f1e</code> |
 
 Wall-clock timestamps are diagnostic metadata and MUST NOT decide ownership or
 event order. Lease epochs, predecessor links, and deterministic conflict rules
@@ -436,7 +446,7 @@ specification permits them, but cross-platform file transfer/chunking MUST be
 Go-native and MUST NOT depend on <code>rsync</code> or
 <code>robocopy</code>.
 
-The diagram deliverable for v0.1.0 MUST render this model as C4 System Context
+The diagram deliverable for v0.2.0 MUST render this model as C4 System Context
 and Container views. Runtime takeover, state, and mesh flows MUST be rendered
 from Sections 12 and 13 as focused PlantUML sources. Those rendered artifacts
 MUST NOT add relationships absent from this document.
@@ -531,7 +541,7 @@ path applies <code>digest_path_v1</code> to <code>marker_id</code> and appends
 | --- | --- | --- |
 | Empty-byte blob <code>sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code> | <code>objects/sha256/e3/b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code> | <code>objects\sha256\e3\b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code> |
 | Example blob <code>sha256:9c21bad65c1b3d0403ac85d7d5bd134bb8d894432702a396a77b0477b8eb3b50</code> | <code>objects/sha256/9c/21bad65c1b3d0403ac85d7d5bd134bb8d894432702a396a77b0477b8eb3b50</code> | <code>objects\sha256\9c\21bad65c1b3d0403ac85d7d5bd134bb8d894432702a396a77b0477b8eb3b50</code> |
-| Marker <code>sha256:be9aa3ab5e3d0db7d65d907759c72c54f531865bfcbd829b1a9e5badc4dd6410</code> | <code>markers/sha256/be/9aa3ab5e3d0db7d65d907759c72c54f531865bfcbd829b1a9e5badc4dd6410.json</code> | <code>markers\sha256\be\9aa3ab5e3d0db7d65d907759c72c54f531865bfcbd829b1a9e5badc4dd6410.json</code> |
+| Marker <code>sha256:385c71c7a29a43615c9d35ffb7c93ae20cd9419bbca461627048de575cade94c</code> | <code>markers/sha256/38/5c71c7a29a43615c9d35ffb7c93ae20cd9419bbca461627048de575cade94c.json</code> | <code>markers\sha256\38\5c71c7a29a43615c9d35ffb7c93ae20cd9419bbca461627048de575cade94c.json</code> |
 
 <code>PATH-DIGEST-N1</code> uses the full digest as REST,
 <code>PATH-DIGEST-N2</code> includes <code>sha256:</code> in a filename,
@@ -1026,7 +1036,7 @@ An owner process MUST revalidate its fencing token before:
 - resuming after any transport or sleep interruption longer than the configured
   lease refresh interval.
 
-There is no time-expiring ownership lease in v0.1.0. Liveness is not authority.
+There is no time-expiring ownership lease in v0.2.0. Liveness is not authority.
 A host being offline does not make a replica owner; only a takeover or fork
 does.
 
@@ -1359,7 +1369,7 @@ The exact <code>SessionState</code> enum is, in this order,
 <code>stale</code>, and <code>tombstoned</code>. Every RPC and CLI field typed
 <code>SessionState</code> uses exactly this registry. The spellings
 <code>created</code>, <code>starting</code>, and <code>quiesced</code> are not
-session lifecycle states in protocol 1.0.0; a subsystem-specific bridge state
+session lifecycle states in Session Record 1.0.0; a subsystem-specific bridge state
 MAY use <code>quiesced</code> only where Section 9 declares that separate enum.
 
 Allowed transitions are:
@@ -1492,11 +1502,11 @@ endpoint resolves to the authenticated host expected by SSH host-key policy.
 Tailscale discovery MAY suggest a candidate configuration but MUST NOT write or
 authorize it automatically.
 
-<code>mesh.payload_encryption</code> MUST be <code>none</code> in v0.1.0.
+<code>mesh.payload_encryption</code> MUST be <code>none</code> in v0.2.0.
 Other values MUST fail as unsupported. SSH supplies transport protection; this
 setting prevents a misleading at-rest encryption claim.
 
-<code>sync.chunk_bytes</code> MUST equal 4,194,304 in protocol 1.0.0.
+<code>sync.chunk_bytes</code> MUST equal 4,194,304 in Configuration 1.0.0.
 Implementations MAY expose the field for forward compatibility but MUST reject
 another value in this protocol version.
 
@@ -1514,12 +1524,12 @@ The complete v1 field/default contract is:
 | <code>host_id</code> | Required | Stable UUIDv7; changing it creates a new mesh host |
 | <code>host_name</code> | Required | 1–64 printable non-control UTF-8 characters |
 | <code>platform</code> | Required | One of the four values above; MUST match runtime probe |
-| <code>mesh.transport</code> | Default <code>ssh</code> | Only <code>ssh</code> in v0.1.0 |
+| <code>mesh.transport</code> | Default <code>ssh</code> | Only <code>ssh</code> in v0.2.0 |
 | <code>mesh.sync_interval_seconds</code> | Default 60 | Integer 5–86,400 |
 | <code>mesh.connect_timeout_seconds</code> | Default 10 | Integer 1–300 |
 | <code>mesh.rpc_timeout_seconds</code> | Default 300 | Integer 10–3,600 |
 | <code>mesh.workspace_replication</code> | Default true | Boolean |
-| <code>mesh.payload_encryption</code> | Default <code>none</code> | Only <code>none</code> in v0.1.0 |
+| <code>mesh.payload_encryption</code> | Default <code>none</code> | Only <code>none</code> in v0.2.0 |
 | <code>mesh.peers</code> | Default empty | Unique host ID and name; endpoint required |
 | <code>mesh.peers[].ssh_args</code> | Default empty | Arg array; MUST NOT disable host-key checks |
 | <code>mesh.peers[].workspace_roots</code> | Default empty | Unique logical roots within peer |
@@ -1598,12 +1608,12 @@ receive only the minimum operation-specific inputs.
 
 The provider protocol is line-delimited JSON over stdin/stdout with
 <code>protocol = "urn:ax:protocol:provider"</code> and
-<code>protocol_version = "1.0.0"</code>. Each line MUST be one complete UTF-8
+<code>protocol_version = "2.0.0"</code>. Each line MUST be one complete UTF-8
 JSON object no larger than 8 MiB. Stdout MUST contain protocol frames only;
 human diagnostics go to stderr.
 
 <code>ax</code> starts one plugin process per operation. Requests are
-single-flight in v1. After one response, <code>ax</code> closes stdin and the
+single-flight in v2. After one response, <code>ax</code> closes stdin and the
 plugin MUST exit. Exit 0 requires a successful response. A structured error
 response SHOULD exit 0 because the protocol succeeded; a crash, invalid frame,
 or missing response is a provider-host failure.
@@ -1613,7 +1623,7 @@ Request envelope:
 ~~~json
 {
   "protocol": "urn:ax:protocol:provider",
-  "protocol_version": "1.0.0",
+  "protocol_version": "2.0.0",
   "request_id": "0198f4c8-8e50-7f66-8f70-1234567890ab",
   "operation": "doctor",
   "deadline": "2026-08-19T04:05:00.000Z",
@@ -1637,7 +1647,7 @@ Success envelope:
 ~~~json
 {
   "protocol": "urn:ax:protocol:provider",
-  "protocol_version": "1.0.0",
+  "protocol_version": "2.0.0",
   "request_id": "0198f4c8-8e50-7f66-8f70-1234567890ab",
   "ok": true,
   "body": {
@@ -1653,14 +1663,14 @@ A success envelope contains exactly <code>protocol</code>,
 and the operation-specific <code>body</code>. A failure envelope contains
 exactly the first four members with <code>ok = false</code> plus
 <code>error</code>, and MUST NOT contain <code>body</code>. Envelope and body
-unknown members are protocol errors under major version 1.
+unknown members are protocol errors under major version 2.
 
 Failure envelope:
 
 ~~~json
 {
   "protocol": "urn:ax:protocol:provider",
-  "protocol_version": "1.0.0",
+  "protocol_version": "2.0.0",
   "request_id": "0198f4c8-8e50-7f66-8f70-1234567890ab",
   "ok": false,
   "error": {
@@ -1675,7 +1685,7 @@ Failure envelope:
 }
 ~~~
 
-Provider protocol <code>1.x</code> statically binds every failure envelope to
+Provider protocol <code>2.x</code> statically binds every failure envelope to
 Structured Error <code>1.0.0</code>. The error schema is not independently
 negotiated on a provider invocation; a provider-protocol minor that needs a
 different error schema must explicitly revise that binding. Section 15.1
@@ -1787,7 +1797,7 @@ identify the exact provider version and emit every known capability using
       "status": "unknown",
       "enabled": false,
       "evidence": "none",
-      "detail": "not claimed for v0.1.0"
+      "detail": "not claimed for v0.2.0"
     },
     "native_goal_binding": {
       "status": "unsupported",
@@ -1822,7 +1832,7 @@ All plugins MUST implement every operation and return
 <code>capability_unavailable</code> when the provider lacks the surface.
 
 Every request and success <code>body</code> is a closed object. The following
-embedded types are part of provider protocol 1.0.0:
+embedded types are part of provider protocol 2.0.0:
 
 | Type | Exact members and constraints |
 | --- | --- |
@@ -1844,7 +1854,7 @@ embedded types are part of provider protocol 1.0.0:
 | <code>ProviderObjectSourceAuthority</code> | <code>authority_id:provider_objects</code>, <code>kind:provider_object_source</code>, <code>root_path:absolute-path</code>, <code>layout:sha256_loose_v1</code>, <code>access:read_only</code>, <code>materialization_id:UUIDv7</code>, <code>provider_id:provider-id</code>, <code>manifest_ids:sorted unique digest[1..1024]</code>, <code>max_bytes:uint53</code>, <code>max_blobs:uint53</code> |
 | <code>ProviderTransactionAuthority</code> | <code>authority_id:provider_transaction</code>, <code>kind:provider_transaction</code>, <code>root_path:absolute-path</code>, <code>layout:provider_transaction_v1</code>, <code>access:read_write</code>, <code>materialization_id:UUIDv7</code>, <code>provider_id:provider-id</code>, <code>transaction_id:UUIDv7</code>, <code>plan_id:digest</code>, <code>same_filesystem_provider_authority_ids:sorted unique root-id[1..32]</code> |
 | <code>ProviderTransactionEntry</code> | <code>sequence:uint53&gt;0</code>, <code>provider_authority_id:root-id</code>, <code>target_relative_path:path</code>, <code>expected_prior_digest:digest&#124;null</code>, <code>prior_kind:absent&#124;file&#124;directory&#124;symlink&#124;hardlink</code>, <code>backup_relative_path:path&#124;null</code>, <code>applied:boolean</code>, <code>restored:boolean</code> |
-| <code>ProviderTransactionDocument</code> | <code>protocol:urn:ax:protocol:provider</code>, <code>protocol_version:1.0.0</code>, <code>document_kind:materialization_transaction</code>, <code>operation_id:UUIDv7</code>, <code>materialization_id:UUIDv7</code>, <code>transaction_id:UUIDv7</code>, <code>provider_id:provider-id</code>, <code>plan_id:digest</code>, <code>state:preparing&#124;prepared&#124;committing&#124;committed&#124;rolling_back&#124;rolled_back</code>, <code>rollback_token:base64url-256+&#124;null</code>, <code>entries:ProviderTransactionEntry[1..65536]</code>, <code>native_discovery:NativeDiscoveryProof&#124;null</code>, <code>created_at:timestamp</code>, <code>updated_at:timestamp</code>, <code>terminal_at:timestamp&#124;null</code> |
+| <code>ProviderTransactionDocument</code> | <code>protocol:urn:ax:protocol:provider</code>, <code>protocol_version:2.0.0</code>, <code>document_kind:materialization_transaction</code>, <code>operation_id:UUIDv7</code>, <code>materialization_id:UUIDv7</code>, <code>transaction_id:UUIDv7</code>, <code>provider_id:provider-id</code>, <code>plan_id:digest</code>, <code>state:preparing&#124;prepared&#124;committing&#124;committed&#124;rolling_back&#124;rolled_back</code>, <code>rollback_token:base64url-256+&#124;null</code>, <code>entries:ProviderTransactionEntry[1..65536]</code>, <code>native_discovery:NativeDiscoveryProof&#124;null</code>, <code>created_at:timestamp</code>, <code>updated_at:timestamp</code>, <code>terminal_at:timestamp&#124;null</code> |
 | <code>ProviderTransactionStatus</code> | <code>operation_id:UUIDv7</code>, <code>materialization_id:UUIDv7</code>, <code>transaction_id:UUIDv7</code>, <code>transaction_authority_id:provider_transaction</code>, <code>plan_id:digest&#124;null</code>, <code>state:unknown&#124;prepared&#124;committed&#124;rolled_back</code>, <code>rollback_token:base64url-256+&#124;null</code>, <code>native_discovery:NativeDiscoveryProof&#124;null</code> |
 
 The <code>SafeBoundaryProof.blockers</code> enum is
@@ -1899,7 +1909,7 @@ the authority. Its
 all <code>provider_store</code> RootAuthority IDs used by plan operations. The
 host MUST prove that the transaction root and every named provider-store root
 are on the same filesystem/volume before the first plugin mutation. If one is
-not, protocol 1.0.0 fails with <code>atomic_commit_unavailable</code>; it MUST
+not, provider protocol 2.0.0 fails with <code>atomic_commit_unavailable</code>; it MUST
 NOT fall back to an in-place cross-filesystem copy.
 
 The <code>provider_transaction_v1</code> layout contains only these durable
@@ -1952,7 +1962,8 @@ reconciled from the entries to one exposed status before
 <code>materialize-status</code> responds; an irreconcilable entry is
 <code>integrity_failure</code> and retains the root for diagnosis. Prepared
 documents store the rollback token under owner-only permissions so a later
-process can return the identical status; terminal documents set it to null.
+process can reconstruct the current durable status; terminal documents set it
+to null.
 Commit removes all backups only after durable committed state; rollback
 restores all predecessors before durable rolled-back state. The terminal
 <code>transaction.json</code> receipt remains until the corresponding
@@ -1970,23 +1981,30 @@ invent a status state: it returns the protocol failure envelope, and the next
 status request reports the last durable state. An unreadable or
 integrity-invalid transaction MUST fail with <code>integrity_failure</code> and
 MUST be quarantined rather than represented as a successful status object.
-Every provider request that carries <code>operation_id</code> uses the single
-protocol-v1 idempotency key <code>(operation, operation_id)</code>. An identical
-canonical request MUST return a byte-identical result across a fresh plugin
-process; any changed member is <code>idempotency_mismatch</code> and MUST cause
-no new mutation. For <code>capture</code>, replay verifies/reuses only exact
+Every provider mutation request that carries <code>operation_id</code> uses the
+single Provider protocol 2.0.0 idempotency key
+<code>(operation, operation_id)</code>. An
+identical canonical mutation request MUST return a byte-identical result across
+a fresh plugin process; any changed member is
+<code>idempotency_mismatch</code> and MUST cause no new mutation. Observational
+operations, including <code>materialize-status</code>, are evolving reads. They
+use the provider envelope's fresh <code>request_id</code> only for correlation,
+MUST NOT be stored as mutation receipts, and MUST return the durable state at
+the read's reconciliation point even when an earlier identical read returned a
+different phase. For <code>capture</code>, replay verifies/reuses only exact
 digest-named files already present in the same Object Sink and re-emits the
 same manifest/descriptors; an extra or changed file fails integrity. Provider
 <code>fork</code> is side-effect-free and recomputes the same plan. The
-materialize family uses its durable transaction document as the receipt. No
-operation relies on a searched ambient registry. Transaction IDs and operation
-IDs are caller-supplied and
-stable across retries. For one provider materialization transaction, the
-<code>operation_id</code> is transaction-wide: <code>materialize</code>, every
-<code>materialize-status</code> read, and exactly one terminal
-<code>materialize-commit</code> or <code>materialize-rollback</code> use the same
-value stored in <code>transaction.json</code>. Reusing that value across distinct
-operation tags does not alias their recorded results. Within one provider ID,
+materialize mutations use their durable transaction document as the receipt.
+No operation relies on a searched ambient registry. Transaction IDs and
+mutation operation IDs are caller-supplied and stable across retries. For one
+provider materialization transaction, the <code>operation_id</code> is
+transaction-wide across <code>materialize</code> and exactly one terminal
+<code>materialize-commit</code> or <code>materialize-rollback</code>; a
+<code>materialize-status</code> request omits it and locates the transaction only
+through the caller-supplied materialization/transaction IDs and exact authority.
+Reusing the mutation value across distinct operation tags does not alias their
+recorded results. Within one provider ID,
 an operation ID used by the materialize family identifies exactly one materialization transaction:
 its <code>materialization_id</code>, <code>transaction_id</code>, plan ID, object
 source, transaction authority, provider-store authorities, lease, activation,
@@ -1996,7 +2014,7 @@ different canonical body is <code>idempotency_mismatch</code>; the plugin MUST
 return the first recorded result or failure and MUST NOT allocate, search, or
 mutate another transaction root. A transaction or materialization ID already
 bound to another operation ID is also <code>idempotency_mismatch</code>. There
-is no second tuple- or path-based idempotency key in protocol 1.0.0.
+is no second tuple- or path-based idempotency key in provider protocol 2.0.0.
 
 The operation body registry is exact. A named schema object means the complete
 validated object, not only its digest. Arrays of schema objects are sorted by
@@ -2011,10 +2029,10 @@ their canonical identity field and contain no duplicate identity:
 | <code>quiesce</code> | <code>{identity:Provider Identity Record, terminal:TerminalDescriptor, timeout_ms:uint53[1..3600000], lease:LeaseToken}</code> | <code>{proof:SafeBoundaryProof}</code> |
 | <code>native-store-plan</code> | Tagged <code>NativeStorePlanRequest</code>: capture is <code>{phase:capture, identity:Provider Identity Record, source_platform:macos&#124;linux&#124;wsl2&#124;windows, mode:snapshot&#124;handoff&#124;fork, source_workspace_paths:WorkspacePaths, lease:LeaseToken}</code>; materialize is <code>{phase:materialize, identity:Provider Identity Record, source_platform:macos&#124;linux&#124;wsl2&#124;windows, destination_platform:macos&#124;linux&#124;wsl2&#124;windows, destination_host_id:UUIDv7, mode:snapshot&#124;handoff&#124;fork, source_manifest_id:digest, destination_workspace_paths:WorkspacePaths, lease:LeaseToken}</code> | Tagged <code>NativeStorePlanResult</code>: capture is <code>{phase:capture, capture_plan:ProviderCapturePlan, include_classes:sorted unique string[0..128], exclude_classes:sorted unique string[0..128]}</code>; materialize is <code>{phase:materialize, materialization_plan:Materialization Plan, include_classes:sorted unique string[0..128], exclude_classes:sorted unique string[0..128], path_key_rewrites:map(UUIDv7,string[1..1024])[0..256]}</code> |
 | <code>capture</code> | <code>{operation_id:UUIDv7, capture_plan:ProviderCapturePlan, proof:SafeBoundaryProof, object_sink:ObjectSink, lease:LeaseToken}</code> | <code>{operation_id:UUIDv7, capture_id:UUIDv7, manifest:Transfer Manifest, blob_descriptors:sorted unique Blob Descriptor[0..32768], written_blob_ids:sorted unique digest[0..32768], captured_store_generation:string[1..512], exclusions_applied:sorted unique string[0..128]}</code> |
-| <code>materialize</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan:Materialization Plan, object_source:ProviderObjectSourceAuthority, transaction:ProviderTransactionAuthority, destination_workspace_paths:WorkspacePaths, lease:LeaseToken}</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan_id:digest, state:prepared, created_paths:sorted unique absolute-path[0..4096], merged_paths:sorted unique absolute-path[0..4096], validations:ValidationEvidence[1..256], rollback_token:base64url-256+, native_discovery:NativeDiscoveryProof}</code> |
-| <code>materialize-status</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority}</code> | <code>ProviderTransactionStatus</code> |
+| <code>materialize</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan:Materialization Plan, object_source:ProviderObjectSourceAuthority, transaction:ProviderTransactionAuthority, destination_workspace_paths:WorkspacePaths, lease:LeaseToken}</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan_id:digest, state:prepared, created_paths:sorted unique absolute-path[0..65536], merged_paths:sorted unique absolute-path[0..65536], validations:ValidationEvidence[1..256], rollback_token:base64url-256+, native_discovery:NativeDiscoveryProof}</code> |
+| <code>materialize-status</code> | <code>{materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority}</code> | <code>ProviderTransactionStatus</code> |
 | <code>materialize-commit</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority, rollback_token:base64url-256+, activation:dormant_validated&#124;owner_resumed, lease:LeaseToken}</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan_id:digest, state:committed, backup_removed:boolean, committed_at:timestamp}</code> |
-| <code>materialize-rollback</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority, rollback_token:base64url-256+, reason:lease_lost&#124;validation_failed&#124;resume_failed&#124;operator_abort&#124;crash_recovery}</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan_id:digest, state:rolled_back, restored_paths:sorted unique absolute-path[0..4096], removed_paths:sorted unique absolute-path[0..4096], native_discovery_absent:boolean}</code> |
+| <code>materialize-rollback</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority, rollback_token:base64url-256+, reason:lease_lost&#124;validation_failed&#124;resume_failed&#124;operator_abort&#124;crash_recovery}</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan_id:digest, state:rolled_back, restored_paths:sorted unique absolute-path[0..65536], removed_paths:sorted unique absolute-path[0..65536], native_discovery_absent:boolean}</code> |
 | <code>resume</code> | <code>{identity:Provider Identity Record, workspace_paths:WorkspacePaths, execution_profile:standard&#124;yolo, terminal:TerminalDescriptor, lease:LeaseToken}</code> | <code>SpawnPlan</code> |
 | <code>fork</code> | <code>{operation_id:UUIDv7, source_identity:Provider Identity Record, source_checkpoint:Checkpoint Record, new_session_record:Session Record, destination_workspace_paths:WorkspacePaths, execution_profile:standard&#124;yolo, terminal:TerminalDescriptor}</code> | <code>{operation_id:UUIDv7, result_kind:native_fork&#124;supported_import, planned_native_session_id:string[1..512]&#124;null, spawn_plan:SpawnPlan, requires_provider_materialization:boolean, provenance_verified:boolean}</code> |
 | <code>stop</code> | <code>{identity:Provider Identity Record, terminal:TerminalDescriptor, mode:graceful&#124;force, timeout_ms:uint53[1..3600000], lease:LeaseToken}</code> | <code>{closure:ProcessClosure}</code> |
@@ -2178,15 +2196,18 @@ uses no unlisted native-store root. A composite plan is therefore one host
 transaction containing disjoint authority-specific executors, not a grant for
 the provider plugin to mutate the workspace.
 
-All four transaction operations use the same parent
-<code>operation_id</code>, <code>materialization_id</code>,
-<code>transaction_id</code>, and byte-identical transaction authority. The
-sole idempotency key remains <code>(operation, operation_id)</code>; the
-materialization and transaction IDs are immutable non-key inputs. Each phase
-therefore has a distinct key while all phases locate the same authority. A
-retry of one operation name MUST use byte-identical canonical arguments.
-<code>materialize-status</code> is the
-required lost-response recovery read. An unknown transaction MUST return state
+The three mutation operations use the same parent <code>operation_id</code>,
+<code>materialization_id</code>, <code>transaction_id</code>, and byte-identical
+transaction authority. The sole mutation idempotency key remains
+<code>(operation, operation_id)</code>; the materialization and transaction IDs
+are immutable non-key inputs. Each mutation tag therefore has a distinct key
+while all phases locate the same authority. A retry of one mutation name MUST
+use byte-identical canonical arguments. <code>materialize-status</code> omits
+<code>operation_id</code>; it is the required evolving lost-response recovery
+read and uses the envelope <code>request_id</code> only for correlation. A status
+read MUST reconcile and return the current durable state, so a read that once
+returned <code>prepared</code> may later return <code>committed</code> or
+<code>rolled_back</code>. An unknown transaction MUST return state
 <code>unknown</code>; the host MUST NOT infer success. A prepared transaction
 survives plugin/host restart until explicit commit or rollback. A plugin that
 cannot provide this prepare/status/commit/rollback behavior MUST advertise
@@ -2225,6 +2246,7 @@ The normative transaction cases are:
 | <code>PTX-ROLLBACK</code> | materialize → validation failure → rollback | predecessor bytes restored; introduced identity absent |
 | <code>PTX-LOST-PREPARE</code> | materialize response lost → status prepared | same token/plan returned; no second destination mutation |
 | <code>PTX-LOST-COMMIT</code> | commit response lost → status committed | caller records commit; MUST NOT roll back |
+| <code>PTX-STATUS-EVOLVES</code> | status returns prepared → commit succeeds → the same status body is read under a fresh envelope request ID | second read returns committed; no byte-identical replay rule applies to either observation |
 | <code>PTX-UNKNOWN</code> | status unknown after an ambiguous call | fail closed and quarantine transaction root; MUST NOT infer prepare or commit |
 | <code>PTX-CROSS-PROCESS-COMMIT</code> | process P1 prepares and exits → P2 status reads the same authority/document → P3 commits and exits → P4 status reads the terminal receipt | prepared and committed facts, token, plan, and discovery are identical across processes; backup bytes are removed only by P3 |
 | <code>PTX-CROSS-PROCESS-ROLLBACK</code> | process P1 prepares and exits → P2 rolls back with the same authority/token → P3 status reads the terminal receipt | every predecessor is restored, every introduced target is absent, and no process searches outside the passed authority |
@@ -2257,7 +2279,7 @@ Normative <code>resume</code> request body and success body:
 ~~~json
 {
   "protocol": "urn:ax:protocol:provider",
-  "protocol_version": "1.0.0",
+  "protocol_version": "2.0.0",
   "request_id": "0198f4c8-e4b0-75cc-9576-1234567890ab",
   "operation": "resume",
   "deadline": "2026-08-19T04:20:00.000Z",
@@ -2303,7 +2325,7 @@ Normative <code>resume</code> request body and success body:
 ~~~json
 {
   "protocol": "urn:ax:protocol:provider",
-  "protocol_version": "1.0.0",
+  "protocol_version": "2.0.0",
   "request_id": "0198f4c8-e4b0-75cc-9576-1234567890ab",
   "ok": true,
   "body": {
@@ -2355,7 +2377,7 @@ provider-defined mapping is permitted.
 
 ### 7.7 Profile mapping
 
-The v0.1.0 <code>yolo</code> mappings are:
+The v0.2.0 <code>yolo</code> mappings are:
 
 | Provider | Required adapter mapping |
 | --- | --- |
@@ -2390,7 +2412,7 @@ Provider and platform matrices use:
   probe still MUST succeed;
 - <strong>C</strong>: conditional and disabled until the named acceptance gate
   succeeds for the exact version/platform tuple;
-- <strong>U</strong>: unsupported in v0.1.0 and disabled; and
+- <strong>U</strong>: unsupported in v0.2.0 and disabled; and
 - <strong>?</strong>: unknown and disabled because there is no sufficient
   contract or evidence.
 
@@ -2399,7 +2421,7 @@ unsupported, and conditional MUST NOT be advertised as available.
 
 ### 8.2 Native-store contract matrix
 
-| Provider | Durable identity and native location | Resume/import surface | v0.1.0 materialization rule | Required exclusions and limits |
+| Provider | Durable identity and native location | Resume/import surface | v0.2.0 materialization rule | Required exclusions and limits |
 | --- | --- | --- | --- | --- |
 | Codex | Session UUID/name; known root <code>~/.codex/sessions</code>. Source absolute cwd is metadata. | <code>codex resume SESSION_ID</code>; current CLI also has <code>codex fork SESSION_ID</code>. | Adapter MUST stage only the closed session objects it has identified, compute the destination cwd mapping, validate discovery by explicit ID, and merge without replacing unrelated sessions. <code>portable_store</code> remains C until cross-host fixtures pass. | Authentication files, config secrets, MCP tokens, logs not required by the session, live processes, locks, SQLite/WAL/SHM, and runtime sockets. |
 | Claude | Session UUID; known root <code>~/.claude/projects</code> with a provider-computed project key. | <code>claude --resume SESSION_ID</code>, <code>--continue</code>, and <code>--fork-session</code> when resuming. | Adapter MUST derive the destination project key from the logical workspace mapping, stage the closed session plus documented companion data, and validate explicit UUID resume. It MUST NOT copy the source project-directory key verbatim as identity. <code>portable_store</code> remains C. | OAuth/API credentials, settings secrets, MCP auth, live PTY state, PID/lock/socket files, caches, and unproven companion databases. |
@@ -2407,7 +2429,7 @@ unsupported, and conditional MUST NOT be advertised as available.
 | Muse | Session UUID; <code>$XDG_DATA_HOME/muse/sessions/YYYY/MM/DD/UUID</code>, defaulting below <code>~/.local/share</code>. | <code>muse resume UUID</code>, <code>--last</code>, picker, and <code>muse exec --session-id UUID</code>. Export exists; native import does not. | On probed macOS 0.1.0, a guarded adapter MAY stage the complete closed durable directory, omit transient files, validate with offline export, and resume explicitly. It MUST advertise <code>portable_store = false</code> because cron-aware, current-version, cross-host fidelity is not proven. | <code>~/.config/muse/auth.json</code>, keys, login state, <code>.session.lock</code>, sockets/tokens, live WAL/SHM/locks, updater/plugin caches. <code>cron.db</code> is durable but not safely portable; a session with active or non-empty scheduled work MUST fail materialization. |
 | Antigravity CLI | Conversation UUID plus a destination-authenticated backend/account realm. <code>last_conversations.json</code> maps absolute workspace paths only as local selectors. | <code>agy --conversation UUID</code>, <code>agy -c</code>, and TUI <code>/resume</code>. Desktop-to-CLI picker import is not arbitrary file import. | Materialize the workspace, invoke explicit UUID resume, and allow the provider to rebuild derived cache. A version-aware cache merge MAY map the destination path to UUID. It MUST NOT claim that cache, brain transcript, or SQLite copying recreates a backend-missing conversation. <code>portable_store = false</code>. | OS keyring/account profiles, OAuth/API/MCP secrets, updater locks, live DB/WAL/SHM, sockets, PIDs. Backend resolution is required and a missing UUID MUST fail rather than create a blank replacement. |
 | Pi | Session UUID/file; <code>~/.pi/agent/sessions</code> or the configured <code>PI_CODING_AGENT_SESSION_DIR</code>/<code>--session-dir</code>. | <code>--session PATH_OR_ID</code>, <code>--continue</code>, <code>--resume</code>, <code>--fork</code>. | Adapter MUST snapshot a closed JSONL session and required non-secret companion data, map the destination cwd/session directory, validate the session ID, and resume explicitly. <code>portable_store</code> remains C until versioned cross-host fixtures pass. | <code>auth.json</code>, provider keys/tokens, extension secrets, live process state, locks, sockets, and caches. Pi 0.73.1 has no YOLO flag. |
-| Qwen through task-board | The task-board bundle and manager-owned provider identity; there is no v0.1.0 direct <code>ax-provider-qwen</code> claim. | Official task-board open/adopt only. | U for direct native materialization. A task-board prompt-mode bundle follows Section 9 and remains opaque. | All private manager/provider state except bytes included by the official bundle exporter. |
+| Qwen through task-board | The task-board bundle and manager-owned provider identity; there is no v0.2.0 direct <code>ax-provider-qwen</code> claim. | Official task-board open/adopt only. | U for direct native materialization. A task-board prompt-mode bundle follows Section 9 and remains opaque. | All private manager/provider state except bytes included by the official bundle exporter. |
 | Future plugin | Declared by plugin and exact probe. | Declared by plugin. | Every cell starts ?/disabled. Promotion requires Section 19 acceptance evidence. | Common exclusions plus plugin-specific exclusions. |
 
 Muse and Antigravity rows above are normative uses of the accepted
@@ -3102,7 +3124,7 @@ verify access to the same board before adopt.
 
 ### 9.5 Task-board capability reality
 
-In v0.1.0:
+In v0.2.0:
 
 - Codex and Claude MAY advertise goal-bound primary-owner support only through
   an accepted task-board bridge;
@@ -3736,7 +3758,7 @@ files are unsupported and MUST fail unless an explicit exclusion applies.
 
 Mode preserves Unix executable and ordinary read/write bits. ACLs, ownership,
 code-signing metadata, quarantine flags, arbitrary xattrs, NTFS alternate
-streams, and resource forks are not portable in v0.1.0. If one is required for
+streams, and resource forks are not portable in v0.2.0. If one is required for
 a provider or workspace, that provider/platform cell MUST be conditional or
 unsupported rather than silently dropping it.
 
@@ -4189,24 +4211,26 @@ The positive task-board authority fragment is:
 
 Materialization Journal schema
 <code>urn:ax:schema:materialization-journal</code> version
-<code>1.0.0</code> is a two-variant machine-local recovery contract. Both the
+<code>2.0.0</code> is a two-variant machine-local recovery contract. Both the
 mutable journal and immutable managed-replica marker MUST NOT be replicated.
 The journal top-level object is closed and contains exactly:
 
 | Field | Type | Constraint |
 | --- | --- | --- |
 | <code>schema</code> | string | Exact Materialization Journal schema identifier |
-| <code>schema_version</code> | semver | Exact <code>1.0.0</code> |
+| <code>schema_version</code> | semver | Exact <code>2.0.0</code> |
 | <code>document_kind</code> | enum | Literal <code>journal</code> |
 | <code>materialization_id</code> | UUIDv7 | Stable across retries |
+| <code>prepare_operation_id</code> | UUIDv7 | Caller-stable Mesh RPC prepare idempotency key, allocated with the materialization ID before the first request |
+| <code>prepare_request_digest</code> | digest | SHA-256 of the complete canonical <code>materialize.prepare</code> request body, including both caller-stable IDs |
 | <code>transfer_id</code> | UUIDv7 or null | Null when all inputs already exist locally |
 | <code>plan_id</code> | digest | Exact Materialization Plan |
 | <code>source_checkpoint_id</code> | digest | Validated source checkpoint |
 | <code>managed_replica_id</code> | UUIDv7 or null | Non-null when workspace bytes participate |
 | <code>authority_states</code> | map(root-id,Authority Journal State)[0..512] | Exactly one entry per plan RootAuthority; empty only for validation-only provider plan |
 | <code>expected_prior_checkpoint_id</code> | digest or null | Null only for absent/empty destination |
-| <code>completed_blob_chunks</code> | map(digest,sorted unique uint32[0..32768])[0..4096] | Chunk indexes keyed by their Blob ID |
-| <code>verified_blob_ids</code> | sorted unique digest[0..4096] | Whole-blob verification, not chunk presence |
+| <code>completed_blob_chunks</code> | map(digest,sorted unique uint32[0..32768])[0..65536] | Chunk indexes keyed by their Blob ID; sufficient for the maximum file/blob cardinality of one committed transfer closure |
+| <code>verified_blob_ids</code> | sorted unique digest[0..65536] | Whole-blob verification, not chunk presence; sufficient for the maximum file/blob cardinality of one committed transfer closure |
 | <code>phase</code> | enum | <code>staging</code>, <code>validating</code>, <code>prepared</code>, <code>committing</code>, <code>rolling_back</code>, <code>rolled_back</code>, <code>committed</code>, or <code>failed</code> |
 | <code>provider_transaction</code> | Provider Journal Transaction or null | Non-null only when a provider plugin participates |
 | <code>task_board_transaction</code> | Task-board Journal Transaction or null | Non-null only when the task-board bridge participates |
@@ -4301,9 +4325,11 @@ Normative example:
 ~~~json
 {
   "schema": "urn:ax:schema:materialization-journal",
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "document_kind": "journal",
   "materialization_id": "0198f4c8-c290-73aa-9374-1234567890ab",
+  "prepare_operation_id": "0198f4c8-b180-72cc-9271-1234567890ab",
+  "prepare_request_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "transfer_id": "0198f4c8-d3a0-74bb-9475-1234567890ab",
   "plan_id": "sha256:64644a5ad573d36c0c13f44f56ef25ab93cff33001ff2a3371b082603910f2dd",
   "source_checkpoint_id": "sha256:e051996f51f13ace4f5cdebe1e30fd26fd5fe104cfd6e6a7f9f1206ba3819656",
@@ -4370,6 +4396,7 @@ Crash recovery fixtures are:
 | Fixture | Durable facts after restart | Required recovery |
 | --- | --- | --- |
 | <code>MJ-CRASH-STAGE</code> | Some per-blob chunk sets, no verified whole blob | Request only absent indexes; never mark another blob's equal index present |
+| <code>MJ-RPC-PREPARE-LOST</code> | The destination journal and prepare receipt exist, but the Mesh RPC response was lost | Retry <code>materialize.prepare</code> with the caller-retained operation/materialization IDs and identical body; return the recorded result and create no second journal, authority, replica, plan, or bridge ID |
 | <code>MJ-CRASH-PREPARE-LOST</code> | Provider call may have prepared but response was lost | Call <code>materialize-status</code> with the same IDs; persist returned prepared token before any commit/rollback |
 | <code>MJ-CRASH-COMMIT-LOST</code> | Journal says committing | Status <code>committed</code> plus exact destination marker commits the journal; prepared rolls back or retries commit; unknown fails closed |
 | <code>MJ-CRASH-ROLLBACK-LOST</code> | Journal says rolling_back | Status <code>rolled_back</code> plus restored predecessor closes recovery; prepared retries rollback; unknown fails closed |
@@ -4408,8 +4435,11 @@ Task-board staging is part of the materialization transaction, not a
 precondition performed outside it. The coordinator MUST follow this order for
 graceful takeover, force takeover, passive sync, owner resume, and fork:
 
-1. <code>materialize.prepare</code> allocates the fresh staging authority,
-   journal, and four stable bridge operation IDs before any bridge mutation.
+1. Before the first call, the caller allocates the materialization and prepare
+   operation IDs. <code>materialize.prepare</code> creates the journal by durably
+   binding both IDs and the canonical request digest before allocating a fresh
+   staging authority or four stable bridge operation IDs and before any bridge
+   mutation.
 2. Transfer installs and validates the bundle at that authority. The
    coordinator calls bridge <code>import</code>, persists the imported state,
    calls <code>open</code>, and persists the opened state. A passive replica
@@ -4460,7 +4490,7 @@ Its closed object contains exactly:
 | Field | Type | Constraint |
 | --- | --- | --- |
 | <code>schema</code> | string | Exact Materialization Journal schema identifier |
-| <code>schema_version</code> | semver | Exact <code>1.0.0</code> |
+| <code>schema_version</code> | semver | Exact <code>2.0.0</code> |
 | <code>document_kind</code> | enum | Literal <code>managed_replica_marker</code> |
 | <code>marker_id</code> | digest | JCS identity with this field omitted |
 | <code>managed_replica_id</code> | UUIDv7 | Stable identity of one host/path replica across updates |
@@ -4493,9 +4523,9 @@ Normative marker fixture:
 ~~~json
 {
   "schema": "urn:ax:schema:materialization-journal",
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "document_kind": "managed_replica_marker",
-  "marker_id": "sha256:be9aa3ab5e3d0db7d65d907759c72c54f531865bfcbd829b1a9e5badc4dd6410",
+  "marker_id": "sha256:385c71c7a29a43615c9d35ffb7c93ae20cd9419bbca461627048de575cade94c",
   "managed_replica_id": "0198f4c8-8e50-7f66-8f70-2234567890ab",
   "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
   "platform": "linux",
@@ -4604,7 +4634,7 @@ example are:
 ~~~
 
 ~~~json
-{"kind":"managed_replica","workspace_group_id":"0198f4c8-5b20-7c33-8c4d-1234567890ab","target_host_id":"0198f4c8-7d40-7e55-8e6f-1234567890ab","managed_replica_id":"0198f4c8-8e50-7f66-8f70-2234567890ab","logical_root":"relux","destination_relative_path":"replicas/payments","predecessor_marker_id":"sha256:be9aa3ab5e3d0db7d65d907759c72c54f531865bfcbd829b1a9e5badc4dd6410","predecessor_checkpoint_id":"sha256:e051996f51f13ace4f5cdebe1e30fd26fd5fe104cfd6e6a7f9f1206ba3819656"}
+{"kind":"managed_replica","workspace_group_id":"0198f4c8-5b20-7c33-8c4d-1234567890ab","target_host_id":"0198f4c8-7d40-7e55-8e6f-1234567890ab","managed_replica_id":"0198f4c8-8e50-7f66-8f70-2234567890ab","logical_root":"relux","destination_relative_path":"replicas/payments","predecessor_marker_id":"sha256:385c71c7a29a43615c9d35ffb7c93ae20cd9419bbca461627048de575cade94c","predecessor_checkpoint_id":"sha256:e051996f51f13ace4f5cdebe1e30fd26fd5fe104cfd6e6a7f9f1206ba3819656"}
 ~~~
 
 Repeated IDs in the target MUST equal the corresponding common/session/group
@@ -4762,7 +4792,7 @@ session name or path into a remote shell string.
 ### 11.2 RPC framing and handshake
 
 Mesh RPC uses line-delimited JSON, maximum line size 8 MiB, protocol
-<code>urn:ax:protocol:rpc</code> version <code>1.0.0</code>. Binary chunk bytes
+<code>urn:ax:protocol:rpc</code> version <code>2.0.0</code>. Binary chunk bytes
 are unpadded base64url in the request body. Every request has a UUIDv7
 <code>request_id</code>; every response echoes it.
 
@@ -4771,16 +4801,16 @@ The first request MUST be <code>hello</code>:
 ~~~json
 {
   "protocol": "urn:ax:protocol:rpc",
-  "protocol_version": "1.0.0",
+  "protocol_version": "2.0.0",
   "request_id": "0198f4c8-a070-7188-9172-1234567890ab",
   "operation": "hello",
   "body": {
     "host_id": "0198f4c8-4a10-7b22-8b3c-1234567890ab",
     "platform": "macos",
-    "ax_version": "0.1.0",
+    "ax_version": "0.2.0",
     "nonce": "YWJjZGVmZ2hpamtsbW5vcA",
     "contracts": {
-      "rpc": ["1.0.0"],
+      "rpc": ["2.0.0"],
       "session_record": ["1.0.0"],
       "session_event": ["1.0.0"],
       "lease": ["1.0.0"],
@@ -4819,17 +4849,17 @@ Normative <code>hello</code> success:
 ~~~json
 {
   "protocol": "urn:ax:protocol:rpc",
-  "protocol_version": "1.0.0",
+  "protocol_version": "2.0.0",
   "request_id": "0198f4c8-a070-7188-9172-1234567890ab",
   "ok": true,
   "body": {
     "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
     "platform": "linux",
-    "ax_version": "0.1.0",
+    "ax_version": "0.2.0",
     "nonce": "cXJzdHV2d3h5ejAxMjM0NQ",
     "nonce_echo": "YWJjZGVmZ2hpamtsbW5vcA",
     "contracts": {
-      "rpc": ["1.0.0"],
+      "rpc": ["2.0.0"],
       "session_record": ["1.0.0"],
       "session_event": ["1.0.0"],
       "lease": ["1.0.0"],
@@ -4855,9 +4885,9 @@ the server's fresh <code>nonce</code>, and <code>nonce_echo</code> equal to the
 request nonce. A success response contains exactly protocol, version, request
 ID, <code>ok = true</code>, and body. A failure response substitutes
 <code>ok = false</code> and one Structured Error and MUST omit body. Unknown
-envelope or body members fail protocol 1.0.0.
+envelope or body members fail protocol 2.0.0.
 
-Mesh RPC protocol <code>1.x</code> statically binds every supported-major
+Mesh RPC protocol <code>2.x</code> statically binds every supported-major
 failure envelope, including a rejected <code>hello</code>, to Structured Error
 <code>1.0.0</code>. <code>error</code> is therefore deliberately absent from the
 hello contracts map and is not independently negotiated on an RPC connection.
@@ -4865,10 +4895,10 @@ Section 15.1 defines the exact response-or-close behavior before handshake and
 for an unsupported major.
 
 The server returns its own identity, nonce echo, supported contracts, and
-limits. Peers negotiate the smaller line/object limit; protocol 1.0.0 requires
+limits. Peers negotiate the smaller line/object limit; protocol 2.0.0 requires
 at least the values shown and MUST refuse a peer below them. The 5 MiB object
 limit leaves room for base64url expansion and the response envelope below the
-8 MiB line limit. Within a valid RPC-v1 hello, an absent required contract
+8 MiB line limit. Within a valid RPC-v2 hello, an absent required contract
 returns the bound <code>incompatible_protocol</code> failure and closes. An
 unsupported RPC major closes without a peer error frame and the initiator emits
 that code locally, exactly as Section 15.1 requires. A peer MUST NOT
@@ -4876,7 +4906,7 @@ perform any other operation before a successful handshake.
 
 ### 11.3 RPC operations
 
-Version 1 operations are:
+Mesh RPC 2.0.0 operations are:
 
 | Operation | Purpose |
 | --- | --- |
@@ -4907,7 +4937,8 @@ Version 1 operations are:
 
 Every mutation body includes <code>initiator_host_id</code>; a session mutation
 also includes an exact lease expectation. The receiver MUST revalidate both
-immediately before mutation. These closed embedded types belong to RPC 1.0.0:
+immediately before mutation. These closed embedded types belong to Mesh RPC
+2.0.0:
 
 | Type | Exact members and constraints |
 | --- | --- |
@@ -4921,7 +4952,7 @@ immediately before mutation. These closed embedded types belong to RPC 1.0.0:
 | <code>MaterializationCohort</code> | <code>materialization_session_ids:sorted unique UUIDv7[1..1024]</code>, <code>ownership_transfer_session_ids:sorted unique UUIDv7[0..1024]</code> |
 | <code>MaterializationSources</code> | <code>workspace_manifest_id:digest&#124;null</code>, <code>provider_manifest_id:digest&#124;null</code>, <code>task_board_bundle_id:digest&#124;null</code>, <code>derived_workspace_manifest_id:digest&#124;null</code>, <code>fork_projection:ForkWorkspaceProjection&#124;null</code> |
 | <code>WorkspaceMaterializationRequest</code> | <code>logical_root_mapping:map(string,absolute-path)[1..64]</code>, <code>destination:{logical_root:string[1..64],workspace_relative_path:path}</code>, <code>workspace_group_expectation:WorkspaceGroupExpectation</code>, <code>conflict_policy:fail&#124;copy&#124;worktree&#124;replace_managed_replica</code>, <code>replacement_confirmation_event_id:digest&#124;null</code> |
-| <code>VerifiedState</code> | <code>object_ids:sorted unique digest[0..65536]</code>, <code>blob_chunks:map(digest,sorted unique uint32[0..32768])[0..4096]</code> |
+| <code>VerifiedState</code> | <code>object_ids:sorted unique digest[0..65536]</code>, <code>blob_chunks:map(digest,sorted unique uint32[0..32768])[0..65536]</code> |
 | <code>WireObject</code> | <code>object_id:digest</code>, <code>media_type:application/json&#124;application/cbor</code>, <code>encoding:json&#124;cbor</code>, <code>data:base64url</code> |
 | <code>SafeBoundary</code> | <code>provider_id:provider-id</code>, <code>provider_version:string[1..128]</code>, <code>evidence:provider_api&#124;provider_event&#124;managed_pty&#124;task_board_bridge&#124;accepted_test</code>, <code>input_blocked:boolean</code>, <code>boundary_ref:string[1..1024]&#124;null</code>, <code>foreground_idle:boolean</code>, <code>background_idle:boolean</code>, <code>open_processes:uint53</code>, <code>open_database_handles:uint53</code>, <code>store_generation:string[1..512]&#124;null</code>, <code>store_stable:boolean</code>, <code>safe:boolean</code>, <code>blockers:sorted unique background_active&#124;database_handle_open&#124;input_not_blocked&#124;process_open&#124;provider_busy&#124;store_unstable[0..6]</code> |
 | <code>ClosureEvidence</code> | <code>process_closed:boolean</code>, <code>store_closed:boolean</code>, <code>exit_code:int32&#124;null</code>, <code>remaining_process_handles:sorted unique string[0..256]</code>, <code>final_store_generation:string[1..512]&#124;null</code> |
@@ -5012,7 +5043,7 @@ resumed. Neither is a control token. Operation bodies are exactly:
 | <code>chunks.put</code> | <code>{initiator_host_id:UUIDv7,transfer_id:UUIDv7,descriptor:Transfer Chunk Descriptor,data:base64url}</code> | <code>{transfer_id:UUIDv7,chunk_id:digest,verified:boolean}</code> |
 | <code>transfer.validate</code> | <code>{initiator_host_id:UUIDv7,transfer_id:UUIDv7,manifest_id:digest}</code> | <code>{transfer_id:UUIDv7,manifest_id:digest,valid:boolean,verified_blob_count:uint53,verified_object_count:uint53,validation_summary_digest:digest}</code> |
 | <code>transfer.commit</code> | <code>{initiator_host_id:UUIDv7,transfer_id:UUIDv7,manifest_id:digest,validation_summary_digest:digest}</code> | <code>{transfer_id:UUIDv7,installed_object_ids:sorted unique digest[1..65536],commit_marker_id:digest}</code> |
-| <code>materialize.prepare</code> | Tagged <code>{initiator_host_id:UUIDv7,kind:MaterializationKind,intent:MaterializationIntent,session_id:UUIDv7,expected_lease:LeaseExpectation,checkpoint_id:digest,cohort:MaterializationCohort,sources:MaterializationSources,workspace_request:WorkspaceMaterializationRequest&#124;null}</code> | <code>{materialization_id:UUIDv7,kind:MaterializationKind,intent:MaterializationIntent,managed_replica_id:UUIDv7&#124;null,destination_path:absolute-path&#124;null,destination_classification:DestinationClass&#124;null,required_capabilities:sorted unique string[0..128],plan_id:digest,rollback_possible:boolean}</code> |
+| <code>materialize.prepare</code> | Tagged <code>{initiator_host_id:UUIDv7,operation_id:UUIDv7,materialization_id:UUIDv7,kind:MaterializationKind,intent:MaterializationIntent,session_id:UUIDv7,expected_lease:LeaseExpectation,checkpoint_id:digest,cohort:MaterializationCohort,sources:MaterializationSources,workspace_request:WorkspaceMaterializationRequest&#124;null}</code> | <code>{operation_id:UUIDv7,materialization_id:UUIDv7,kind:MaterializationKind,intent:MaterializationIntent,managed_replica_id:UUIDv7&#124;null,destination_path:absolute-path&#124;null,destination_classification:DestinationClass&#124;null,required_capabilities:sorted unique string[0..128],plan_id:digest,rollback_possible:boolean}</code> |
 | <code>materialize.commit</code> | <code>{initiator_host_id:UUIDv7,materialization_id:UUIDv7,plan_id:digest,session_id:UUIDv7,expected_lease:LeaseExpectation}</code> | <code>{materialization_id:UUIDv7,kind:MaterializationKind,intent:MaterializationIntent,phase:prepared,prepared_checkpoint_id:digest,destination_path:absolute-path&#124;null,destination_classification:DestinationClass&#124;null,managed_replica_id:UUIDv7&#124;null,rollback_token:base64url-256+,provider_transaction_id:UUIDv7&#124;null,task_board_transaction_state:none&#124;opened}</code> |
 | <code>materialize.status</code> | <code>{materialization_id:UUIDv7}</code> | <code>MaterializationStatus</code> |
 | <code>materialize.finalize</code> | <code>{initiator_host_id:UUIDv7,materialization_id:UUIDv7,rollback_token:base64url-256+,session_id:UUIDv7,expected_lease:LeaseExpectation,activation:dormant_validated&#124;direct_owner_resumed&#124;task_board_owner_resumed,execution_profile:standard&#124;yolo&#124;null,profile_source_event_id:digest&#124;null}</code> | <code>{materialization_id:UUIDv7,kind:MaterializationKind,intent:MaterializationIntent,phase:committed,committed_checkpoint_id:digest,managed_replica_id:UUIDv7&#124;null,destination_marker_id:digest&#124;null,provider_transaction_state:none&#124;committed,task_board_transaction_state:none&#124;resumed&#124;dormant_finalized,manager_session_ref:string[1..512]&#124;null,finalized_at:timestamp}</code> |
@@ -5033,6 +5064,21 @@ For rollback and acknowledgement, success requires the corresponding boolean
 true. A workspace request with replace policy requires a non-null
 <code>replacement_confirmation_event_id</code>; every other policy requires
 null. Every response uses the exact success/failure envelopes in Section 11.2.
+
+The caller MUST allocate <code>materialize.prepare.operation_id</code> and
+<code>materialization_id</code> before the first request and MUST retain them
+until the transaction is terminal. Before the first destination mutation, the
+receiver MUST durably create the Materialization Journal with both IDs and a
+digest of the complete canonical prepare body. The mutation idempotency key is
+<code>(materialize.prepare, operation_id)</code>. An identical retry, including
+after a lost response or receiver restart, returns the byte-identical recorded
+success or failure and MUST NOT allocate a second journal, staging authority,
+managed-replica ID, plan, or bridge operation ID. A changed canonical body,
+including a changed materialization ID, is <code>idempotency_mismatch</code> and
+causes no new mutation. <code>materialize.status</code> is an evolving read,
+locates the one journal by caller-known <code>materialization_id</code>, uses the
+RPC envelope <code>request_id</code> only for correlation, and MUST return the
+current reconciled durable phase rather than replaying an earlier observation.
 
 The prepare response MUST echo the request kind and intent. For
 workspace/composite it returns a non-null destination path, classification, and
@@ -5093,7 +5139,7 @@ provider manifest participates:
 | Confirmed operator cancellation before activation | <code>operator_abort</code> |
 | Restart reconciliation selects rollback | <code>crash_recovery</code> |
 
-No other mapping exists in RPC 1.0.0. The reason is persisted in the host
+No other mapping exists in Mesh RPC 2.0.0. The reason is persisted in the host
 journal before the provider call and is part of both layers' idempotency input.
 The required materialization fixtures are:
 
@@ -5147,7 +5193,7 @@ Normative common failure response:
 ~~~json
 {
   "protocol": "urn:ax:protocol:rpc",
-  "protocol_version": "1.0.0",
+  "protocol_version": "2.0.0",
   "request_id": "0198f4c8-f5c0-76dd-9677-1234567890ab",
   "ok": false,
   "error": {
@@ -5255,7 +5301,7 @@ wire response envelope. <code>inventory.roots.root_id</code> and
 but non-materialized non-root prefix returns <code>not_found</code> rather than
 inventing an empty child.
 
-These protocol-1.0.0 fixtures are normative. The middle column is the complete
+These Mesh RPC 2.0.0 fixtures are normative. The middle column is the complete
 canonical root-node byte string before hashing:
 
 | Fixture ID set in namespace <code>record</code> | Canonical root-node bytes | Expected root hash |
@@ -6450,7 +6496,7 @@ process or open store handle returns failure and leaves the command retryable;
 it is never represented as a successful closure.
 
 Stop is not delete. Deletion requires a separate future/administrative surface
-that emits a Session Tombstone; v0.1.0 MUST NOT make stop delete state.
+that emits a Session Tombstone; v0.2.0 MUST NOT make stop delete state.
 
 ### 13.10 Resume
 
@@ -6566,7 +6612,7 @@ process; it does not resurrect process memory.
 
 ### 14.1 Command surface
 
-The v0.1.0 command surface is:
+The v0.2.0 command surface is:
 
 ~~~text
 ax NAME [--action attach|takeover|fork|cancel] [--to HOST] [--as NEW_NAME] [--workspace-mode whole-group|separate-worktrees]
@@ -7006,8 +7052,8 @@ content.
 
 Structured Error is independently versioned as a reusable schema, but that
 does not imply independent negotiation inside every envelope. Provider
-protocol <code>1.x</code>, task-board bridge <code>1.x</code>, and Mesh RPC
-<code>1.x</code> each embed exactly Structured Error <code>1.0.0</code>. A
+protocol <code>2.x</code>, task-board bridge <code>1.x</code>, and Mesh RPC
+<code>2.x</code> each embed exactly Structured Error <code>1.0.0</code>. A
 supported-major failure MUST use that exact object; the containing protocol
 version is sufficient to select it. RPC hello MUST NOT advertise or negotiate
 an <code>error</code> contract key. A future containing-protocol version may
@@ -7017,9 +7063,9 @@ Bootstrap and incompatible-major behavior is exact:
 
 | Surface | Supported-major failure before normal success | Unsupported major or unparseable first frame/output |
 | --- | --- | --- |
-| Provider JSON-over-stdio | A syntactically valid v1 request whose operation/body fails receives the Section 7.2 v1 failure envelope with Error 1.0.0 | The plugin MUST NOT masquerade a different-major object as v1. The host accepts no child error object, terminates/waits for exit as applicable, and emits its own local Error 1.0.0: <code>incompatible_protocol</code> for a recognizable major mismatch, otherwise <code>provider_protocol_error</code> |
+| Provider JSON-over-stdio | A syntactically valid v2 request whose operation/body fails receives the Section 7.2 v2 failure envelope with Error 1.0.0 | The plugin MUST NOT masquerade a different-major object as v2. The host accepts no child error object, terminates/waits for exit as applicable, and emits its own local Error 1.0.0: <code>incompatible_protocol</code> for a recognizable major mismatch, otherwise <code>provider_protocol_error</code> |
 | Task-board bridge facade | A syntactically valid v1 invocation failure receives the Section 9.2 v1 failure envelope with Error 1.0.0 | The facade output is not accepted as a bridge result. <code>ax</code> emits its own local Error 1.0.0: <code>incompatible_protocol</code> for a recognizable major mismatch, otherwise <code>task_board_bridge_unavailable</code> |
-| Mesh RPC | Before hello success, a syntactically valid v1 non-hello request or invalid v1 hello receives one v1 failure envelope with Error 1.0.0 and the server then closes | An unsupported protocol major, invalid JSON, oversize line, missing protocol/version/request ID, or response that cannot be framed causes close without an RPC error frame. The initiator emits its own local Error 1.0.0: <code>incompatible_protocol</code> for a recognizable major mismatch, otherwise <code>transport_failure</code> |
+| Mesh RPC | Before hello success, a syntactically valid v2 non-hello request or invalid v2 hello receives one v2 failure envelope with Error 1.0.0 and the server then closes | An unsupported protocol major, invalid JSON, oversize line, missing protocol/version/request ID, or response that cannot be framed causes close without an RPC error frame. The initiator emits its own local Error 1.0.0: <code>incompatible_protocol</code> for a recognizable major mismatch, otherwise <code>transport_failure</code> |
 
 A local error above is an <code>ax</code> CLI/observation result, not a forged
 response attributed to the child or peer; it omits unknown operation/session
@@ -7029,16 +7075,17 @@ authority fields.
 
 The normative binding fixtures are
 <code>ERR-PROVIDER-COMPAT</code>, <code>ERR-BRIDGE-COMPAT</code>, and
-<code>ERR-RPC-COMPAT</code>, which use the three documented v1 failure
-envelopes; <code>ERR-PROVIDER-MAJOR</code>,
+<code>ERR-RPC-COMPAT</code>, which use the documented provider/RPC v2 and bridge
+v1 failure envelopes; <code>ERR-PROVIDER-MAJOR</code>,
 <code>ERR-BRIDGE-MAJOR</code>, and <code>ERR-RPC-MAJOR</code>, which change only
-the containing protocol major to 2 and require the local
+the containing protocol major to 3 for provider/RPC or 2 for the bridge and require the local
 <code>incompatible_protocol</code> result; and
 <code>ERR-PROVIDER-FIRST</code>, <code>ERR-BRIDGE-FIRST</code>, and
-<code>ERR-RPC-FIRST</code>. The first two submit a valid v1 envelope/invocation
-with an invalid first operation/body and require the bound v1 error; the RPC
-fixture submits <code>health.get</code> before hello, requires one bound v1
-error, and then EOF. <code>ERR-FIRST-UNFRAMED</code> supplies invalid JSON to
+<code>ERR-RPC-FIRST</code>. Provider and RPC fixtures submit valid v2 envelopes
+with an invalid first operation/body and require the bound v2 error; the bridge
+fixture uses its valid v1 invocation and bound v1 error. The RPC fixture submits
+<code>health.get</code> before hello, requires one bound v2 error, and then EOF.
+<code>ERR-FIRST-UNFRAMED</code> supplies invalid JSON to
 each stdio parser (or invalid JSON output from the bridge) and requires no
 remote/child error to be trusted.
 
@@ -7104,7 +7151,7 @@ provider plugin, or a compromised local user account.
 
 Peers MUST be explicitly allowlisted by stable host ID and SSH endpoint.
 Tailscale discovery MAY propose hosts but MUST NOT authorize them. SSH protects
-authentication, integrity, and confidentiality in transport. v0.1.0 provides no
+authentication, integrity, and confidentiality in transport. v0.2.0 provides no
 default payload encryption at rest and MUST NOT claim otherwise.
 
 Machine-local credentials are a prerequisite at the destination. A successful
@@ -7133,7 +7180,7 @@ MUST NOT be treated as current process, ownership, or routing authority. This
 does not permit copying a live PID/lock control artifact.
 
 Transcripts and tool outputs can themselves contain secrets entered by an
-operator or printed by tools. v0.1.0 does not claim reliable content-level
+operator or printed by tools. v0.2.0 does not claim reliable content-level
 secret scrubbing. Operators MUST therefore treat all payloads as sensitive and
 authorize only trusted project peers. An implementation SHOULD offer a
 best-effort scanner and warning, but scanner success MUST NOT be described as a
@@ -7184,7 +7231,7 @@ Force takeover MUST therefore:
 
 ### 16.6 Out of scope
 
-v0.1.0 does not provide Byzantine consensus, hostile-peer isolation,
+v0.2.0 does not provide Byzantine consensus, hostile-peer isolation,
 multi-tenant access control, end-to-end snapshot encryption, secret
 distribution, provider-account migration, revocation of actions already sent
 to external services, or sandboxing stronger than the provider/OS configuration
@@ -7203,17 +7250,26 @@ Each contract in Section 1.5 versions independently:
 - a patch increment MAY clarify constraints or fix a validator defect without
   adding a field or changing behavior.
 
-Within major version 1, new object data MUST live under a namespaced
+Within any negotiated major version, new object data MUST live under a namespaced
 <code>extensions</code> entry unless the consumer negotiated a newer minor
 schema. Unknown top-level fields remain an error. Protocol peers choose the
 highest mutually supported minor within a common major; they MUST NOT select a
 major by coercion.
 
 Independent release versions do not override an explicit embedding rule.
-Provider protocol, task-board bridge, and Mesh RPC major 1 each bind Structured
-Error 1.0.0 as Section 15.1 specifies; those envelopes do not negotiate the
-error schema separately. Compatibility is evaluated first for the containing
-protocol and then against its fixed embedded-error validator.
+Provider protocol and Mesh RPC major 2 and task-board bridge major 1 each bind
+Structured Error 1.0.0 as Section 15.1 specifies; those envelopes do not
+negotiate the error schema separately. Compatibility is evaluated first for the
+containing protocol and then against its fixed embedded-error validator.
+
+The v0.2.0 correction is an explicit major-version boundary. Provider protocol
+1.0.0, Mesh RPC 1.0.0, and Materialization recovery state 1.0.0 remain the
+immutable v0.1.0 contracts and MUST NOT be interpreted using the corrected
+2.0.0 request or journal shapes. There is no in-place migration of a live
+machine-local 1.0.0 materialization transaction: upgrade MUST first reach a
+safe terminal state or roll it back with the v0.1.0 implementation, then create
+a new 2.0.0 transaction. A 2.0.0 peer or plugin rejects major 1 rather than
+coercing its missing IDs or freezing an evolving status read.
 
 ### 17.2 Reader/writer behavior
 
@@ -7361,7 +7417,7 @@ with owner-only permissions or an equivalent Windows user-only DACL. The user
 service MAY also mirror redacted events to launchd/systemd/Windows service
 logging. <code>ax logs</code> reads the local durable stream; remote logs require
 an explicit peer flag and the authenticated, allowlisted SSH remote-CLI path in
-Section 14.1. Mesh RPC 1.0.0 deliberately has no log-read operation. The remote
+Section 14.1. Mesh RPC 2.0.0 deliberately has no log-read operation. The remote
 process returns its own non-null emitting host identity and the initiator does
 not rewrite it. Log retrieval MUST NOT become a public listener.
 
@@ -7451,7 +7507,7 @@ Events are not.
 ### 19.1 Implementation phases
 
 These are ordered phases for an implementation that intends to claim
-<code>ax</code> product conformance version 0.1.0. They are not prerequisites
+<code>ax</code> product conformance version 0.2.0. They are not prerequisites
 for publishing this specification and are not permission to ship a required
 core target half-implemented:
 
@@ -7550,8 +7606,9 @@ SQLite handles.
 | <code>AC-MAT-001</code> | Source-only provider capture writes only a fresh Object Sink; two blobs with chunk zero remain distinct; cross-host authority-scoped prepare/status/commit/rollback and every listed crash point preserve or restore exact bytes. |
 | <code>AC-MAT-002</code> | Tagged workspace/provider/task-board/composite prepare/result fixtures preserve kind, intent, passive-versus-transfer cohorts, stopped-session behavior, and managed-replica nullability through status/finalize/rollback. |
 | <code>AC-MAT-003</code> | Full Materialization Plan objects for all four kinds accept only their registered source/authority/action/validation/strategy combinations; provider and task-board one-root transactions have a legal strategy and every full negative object fails before staging. |
+| <code>AC-MAT-004</code> | A lost <code>materialize.prepare</code> response is retried with the same caller-created operation/materialization IDs and canonical body, returns the byte-identical receipt after receiver restart, and creates exactly one journal and one set of derived authorities/IDs; a changed body fails with <code>idempotency_mismatch</code>, while later status reads may evolve through durable phases under fresh request IDs. |
 | <code>AC-PTX-001</code> | Fresh provider processes prepare/status/commit/rollback through the same host-created object/transaction authorities; same-filesystem and path-disjointness checks pass or fail before mutation, and all five rollback reasons round-trip exactly. |
-| <code>AC-PTX-002</code> | <code>(operation, operation_id)</code> is the sole provider idempotency key; a lost-response retry that changes materialization ID, transaction ID, plan, authority, activation, or rollback reason returns <code>idempotency_mismatch</code> and creates no second transaction root. |
+| <code>AC-PTX-002</code> | <code>(operation, operation_id)</code> is the sole provider mutation idempotency key; a lost-response mutation retry that changes materialization ID, transaction ID, plan, authority, activation, or rollback reason returns <code>idempotency_mismatch</code> and creates no second transaction root; <code>materialize-status</code> carries no operation ID and may evolve from prepared to committed or rolled back. |
 | <code>AC-MARKER-001</code> | Absent, matching, content/path-mismatching, replacement, and crash-reconstructed Managed Replica Markers produce the exact classifications, marker identity, atomic current/history writes, and fail-closed recovery in Section 10.6. |
 | <code>AC-ATTACH-001</code> | Remote attach uses SSH, changes no lease/manifest, and reconnects after client loss. |
 | <code>AC-TAKE-001</code> | Graceful takeover follows every phase, stops source before lease advance, persists profile, and leaves source a replica. |
@@ -7603,7 +7660,7 @@ SQLite handles.
 
 ### 19.5 <code>ax</code> implementation release acceptance rule
 
-An implementation MAY claim <code>ax</code> product conformance 0.1.0 only when:
+An implementation MAY claim <code>ax</code> product conformance 0.2.0 only when:
 
 1. all product-release-blocking core platform lanes pass;
 2. every A provider cell passes its suites;
@@ -7628,7 +7685,7 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
 the default branch, and carry the MIT License. The first specification release
-is <code>v0.1.0</code>.
+is <code>v0.2.0</code>.
 
 The release commit and annotated tag MUST both be signed using Ivan Oparin's
 SSH signing key <code>~/.ssh/ivanopcode</code>. The commit author is:
@@ -7651,7 +7708,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-specification release <code>v0.1.0</code>, not an <code>ax</code> executable
+specification release <code>v0.2.0</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -7663,19 +7720,19 @@ release. The publication task MUST:
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
 4. verify <code>VERSION</code>, document metadata, changelog, release notes, and
-   tag all say <code>v0.1.0</code>;
+   tag all say <code>v0.2.0</code>;
 5. prepare the exact signed-commit command with author
    <code>Ivan Oparin &lt;oparin@me.com&gt;</code> and no AI trailer, and hand it
    to the user for explicit review; automation MUST NOT stage or commit before
    human approval;
-6. prepare the exact signed annotated <code>v0.1.0</code> tag command and hand it
+6. prepare the exact signed annotated <code>v0.2.0</code> tag command and hand it
    to the user for explicit review; automation MUST NOT create the tag before
    human approval;
 7. after the human creates the commit and tag, verify both signatures locally
    with <code>git log --show-signature -1</code> and
-   <code>git tag --verify v0.1.0</code>;
+   <code>git tag --verify v0.2.0</code>;
 8. hand the exact <code>git push</code> commands for <code>main</code> and the
-   <code>v0.1.0</code> tag to the user; automation MUST NOT push before explicit
+   <code>v0.2.0</code> tag to the user; automation MUST NOT push before explicit
    human approval and only after accepted validation/review;
 9. verify the public repository, default branch, license, commit signature, tag
    signature, and release URL; and
@@ -7719,7 +7776,7 @@ acceptance cases from Section 19 fails this publication case.
 | All settled decisions are traceable | Appendix A.1 |
 | Independent reviewer accepts the artifact | Required board reviewer route after this task's <code>to-review</code> handoff |
 
-The Epic criterion for a signed public <code>v0.1.0</code> specification release
+The Epic criterion for a signed public <code>v0.2.0</code> specification release
 maps only to Section 20 and remains owned by the downstream validation and
 publication tasks. Section 19 governs a future product implementation and is
 not a prerequisite for that publication.
@@ -7771,7 +7828,7 @@ not a prerequisite for that publication.
 | Task-board bundle projection and blob paths were ambiguous | Section 9.3 defines whole-object Session/bridge projection, preservation of non-secret literals/extensions, exact binding-state derivation, canonical <code>bundle.json</code>, and the unique <code>sha256/HH/REST</code> regular-file member set; <code>AC-TB-003</code> and Appendix D cover round trips and path negatives |
 | Materialization could not represent passive/stopped or non-workspace work | Section 11.3 defines MaterializationKind/Intent/Cohort/Sources and tagged request/result nullability; Sections 13.3, 13.6–13.7, and 13.10 select passive replica, owner resume, or ownership transfer explicitly; <code>AC-MAT-002</code> covers all six lanes |
 | Provider transactions could not survive fresh plugin processes safely | Sections 3.2 and 7.5 define host-created object-source/transaction authorities, exact durable layout, path disjointness, same-filesystem atomicity, restart lookup/retention, and all-operation authority passing; Section 10.6 journals the authority and Section 11.3 maps every rollback reason; <code>AC-PTX-001</code> covers cross-process recovery |
-| Structured Error lacked protocol negotiation/bootstrap rules | Provider/bridge/RPC major 1 statically bind Error 1.0.0 in Sections 7.2, 9.2, 11.2, and 15.1; Section 17 distinguishes independent release from explicit embedding; compatible, major-mismatch, and first-frame fixtures map to <code>AC-ERR-002</code> |
+| Structured Error lacked protocol negotiation/bootstrap rules | Provider/RPC major 2 and bridge major 1 statically bind Error 1.0.0 in Sections 7.2, 9.2, 11.2, and 15.1; Section 17 distinguishes independent release from explicit embedding; compatible, major-mismatch, and first-frame fixtures map to <code>AC-ERR-002</code> |
 | Remote log transport and host identity contradicted | Sections 14.1–14.3 and 18.1 use one allowlisted SSH remote-CLI transport, require non-null <code>emitting_host_id</code> locally and remotely, preserve cursor host scope, reject forged/mismatched results, and explicitly add no Mesh RPC operation; <code>AC-CLI-004</code> covers the sequence |
 
 ### A.7 Fifth-review closure traceability
@@ -7780,7 +7837,7 @@ not a prerequisite for that publication.
 | --- | --- |
 | Materialization Plan kinds/strategies were not closed | Section 10.5 defines intent, source/derived IDs, fork projection, the exhaustive kind/source/authority/action/validation/strategy matrix, full positive plans for all four kinds, full negative objects, and legal validation-only/single-root strategies; <code>AC-MAT-003</code> covers execution |
 | Task-board materialization lacked durable subtransaction recovery | Section 10.6 defines the exact journaled bridge IDs, tokens, references, state/null rules, order, cleanup, and crash/expiry cases; Section 11.3 exposes token-free status and Sections 13.3/13.6–13.8/13.10 use the same coordinator; <code>AC-TB-004</code> covers all paths |
-| Provider idempotency had two keys | Section 7.5 makes <code>(operation, operation_id)</code> the sole key and all IDs/authorities immutable retry input; the <code>PTX-IDEMPOTENCY-ID-*</code> fixtures and <code>AC-PTX-002</code> reject a second root |
+| Provider idempotency had two keys | Section 7.5 makes <code>(operation, operation_id)</code> the sole mutation key and all IDs/authorities immutable mutation-retry input, while status is an evolving read without an operation ID; the <code>PTX-IDEMPOTENCY-ID-*</code> fixtures and <code>AC-PTX-002</code> reject a second root without freezing status |
 | Owner resume omitted commit/finalize/rollback | Section 13.10 defines no-materialization, direct, and task-board paths through prepare, commit/prepared, activation, finalize or phase-safe rollback/status recovery; <code>AC-RESUME-001</code> covers every source-kind lane |
 | Fork could not produce a new workspace identity | Sections 10.5 and 13.8 define the complete old→new topology/manifest projection, new records/lease, transactional direct/task-board activation, provenance/profile authority, and phase failure matrix; <code>AC-FORK-001..002</code> cover derivation and recovery |
 | Epoch-1 failed launch had no stop/resume representation | Sections 5.2, 5.7, 11.3, 13.1–13.2, 13.9–13.10, and 14.2 define bootstrap retry/abort, nullable checkpoint, non-resumable failed state, and exact RPC/Event/CLI agreement; <code>AC-BOOT-001</code> covers every boundary |
