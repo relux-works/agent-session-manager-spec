@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Expected-red mutation suite for v0.2.0 specification validation ==="
+echo "=== Expected-red mutation suite for v0.2.1 specification validation ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -154,7 +154,7 @@ python3 -c "
 import pathlib
 p=pathlib.Path('$FIX/SPEC.md')
 t=p.read_text()
-t=t.replace('there is no v0.2.0 direct <code>ax-provider-qwen</code> claim.','ax-provider-qwen is available for direct use.')
+t=t.replace('there is no v0.2.1 direct <code>ax-provider-qwen</code> claim.','ax-provider-qwen is available for direct use.')
 p.write_text(t)
 "
 expect_fail "forbidden qwen direct claim" "forbidden" "$FIX"
@@ -455,7 +455,7 @@ expect_fail "retained prohibition plus live SQLite replication claim" "live SQLi
 echo ""
 echo "Mutation 39: Qwen works without task-board while task-board-only caveat remains"
 FIX=$(fixture_copy "contradictory-qwen-without-task-board")
-printf '\nQwen works without task-board in v0.2.0.\n' >> "$FIX/README.md"
+printf '\nQwen works without task-board in v0.2.1.\n' >> "$FIX/README.md"
 expect_fail "retained caveat plus without-task-board Qwen claim" "without-task-board Qwen" "$FIX" "./run_validation.sh"
 
 echo ""
@@ -485,7 +485,7 @@ expect_fail "live SQLite replication remains positive despite without-staging qu
 echo ""
 echo "Mutation 44: Qwen task-board independence claim"
 FIX=$(fixture_copy "qwen-independent-of-task-board")
-printf '\nQwen works independently of task-board in v0.2.0.\n' >> "$FIX/README.md"
+printf '\nQwen works independently of task-board in v0.2.1.\n' >> "$FIX/README.md"
 expect_fail "Qwen task-board independence wording" "direct/native/without-task-board Qwen" "$FIX" "./run_validation.sh"
 
 echo ""
@@ -498,31 +498,31 @@ echo ""
 echo "Mutation 46: Active default-encryption wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-encryption-active")
 printf '\nBy default, all session snapshots receive at-rest encryption.\n' >> "$FIX/SPEC.md"
-expect_fail "frozen release baseline rejects active default-encryption wording" "SPEC.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active default-encryption wording" "SPEC.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
-printf '\nQwen sessions do not need task-board in v0.2.0.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+printf '\nQwen sessions do not need task-board in v0.2.1.\n' >> "$FIX/README.md"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.2.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
@@ -670,6 +670,73 @@ assert old in t
 p.write_text(t.replace(old, new, 1))
 "
 expect_fail "active Mesh RPC fixtures use stale major label" "critical active contract version label missing or regressed" "$FIX"
+
+echo ""
+echo "Mutation 61: Crash outcome exhaustiveness clause is weakened"
+FIX=$(fixture_copy "crash-outcome-not-exhaustive")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='They are collectively exhaustive:'
+assert old in t
+p.write_text(t.replace(old, 'They are usually sufficient:', 1))
+"
+expect_fail "crash outcomes must remain collectively exhaustive" "crash/restart gate outcome collective exhaustiveness" "$FIX"
+
+echo ""
+echo "Mutation 62: Owner-resume crash boundary family is removed"
+FIX=$(fixture_copy "crash-boundary-resume-removed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+lines=p.read_text().splitlines()
+prefix='| <code>CR-RESUME-01..06</code> |'
+assert any(line.startswith(prefix) for line in lines)
+p.write_text('\n'.join(line for line in lines if not line.startswith(prefix)) + '\n')
+"
+expect_fail "crash registry must retain owner-resume boundaries" "crash/restart gate boundary registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 63: Duplicate live-owner prohibition is weakened"
+FIX=$(fixture_copy "crash-duplicate-owner-weakened")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='two hosts or two native\nprocesses/managers can both be treated as live or authoritative for the same\nlogical session'
+assert old in t
+new='two hosts or two native\nprocesses/managers may both be treated as live or authoritative for the same\nlogical session'
+p.write_text(t.replace(old, new, 1))
+"
+expect_fail "crash recovery must reject duplicate live owners" "crash/restart gate duplicate-owner prohibition" "$FIX"
+
+echo ""
+echo "Mutation 64: Silent fresh native-session prohibition is removed"
+FIX=$(fixture_copy "crash-fresh-native-allowed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='invokes a new-session launch, allocates a fresh native handle or manager\nreference, relabels blank state, or resumes a different provider/account realm'
+assert old in t
+new='reuses any available provider or manager session'
+p.write_text(t.replace(old, new, 1))
+"
+expect_fail "crash recovery must preserve exact native identity" "crash/restart gate fresh native identity prohibition" "$FIX"
+
+echo ""
+echo "Mutation 65: Required external-effect status evidence is removed"
+FIX=$(fixture_copy "crash-evidence-status-probe-removed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='external effect and status probe'
+assert old in t
+p.write_text(t.replace(old, 'external effect note', 1))
+"
+expect_fail "crash classification must retain external-effect status evidence" "crash/restart gate classification evidence field external effect and status probe" "$FIX"
 
 echo ""
 echo "=========================================="

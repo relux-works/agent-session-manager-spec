@@ -1,8 +1,23 @@
-# Agent Session Manager (`ax`) Specification v0.2.0
+# Agent Session Manager (`ax`) Specification v0.2.1
 
-This release supersedes `v0.1.0` without moving or rewriting that tag. It
-corrects independently reviewed crash-recovery and conformance defects before
-implementation begins.
+This patch release supersedes `v0.2.0` without moving or rewriting the
+`v0.1.0` or `v0.2.0` tags. It adds a normative crash/restart outcome gate
+without changing any wire-contract version.
+
+## Crash/restart outcome gate
+
+- Every inter-phase crash/restart boundary in launch, sync, materialization,
+  graceful and force takeover, fork, stop, owner resume, and reboot restore
+  must classify into exactly one of `safe_retry`, `explicit_rollback`, or
+  `recoverable_parked_state`.
+- Safe retry preserves caller-stable operation IDs and the exact persisted
+  native provider identity or task-board manager binding.
+- Explicit rollback is durable, visible, and proves predecessor restoration or
+  closure; parked recovery is fail-closed and preserves reconciliation facts.
+- Recovery may not produce duplicate live/authoritative owners, treat an
+  unfenced continuation as safe, or silently allocate a fresh native session.
+- `AC-CRASH-001` and `SPEC-PUB-CRASH-001` gate runtime conformance and
+  specification publication respectively.
 
 ## Critical Corrections
 
@@ -33,11 +48,11 @@ Capabilities are gated and reported per-provider and per-platform:
 
 ## Security Boundary
 The system assumes an explicitly allowlisted trusted mesh.
-- No payload encryption at rest is provided in v0.2.0 (`mesh.payload_encryption` MUST be `none`).
+- No payload encryption at rest is provided in v0.2.1 (`mesh.payload_encryption` MUST be `none`).
 - Transport uses standard Tailscale SSH or OpenSSH.
 - Secrets, active sockets, tmux servers, and live database files are explicitly excluded from replication.
 
 ## Known Limitations
 - Network split-brain scenarios must be explicitly managed by force takeover, retaining both histories for manual resolution.
 - Workspace conflict resolution is fail-closed, prioritizing explicit user choices (copy, worktree, or verified replace) over automated merges.
-- v0.2.0 does not specify Byzantine consensus or isolate hostile peers.
+- v0.2.1 does not specify Byzantine consensus or isolate hostile peers.

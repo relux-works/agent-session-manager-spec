@@ -1,8 +1,8 @@
-# Agent Session Manager (<code>ax</code>) v0.2.0 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.2.1 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.2.0</code> |
+| Specification release | <code>v0.2.1</code> |
 | Document status | Review candidate and implementation contract |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.2.0. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.2.1. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -46,7 +46,7 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
 8. stop a session without deleting its durable state; and
 9. resume a stopped session on its owner host.
 
-The v0.2.0 product is a Go CLI, optional per-user background service, provider
+The v0.2.1 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -88,7 +88,7 @@ The settled product and architecture decisions attached to
 accepted provider research from <code>TASK-260819-1ecd6x</code>, preserved in
 [the Muse and Antigravity evidence report](.research/260819_muse-antigravity-native-store-contracts.md),
 is the authority for those two adapters. Its retained unknowns MUST remain
-unknown or unsupported in v0.2.0.
+unknown or unsupported in v0.2.1.
 
 The Codex command and unrestricted profile facts in this specification are
 cross-checked against the
@@ -100,7 +100,7 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following versions are active in v0.2.0:
+The following versions are active in v0.2.1:
 
 | Contract | Schema identifier | Version |
 | --- | --- | --- |
@@ -446,10 +446,12 @@ specification permits them, but cross-platform file transfer/chunking MUST be
 Go-native and MUST NOT depend on <code>rsync</code> or
 <code>robocopy</code>.
 
-The diagram deliverable for v0.2.0 MUST render this model as C4 System Context
-and Container views. Runtime takeover, state, and mesh flows MUST be rendered
-from Sections 12 and 13 as focused PlantUML sources. Those rendered artifacts
-MUST NOT add relationships absent from this document.
+The diagram deliverable rendered for v0.2.0 remains the unchanged architecture
+baseline for v0.2.1 and MUST render this model as C4 System Context and
+Container views. Runtime takeover, state, and mesh flows MUST be rendered from
+Sections 12 and 13 as focused PlantUML sources. Section 13.13 adds a
+conformance gate over those flows, not a new component or sequence topology.
+Those rendered artifacts MUST NOT add relationships absent from this document.
 
 ### 3.2 Platform paths
 
@@ -1036,7 +1038,7 @@ An owner process MUST revalidate its fencing token before:
 - resuming after any transport or sleep interruption longer than the configured
   lease refresh interval.
 
-There is no time-expiring ownership lease in v0.2.0. Liveness is not authority.
+There is no time-expiring ownership lease in v0.2.1. Liveness is not authority.
 A host being offline does not make a replica owner; only a takeover or fork
 does.
 
@@ -1502,7 +1504,7 @@ endpoint resolves to the authenticated host expected by SSH host-key policy.
 Tailscale discovery MAY suggest a candidate configuration but MUST NOT write or
 authorize it automatically.
 
-<code>mesh.payload_encryption</code> MUST be <code>none</code> in v0.2.0.
+<code>mesh.payload_encryption</code> MUST be <code>none</code> in v0.2.1.
 Other values MUST fail as unsupported. SSH supplies transport protection; this
 setting prevents a misleading at-rest encryption claim.
 
@@ -1524,12 +1526,12 @@ The complete v1 field/default contract is:
 | <code>host_id</code> | Required | Stable UUIDv7; changing it creates a new mesh host |
 | <code>host_name</code> | Required | 1–64 printable non-control UTF-8 characters |
 | <code>platform</code> | Required | One of the four values above; MUST match runtime probe |
-| <code>mesh.transport</code> | Default <code>ssh</code> | Only <code>ssh</code> in v0.2.0 |
+| <code>mesh.transport</code> | Default <code>ssh</code> | Only <code>ssh</code> in v0.2.1 |
 | <code>mesh.sync_interval_seconds</code> | Default 60 | Integer 5–86,400 |
 | <code>mesh.connect_timeout_seconds</code> | Default 10 | Integer 1–300 |
 | <code>mesh.rpc_timeout_seconds</code> | Default 300 | Integer 10–3,600 |
 | <code>mesh.workspace_replication</code> | Default true | Boolean |
-| <code>mesh.payload_encryption</code> | Default <code>none</code> | Only <code>none</code> in v0.2.0 |
+| <code>mesh.payload_encryption</code> | Default <code>none</code> | Only <code>none</code> in v0.2.1 |
 | <code>mesh.peers</code> | Default empty | Unique host ID and name; endpoint required |
 | <code>mesh.peers[].ssh_args</code> | Default empty | Arg array; MUST NOT disable host-key checks |
 | <code>mesh.peers[].workspace_roots</code> | Default empty | Unique logical roots within peer |
@@ -1797,7 +1799,7 @@ identify the exact provider version and emit every known capability using
       "status": "unknown",
       "enabled": false,
       "evidence": "none",
-      "detail": "not claimed for v0.2.0"
+      "detail": "not claimed for v0.2.1"
     },
     "native_goal_binding": {
       "status": "unsupported",
@@ -2377,7 +2379,7 @@ provider-defined mapping is permitted.
 
 ### 7.7 Profile mapping
 
-The v0.2.0 <code>yolo</code> mappings are:
+The v0.2.1 <code>yolo</code> mappings are:
 
 | Provider | Required adapter mapping |
 | --- | --- |
@@ -2412,7 +2414,7 @@ Provider and platform matrices use:
   probe still MUST succeed;
 - <strong>C</strong>: conditional and disabled until the named acceptance gate
   succeeds for the exact version/platform tuple;
-- <strong>U</strong>: unsupported in v0.2.0 and disabled; and
+- <strong>U</strong>: unsupported in v0.2.1 and disabled; and
 - <strong>?</strong>: unknown and disabled because there is no sufficient
   contract or evidence.
 
@@ -2421,7 +2423,7 @@ unsupported, and conditional MUST NOT be advertised as available.
 
 ### 8.2 Native-store contract matrix
 
-| Provider | Durable identity and native location | Resume/import surface | v0.2.0 materialization rule | Required exclusions and limits |
+| Provider | Durable identity and native location | Resume/import surface | v0.2.1 materialization rule | Required exclusions and limits |
 | --- | --- | --- | --- | --- |
 | Codex | Session UUID/name; known root <code>~/.codex/sessions</code>. Source absolute cwd is metadata. | <code>codex resume SESSION_ID</code>; current CLI also has <code>codex fork SESSION_ID</code>. | Adapter MUST stage only the closed session objects it has identified, compute the destination cwd mapping, validate discovery by explicit ID, and merge without replacing unrelated sessions. <code>portable_store</code> remains C until cross-host fixtures pass. | Authentication files, config secrets, MCP tokens, logs not required by the session, live processes, locks, SQLite/WAL/SHM, and runtime sockets. |
 | Claude | Session UUID; known root <code>~/.claude/projects</code> with a provider-computed project key. | <code>claude --resume SESSION_ID</code>, <code>--continue</code>, and <code>--fork-session</code> when resuming. | Adapter MUST derive the destination project key from the logical workspace mapping, stage the closed session plus documented companion data, and validate explicit UUID resume. It MUST NOT copy the source project-directory key verbatim as identity. <code>portable_store</code> remains C. | OAuth/API credentials, settings secrets, MCP auth, live PTY state, PID/lock/socket files, caches, and unproven companion databases. |
@@ -2429,7 +2431,7 @@ unsupported, and conditional MUST NOT be advertised as available.
 | Muse | Session UUID; <code>$XDG_DATA_HOME/muse/sessions/YYYY/MM/DD/UUID</code>, defaulting below <code>~/.local/share</code>. | <code>muse resume UUID</code>, <code>--last</code>, picker, and <code>muse exec --session-id UUID</code>. Export exists; native import does not. | On probed macOS 0.1.0, a guarded adapter MAY stage the complete closed durable directory, omit transient files, validate with offline export, and resume explicitly. It MUST advertise <code>portable_store = false</code> because cron-aware, current-version, cross-host fidelity is not proven. | <code>~/.config/muse/auth.json</code>, keys, login state, <code>.session.lock</code>, sockets/tokens, live WAL/SHM/locks, updater/plugin caches. <code>cron.db</code> is durable but not safely portable; a session with active or non-empty scheduled work MUST fail materialization. |
 | Antigravity CLI | Conversation UUID plus a destination-authenticated backend/account realm. <code>last_conversations.json</code> maps absolute workspace paths only as local selectors. | <code>agy --conversation UUID</code>, <code>agy -c</code>, and TUI <code>/resume</code>. Desktop-to-CLI picker import is not arbitrary file import. | Materialize the workspace, invoke explicit UUID resume, and allow the provider to rebuild derived cache. A version-aware cache merge MAY map the destination path to UUID. It MUST NOT claim that cache, brain transcript, or SQLite copying recreates a backend-missing conversation. <code>portable_store = false</code>. | OS keyring/account profiles, OAuth/API/MCP secrets, updater locks, live DB/WAL/SHM, sockets, PIDs. Backend resolution is required and a missing UUID MUST fail rather than create a blank replacement. |
 | Pi | Session UUID/file; <code>~/.pi/agent/sessions</code> or the configured <code>PI_CODING_AGENT_SESSION_DIR</code>/<code>--session-dir</code>. | <code>--session PATH_OR_ID</code>, <code>--continue</code>, <code>--resume</code>, <code>--fork</code>. | Adapter MUST snapshot a closed JSONL session and required non-secret companion data, map the destination cwd/session directory, validate the session ID, and resume explicitly. <code>portable_store</code> remains C until versioned cross-host fixtures pass. | <code>auth.json</code>, provider keys/tokens, extension secrets, live process state, locks, sockets, and caches. Pi 0.73.1 has no YOLO flag. |
-| Qwen through task-board | The task-board bundle and manager-owned provider identity; there is no v0.2.0 direct <code>ax-provider-qwen</code> claim. | Official task-board open/adopt only. | U for direct native materialization. A task-board prompt-mode bundle follows Section 9 and remains opaque. | All private manager/provider state except bytes included by the official bundle exporter. |
+| Qwen through task-board | The task-board bundle and manager-owned provider identity; there is no v0.2.1 direct <code>ax-provider-qwen</code> claim. | Official task-board open/adopt only. | U for direct native materialization. A task-board prompt-mode bundle follows Section 9 and remains opaque. | All private manager/provider state except bytes included by the official bundle exporter. |
 | Future plugin | Declared by plugin and exact probe. | Declared by plugin. | Every cell starts ?/disabled. Promotion requires Section 19 acceptance evidence. | Common exclusions plus plugin-specific exclusions. |
 
 Muse and Antigravity rows above are normative uses of the accepted
@@ -3124,7 +3126,7 @@ verify access to the same board before adopt.
 
 ### 9.5 Task-board capability reality
 
-In v0.2.0:
+In v0.2.1:
 
 - Codex and Claude MAY advertise goal-bound primary-owner support only through
   an accepted task-board bridge;
@@ -3758,7 +3760,7 @@ files are unsupported and MUST fail unless an explicit exclusion applies.
 
 Mode preserves Unix executable and ordinary read/write bits. ACLs, ownership,
 code-signing metadata, quarantine flags, arbitrary xattrs, NTFS alternate
-streams, and resource forks are not portable in v0.2.0. If one is required for
+streams, and resource forks are not portable in v0.2.1. If one is required for
 a provider or workspace, that provider/platform cell MUST be conditional or
 unsupported rather than silently dropping it.
 
@@ -4807,7 +4809,7 @@ The first request MUST be <code>hello</code>:
   "body": {
     "host_id": "0198f4c8-4a10-7b22-8b3c-1234567890ab",
     "platform": "macos",
-    "ax_version": "0.2.0",
+    "ax_version": "0.2.1",
     "nonce": "YWJjZGVmZ2hpamtsbW5vcA",
     "contracts": {
       "rpc": ["2.0.0"],
@@ -4855,7 +4857,7 @@ Normative <code>hello</code> success:
   "body": {
     "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
     "platform": "linux",
-    "ax_version": "0.2.0",
+    "ax_version": "0.2.1",
     "nonce": "cXJzdHV2d3h5ejAxMjM0NQ",
     "nonce_echo": "YWJjZGVmZ2hpamtsbW5vcA",
     "contracts": {
@@ -6496,7 +6498,7 @@ process or open store handle returns failure and leaves the command retryable;
 it is never represented as a successful closure.
 
 Stop is not delete. Deletion requires a separate future/administrative surface
-that emits a Session Tombstone; v0.2.0 MUST NOT make stop delete state.
+that emits a Session Tombstone; v0.2.1 MUST NOT make stop delete state.
 
 ### 13.10 Resume
 
@@ -6608,11 +6610,72 @@ process; it does not resurrect process memory.
 | SQLite index corrupt | Do not sync database | Move corrupt index to local diagnostics and rebuild from immutable truth |
 | Operator interrupt | Preserve transaction journal and report whether authority changed | Retry same operation ID; inspect status before another takeover |
 
+### 13.13 Crash/restart outcome gate
+
+Every implementation MUST inject a crash and a clean process restart at every
+boundary in the registry below for each applicable direct and task-board path.
+After restart, the recovery evaluator MUST classify the operation into exactly
+one of these three normative outcomes:
+
+| Outcome | Exclusive normative meaning | Required evidence |
+| --- | --- | --- |
+| <code>safe_retry</code> | The same logical operation can continue or return its recorded result using every caller-stable operation/materialization/transaction/bridge ID and byte-identical immutable input. The winning lease and the exact persisted Provider Identity Record or task-board manager reference/Ax Binding are unchanged. A retry MUST reconcile an uncertain external effect before issuing it again and MUST NOT allocate another process, manager, native handle, lease epoch, staging authority, or transaction root. | The pre-crash durable receipt or journal phase, the post-restart status result for every possibly executed provider/bridge/external effect, the unchanged winning lease, the unchanged native identity/binding, and the single returned or advanced durable result. |
+| <code>explicit_rollback</code> | Recovery executes an allowed abort, rollback, or proven closure before owner activation. It restores every affected predecessor or removes only inert fresh staging. The terminal rollback/abort result is durable and visible through the existing journal, event, CLI/status, and audit surfaces; recovery MUST NOT silently discard evidence or describe an implicit byte reversal as success. Ownership changes only through an already specified explicit lease transition and never rolls back merely because bytes were rolled back. | A terminal <code>rolled_back</code>, bootstrap-abort, handoff-abort, or equivalent existing durable result; predecessor/closure verification; unchanged or explicitly advanced winning lease as required by the flow; no live provider/manager effect; and operator-visible reason/remediation. |
+| <code>recoverable_parked_state</code> | Recovery cannot yet prove safe replay or legal rollback, so it fails closed. The authoritative lease, exact operation IDs, checkpoint/native identity, last durable phase, and unresolved external-effect evidence remain recoverable; input and activation are blocked. The lifecycle projection MUST be <code>parked</code>, <code>failed</code>, or a stopped owner as already allowed by the flow, and status/doctor MUST expose the blocking reason and the same-operation retry, explicit stop/transfer, or reconciliation action. | Durable journal/event/lease/checkpoint facts sufficient to resume reconciliation, a status/doctor failure naming the ambiguous or blocked effect, proof that no losing or additional owner accepts input, and proof that no new native session or manager was allocated. |
+
+These outcomes are mutually exclusive. <code>safe_retry</code> requires an
+unchanged exact identity and a replayable or already recorded effect, so it
+cannot also have a terminal rollback/abort fact or an unresolved activation.
+<code>explicit_rollback</code> requires a visible terminal reversal/closure and
+no live activated effect, so it cannot be retry success or parked ambiguity.
+<code>recoverable_parked_state</code> is selected only when neither of the first
+two predicates is proven. They are collectively exhaustive: missing, stale,
+contradictory, unreachable, or ambiguous evidence MUST select
+<code>recoverable_parked_state</code>; an implementation MUST NOT invent a
+fourth recovery outcome or report an unclassified successful restart.
+
+The gate is evaluated per logical session and per migration cohort. Every row
+means both “after the named phase's durable write, before the next phase” and
+“after the named external effect may have happened, before its result is
+durable” when that effect exists. A row whose phase is skipped by a valid plan
+is not applicable to that plan; every boundary between the remaining adjacent
+phases still is. The conformance record MUST name the boundary ID, path,
+operation IDs, pre/post durable facts, external effect and status probe,
+winning lease before/after, native identity/binding before/after, selected
+outcome, and the evidence satisfying that outcome.
+
+| Boundary IDs | Required injection boundary and applicable paths |
+| --- | --- |
+| <code>CR-LAUNCH-D-01..05</code> | Direct bootstrap: after session/lease/event persistence; terminal creation; provider process start; Provider Identity persistence; capture/object validation, each before the next Section 13.1 phase or first-checkpoint publication. |
+| <code>CR-LAUNCH-TB-01..03</code> | Task-board bootstrap: after session/lease/event persistence; bridge launch may have returned a manager reference; bridge export may have returned a bundle/proof, each before the next Section 13.2 durable phase or first-checkpoint publication. |
+| <code>CR-SYNC-01..07</code> | Sync: after inventory exchange; immutable union; missing-object selection; staged chunk progress; immutable-object commit; passive <code>materialize.prepare</code>/<code>commit</code>; dormant finalize, each before the next Section 13.3 phase or <code>sync.completed</code>. |
+| <code>CR-MAT-01..08</code> | Every workspace/provider/task-board/composite materialization: before journal creation; after journal/prepare receipt; after transfer; after validation; after provider prepare or bridge import; after bridge open or host commit enters prepared; after owner activation may have occurred; after finalize/cleanup may have occurred but before its result/event is durable. This row applies independently to graceful takeover, force takeover, passive sync, owner resume, and fork. |
+| <code>CR-GRACE-01..13</code> | Graceful takeover: after prepare; input block; quiescence proof; checkpoint capture; final sync; destination validation; source stop; closure-delta checkpoint; destination prepared materialization; destination lease persistence/union; direct resume or task-board activation; finalize; source park/resume-event publication, each before the next Section 13.6 phase. |
+| <code>CR-FORCE-01..07</code> | Common force takeover: after refresh/pinned-cohort selection; divergence preservation; inert staging; final preflight; confirmation receipt; new lease persistence; winning-lease recomputation/events, each before the applicable direct/task-board activation path. |
+| <code>CR-FORCE-D-01..05</code> | Direct force activation: after prepare; prepared commit/provider materialization; native discovery; plugin resume/process start; finalize may have occurred, each before the next Section 13.7 durable result/event. |
+| <code>CR-FORCE-TB-01..04</code> | Task-board force activation: after prepare/journal creation; import/open/commit prepared; adopt may have occurred; resume/finalize may have occurred, each before the next Section 13.7 durable result/event. |
+| <code>CR-FORK-01..08</code> | Fork: after ID allocation; topology/manifest projection persistence; new Session Record/lease persistence; provider fork plan or bundle selection; prepared materialization; direct identity/activation; task-board adopt/activation; finalize before exactly-once fork/resume events, each before the next Section 13.8 phase. |
+| <code>CR-STOP-01..05</code> | Stop: after input block/quiesce; checkpoint/export capture; process/manager stop may have occurred; closure verification; stopped event/result persistence, each before the next Section 13.9 phase. Bootstrap abort uses the corresponding <code>CR-LAUNCH-*</code> boundary and the same outcome gate. |
+| <code>CR-RESUME-01..06</code> | Owner resume: after owner/checkpoint/profile validation; prepare; prepared commit; exact native discovery or dormant manager reconciliation; provider/bridge activation may have occurred; finalize may have occurred before exactly-once <code>session.resumed</code>, each before the next Section 13.10 phase. |
+| <code>CR-RESTORE-01..07</code> | Reboot restore: after index validation; prior-live-session enumeration; lease refresh; stale-owner marking; checkpoint/profile validation; wrapper recreation; auto-resume may have occurred before durable status/event reconciliation, each before the next Section 13.11 phase. |
+
+For every boundary, the gate MUST reject the run if two hosts or two native
+processes/managers can both be treated as live or authoritative for the same
+logical session. A losing or unfenced external continuation is not
+<code>safe_retry</code>, even if the deterministic lease winner is known; it
+MUST be fenced/stopped with visible divergent-history evidence or remain
+<code>recoverable_parked_state</code>. The gate also MUST reject any recovery
+that invokes a new-session launch, allocates a fresh native handle or manager
+reference, relabels blank state, or resumes a different provider/account realm
+in place of the exact persisted Provider Identity Record or task-board Ax
+Binding. Such substitution is never a successful retry, rollback, or parked
+recovery.
+
 ## 14. CLI and operator experience
 
 ### 14.1 Command surface
 
-The v0.2.0 command surface is:
+The v0.2.1 command surface is:
 
 ~~~text
 ax NAME [--action attach|takeover|fork|cancel] [--to HOST] [--as NEW_NAME] [--workspace-mode whole-group|separate-worktrees]
@@ -7151,7 +7214,7 @@ provider plugin, or a compromised local user account.
 
 Peers MUST be explicitly allowlisted by stable host ID and SSH endpoint.
 Tailscale discovery MAY propose hosts but MUST NOT authorize them. SSH protects
-authentication, integrity, and confidentiality in transport. v0.2.0 provides no
+authentication, integrity, and confidentiality in transport. v0.2.1 provides no
 default payload encryption at rest and MUST NOT claim otherwise.
 
 Machine-local credentials are a prerequisite at the destination. A successful
@@ -7180,7 +7243,7 @@ MUST NOT be treated as current process, ownership, or routing authority. This
 does not permit copying a live PID/lock control artifact.
 
 Transcripts and tool outputs can themselves contain secrets entered by an
-operator or printed by tools. v0.2.0 does not claim reliable content-level
+operator or printed by tools. v0.2.1 does not claim reliable content-level
 secret scrubbing. Operators MUST therefore treat all payloads as sensitive and
 authorize only trusted project peers. An implementation SHOULD offer a
 best-effort scanner and warning, but scanner success MUST NOT be described as a
@@ -7231,7 +7294,7 @@ Force takeover MUST therefore:
 
 ### 16.6 Out of scope
 
-v0.2.0 does not provide Byzantine consensus, hostile-peer isolation,
+v0.2.1 does not provide Byzantine consensus, hostile-peer isolation,
 multi-tenant access control, end-to-end snapshot encryption, secret
 distribution, provider-account migration, revocation of actions already sent
 to external services, or sandboxing stronger than the provider/OS configuration
@@ -7507,7 +7570,7 @@ Events are not.
 ### 19.1 Implementation phases
 
 These are ordered phases for an implementation that intends to claim
-<code>ax</code> product conformance version 0.2.0. They are not prerequisites
+<code>ax</code> product conformance version 0.2.1. They are not prerequisites
 for publishing this specification and are not permission to ship a required
 core target half-implemented:
 
@@ -7626,6 +7689,7 @@ SQLite handles.
 | <code>AC-RESUME-001</code> | No-materialization, workspace-only, provider-only, task-board-only, and both composite owner-resume paths execute their exact prepare/commit/activation/finalize or rollback/status recovery and emit one profile-consistent resumed event. |
 | <code>AC-RESTORE-001</code> | tmux restore invokes wrapper and parks remote/stale owners; it does not migrate a session. |
 | <code>AC-RESTORE-002</code> | Native Windows recreates ConPTY after reboot and resumes only after lease/checkpoint validation. |
+| <code>AC-CRASH-001</code> | Every applicable <code>CR-LAUNCH-*</code>, <code>CR-SYNC-*</code>, <code>CR-MAT-*</code>, <code>CR-GRACE-*</code>, <code>CR-FORCE-*</code>, <code>CR-FORK-*</code>, <code>CR-STOP-*</code>, <code>CR-RESUME-*</code>, and <code>CR-RESTORE-*</code> injection classifies into exactly one of <code>safe_retry</code>, <code>explicit_rollback</code>, or <code>recoverable_parked_state</code> with the Section 13.13 evidence record; no run produces duplicate live/authoritative owners, treats an unfenced external continuation as safe, or substitutes a fresh native provider/manager session for the persisted identity. |
 | <code>AC-WORK-001</code> | The exact Section 10.4 Git root/child fixtures round-trip branch/detached HEAD, object pack, raw/logical index, staged versus working bytes, untracked files, modes, submodules, features, cwd, and project config without network access. |
 | <code>AC-WORK-002</code> | The exact managed-tree variant round-trips and rejects Git-only members; concurrent capture mutation retries/fails. |
 | <code>AC-WORK-003</code> | Divergent managed and unmanaged destinations fail closed; diff/copy/worktree/explicit managed replacement behave as specified. |
@@ -7660,7 +7724,7 @@ SQLite handles.
 
 ### 19.5 <code>ax</code> implementation release acceptance rule
 
-An implementation MAY claim <code>ax</code> product conformance 0.2.0 only when:
+An implementation MAY claim <code>ax</code> product conformance 0.2.1 only when:
 
 1. all product-release-blocking core platform lanes pass;
 2. every A provider cell passes its suites;
@@ -7684,8 +7748,10 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
-the default branch, and carry the MIT License. The first specification release
-is <code>v0.2.0</code>.
+the default branch, and carry the MIT License. The current specification
+release is <code>v0.2.1</code>. The existing <code>v0.1.0</code> and
+<code>v0.2.0</code> tags are immutable history and MUST NOT be moved or
+rewritten.
 
 The release commit and annotated tag MUST both be signed using Ivan Oparin's
 SSH signing key <code>~/.ssh/ivanopcode</code>. The commit author is:
@@ -7708,7 +7774,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-specification release <code>v0.2.0</code>, not an <code>ax</code> executable
+specification release <code>v0.2.1</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -7719,24 +7785,30 @@ release. The publication task MUST:
 3. explicitly verify that the publication validator does not require an
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
-4. verify <code>VERSION</code>, document metadata, changelog, release notes, and
-   tag all say <code>v0.2.0</code>;
-5. prepare the exact signed-commit command with author
+4. verify <code>VERSION</code>, current document metadata, changelog, release
+   notes, and the proposed tag all say <code>v0.2.1</code>, while the existing
+   <code>v0.1.0</code> and <code>v0.2.0</code> tags remain unchanged;
+5. run the semantic crash/restart gate and its focused expected-red mutations;
+   validation MUST emit an actionable diagnostic when the three-outcome
+   exclusivity/exhaustiveness rule, boundary registry, evidence requirements,
+   duplicate-owner prohibition, or exact-native-identity prohibition is
+   weakened or removed;
+6. prepare the exact signed-commit command with author
    <code>Ivan Oparin &lt;oparin@me.com&gt;</code> and no AI trailer, and hand it
    to the user for explicit review; automation MUST NOT stage or commit before
    human approval;
-6. prepare the exact signed annotated <code>v0.2.0</code> tag command and hand it
+7. prepare the exact signed annotated <code>v0.2.1</code> tag command and hand it
    to the user for explicit review; automation MUST NOT create the tag before
    human approval;
-7. after the human creates the commit and tag, verify both signatures locally
+8. after the human creates the commit and tag, verify both signatures locally
    with <code>git log --show-signature -1</code> and
-   <code>git tag --verify v0.2.0</code>;
-8. hand the exact <code>git push</code> commands for <code>main</code> and the
-   <code>v0.2.0</code> tag to the user; automation MUST NOT push before explicit
+   <code>git tag --verify v0.2.1</code>;
+9. hand the exact <code>git push</code> commands for <code>main</code> and the
+   <code>v0.2.1</code> tag to the user; automation MUST NOT push before explicit
    human approval and only after accepted validation/review;
-9. verify the public repository, default branch, license, commit signature, tag
+10. verify the public repository, default branch, license, commit signature, tag
    signature, and release URL; and
-10. attach publication evidence to the board.
+11. attach publication evidence to the board.
 
 No automation MAY publish, stage, commit, tag, or push before validation
 acceptance and explicit human review of every stage/commit/tag/push command.
@@ -7750,6 +7822,14 @@ structure, contract-fixture, link, diagram, metadata, and signature-preflight
 checks available before signing. Any validator that tries to execute product
 acceptance cases from Section 19 fails this publication case.
 
+Publication acceptance case <code>SPEC-PUB-CRASH-001</code> MUST prove that the
+Section 13.13 outcome vocabulary is mutually exclusive and collectively
+exhaustive, every boundary family and required evidence field is present, and
+both duplicate-owner and silent-fresh-native-session recovery are forbidden.
+At least one focused expected-red mutation MUST remove or weaken a gate clause
+and MUST be rejected with a diagnostic that names the missing crash/restart
+requirement rather than only reporting a generic document digest mismatch.
+
 ## Appendix A. Normative traceability
 
 ### A.1 Settled-decision traceability
@@ -7757,10 +7837,10 @@ acceptance cases from Section 19 fails this publication case.
 | Settled input section | Normative specification sections |
 | --- | --- |
 | Product and operator model | Sections 1, 2, 5, 13, 14 |
-| Terminal persistence | Sections 3.1–3.2, 4, 13.4–13.11, 19.2–19.4 |
-| Providers and native stores | Sections 7, 8, 13.1, 13.6–13.10, Appendix C |
-| Task-board integration | Sections 2.2, 9, 13.2, 13.6–13.10, 19.3–19.4 |
-| Mesh and replication | Sections 1.6, 3.2–3.3, 6, 10–12, 13.3, 16, 19 |
+| Terminal persistence | Sections 3.1–3.2, 4, 13.4–13.13, 19.2–19.4 |
+| Providers and native stores | Sections 7, 8, 13.1, 13.6–13.13, Appendix C |
+| Task-board integration | Sections 2.2, 9, 13.2, 13.6–13.13, 19.3–19.4 |
+| Mesh and replication | Sections 1.6, 3.2–3.3, 6, 10–12, 13.3, 13.13, 16, 19 |
 | Attach, takeover, failure, and fork | Sections 5.3–5.7, 13, 14, 15, 16.5, 19.4 |
 | Implementation stack and delivery | Sections 1.3–1.6, 3–7, 10–12, 17–20 |
 | Publication metadata | Section 20 |
@@ -7776,7 +7856,7 @@ acceptance cases from Section 19 fails this publication case.
 | All settled decisions are traceable | Appendix A.1 |
 | Independent reviewer accepts the artifact | Required board reviewer route after this task's <code>to-review</code> handoff |
 
-The Epic criterion for a signed public <code>v0.2.0</code> specification release
+The Epic criterion for a signed public <code>v0.2.1</code> specification release
 maps only to Section 20 and remains owned by the downstream validation and
 publication tasks. Section 19 governs a future product implementation and is
 not a prerequisite for that publication.
@@ -7795,6 +7875,7 @@ not a prerequisite for that publication.
 | Independently versioned plugin/RPC/record/bundle/config/CLI result with explicit embedded-error bindings | Sections 1.5–1.6, 5, 7, 9–11, 14.2, 15.1, and 17 |
 | CLI, exit codes, observability, implementation rollout/acceptance, specification publication | Sections 14, 15, 18, 19, and the independent Section 20 gate |
 | No unresolved implementation question except provider version gates | Appendix B |
+| Crash/restart classification has one exhaustive outcome and preserves owner/native identity | Sections 13.13, 19.4 <code>AC-CRASH-001</code>, 20.2 <code>SPEC-PUB-CRASH-001</code>, and Appendix A.8 |
 
 ### A.4 Second-review closure traceability
 
@@ -7844,6 +7925,17 @@ not a prerequisite for that publication.
 | Git submodule pack rule contradicted repository boundaries | Sections 10.4 and 12.3 make parent/child packs independent, define the head-tree/index/checked-out triple, and require clean/staged/unstaged/combined cases in isolated object databases; <code>AC-WORK-005</code> covers it |
 | Effective profile authority conflicted with events/bundles | Sections 2.4, 5.2, 5.4, 9.3, 11.3, and 13 repeat one checkpoint-derived effective profile/source through launch, bundle, takeover, resume, and fork, including Pi's equal mapping; <code>AC-PROFILE-001</code> covers both persistence paths |
 | Digest path and cohort reference grammars were unresolved | Section 3.2 defines one Windows-safe <code>digest_path_v1</code> with golden vectors reused by provider/bundle/marker stores; Section 12.6 names <code>MaterializationCohort.ownership_transfer_session_ids</code> exactly; <code>AC-PATH-002</code> and schema-aware <code>AC-REF-001</code> cover both |
+
+### A.8 Crash/restart outcome-gate traceability
+
+| <code>TASK-260823-22b7zx</code> criterion | Normative closure |
+| --- | --- |
+| Three mutually exclusive, collectively exhaustive outcomes | Section 13.13 defines <code>safe_retry</code>, <code>explicit_rollback</code>, and <code>recoverable_parked_state</code>, their disjoint predicates, ambiguity rule, and required evidence. |
+| Every relevant inter-phase crash/restart boundary | The closed <code>CR-LAUNCH-*</code>, <code>CR-SYNC-*</code>, <code>CR-MAT-*</code>, <code>CR-GRACE-*</code>, <code>CR-FORCE-*</code>, <code>CR-FORK-*</code>, <code>CR-STOP-*</code>, <code>CR-RESUME-*</code>, and <code>CR-RESTORE-*</code> registry in Section 13.13 covers direct, task-board, movement, materialization, ownership, native-resume, and restore phases. |
+| No duplicate owner or silent fresh native session | Section 13.13 rejects two live/authoritative owners, unfenced continuation presented as safe recovery, new-session launch, fresh native handles/manager references, blank relabeling, and realm substitution. |
+| Runtime conformance acceptance | Section 19.4 <code>AC-CRASH-001</code> executes every applicable boundary with exact classification and evidence. |
+| Specification publication acceptance and mutation gate | Section 20.2 <code>SPEC-PUB-CRASH-001</code> requires semantic validation plus an actionable focused expected-red mutation. |
+| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version; Section 20.1 identifies <code>v0.2.1</code> and preserves the existing <code>v0.1.0</code>/<code>v0.2.0</code> tags. |
 
 ## Appendix B. Explicit provider version gates
 

@@ -1,16 +1,16 @@
-# Agent Session Manager (`ax`) v0.2.0 — Specification Repository
+# Agent Session Manager (`ax`) v0.2.1 — Specification Repository
 
 | Field | Value |
 | --- | --- |
 | Public command | `ax` |
-| Specification release | `v0.2.0` |
+| Specification release | `v0.2.1` |
 | Repository | `relux-works/agent-session-manager-spec` |
 | Default branch | `main` |
 | License | MIT |
 | Normative contract | [`SPEC.md`](SPEC.md) |
 | Status | Specification only — no `ax` product binary in this repository |
 
-> This repository publishes the normative, implementation-ready contract for Agent Session Manager v0.2.0. It specifies behavior; it does not implement `ax`. Publishing the specification does not claim that any future product acceptance matrix has passed. See [SPEC.md §1](SPEC.md#1-conformance-language-and-scope), [§19](SPEC.md#19-ax-implementation-conformance-and-product-release), and [§20](SPEC.md#20-specification-publication-and-governance).
+> This repository publishes the normative, implementation-ready contract for Agent Session Manager v0.2.1. It specifies behavior; it does not implement `ax`. Publishing the specification does not claim that any future product acceptance matrix has passed. See [SPEC.md §1](SPEC.md#1-conformance-language-and-scope), [§19](SPEC.md#19-ax-implementation-conformance-and-product-release), and [§20](SPEC.md#20-specification-publication-and-governance).
 
 ## Read first
 
@@ -40,9 +40,24 @@ The operator can:
 
 There is no permanent public TCP listener. The remote entry point is `ax rpc serve --stdio`, normally started by Tailscale SSH or ordinary OpenSSH. See [SPEC.md §1.2](SPEC.md#12-product-boundary) and [§11.1](SPEC.md#111-transport-and-peer-authentication).
 
+## Crash/restart recovery gate
+
+Every crash or restart between phases of launch, sync, materialization,
+takeover, fork, stop, owner resume, and reboot restore must resolve to exactly
+one outcome: `safe_retry`, `explicit_rollback`, or
+`recoverable_parked_state`. Safe retry reuses the same operation and exact
+native session identity; rollback is durable and operator-visible; parked
+recovery blocks activation while preserving enough evidence to reconcile or
+retry. No recovery may create duplicate live/authoritative owners, treat an
+unfenced continuation as safe, or silently substitute a fresh native provider
+or task-board manager session. The complete boundary registry and evidence
+requirements are normative in [SPEC.md §13.13](SPEC.md#1313-crashrestart-outcome-gate),
+with runtime acceptance in `AC-CRASH-001` and publication acceptance in
+`SPEC-PUB-CRASH-001`.
+
 ## Installation and status caveat
 
-This is a **specification-only** repository at `v0.2.0`. There is no `ax` binary to install, no provider runtime requirement to validate or publish the spec, and no Section 19 product-conformance result implied by publication. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20.2](SPEC.md#202-publication-gate).
+This is a **specification-only** repository at `v0.2.1`. There is no `ax` binary to install, no provider runtime requirement to validate or publish the spec, and no Section 19 product-conformance result implied by publication. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20.2](SPEC.md#202-publication-gate).
 
 To work with the spec:
 
@@ -223,7 +238,7 @@ Change the profile with `ax session set-profile NAME standard|yolo`, which requi
 
 Peers are explicitly allowlisted in `~/.config/ax/config.toml` (or the platform-equivalent directory — see [SPEC.md §3.2](SPEC.md#32-platform-paths) and [§6](SPEC.md#6-configuration-contract)) with stable host ID, Tailscale/OpenSSH endpoint, platform, and workspace-root mappings. Tailscale discovery may suggest hosts but may not auto-authorize them. Transport is Tailscale SSH or ordinary OpenSSH; the remote side is `ax rpc serve --stdio`; no permanent public TCP listener is required. See [SPEC.md §11.1](SPEC.md#111-transport-and-peer-authentication).
 
-The project owner does not require payload encryption at rest. The spec must not claim default snapshot encryption — and this README does not. SSH protects transport. The security boundary remains a trusted project mesh. `mesh.payload_encryption` must be `none` in `v0.2.0`; any other value fails as unsupported. See [SPEC.md §6.3](SPEC.md#63-field-constraints) and [§16.1](SPEC.md#161-trusted-mesh-model).
+The project owner does not require payload encryption at rest. The spec must not claim default snapshot encryption — and this README does not. SSH protects transport. The security boundary remains a trusted project mesh. `mesh.payload_encryption` must be `none` in `v0.2.1`; any other value fails as unsupported. See [SPEC.md §6.3](SPEC.md#63-field-constraints) and [§16.1](SPEC.md#161-trusted-mesh-model).
 
 Never replicated: credentials/tokens, SSH private keys, environment secrets, live PIDs, sockets, tmux server sockets, transient locks, machine-local authentication state, or the live SQLite database file (rebuildable derived index). Opaque durable history may contain historical path/PID facts as inert bytes required for native resume, but they are not current authority. See [SPEC.md §2.2](SPEC.md#22-global-invariants), [§10-§11](SPEC.md#10-immutable-records-blobs-manifests-and-tombstones), and [§16.2](SPEC.md#162-mandatory-exclusions).
 
@@ -264,7 +279,7 @@ Capabilities are `native_resume`, `portable_store`, `managed_pty`, `appserver`, 
 Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-contracts) and [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates)):
 
 - **Pi 0.73.1** has no YOLO flag; both `ax` profiles map to `default_unrestricted_tool_set` but remain distinct `ax` authority — see [§2.4](SPEC.md#24-execution-profiles).
-- **Qwen** has no direct `ax-provider-qwen` claim in `v0.2.0`; task-board prompt-mode bundles only — see [§8.2](SPEC.md#82-native-store-contract-matrix).
+- **Qwen** has no direct `ax-provider-qwen` claim in `v0.2.1`; task-board prompt-mode bundles only — see [§8.2](SPEC.md#82-native-store-contract-matrix).
 - **Muse** and **Antigravity** unknowns in [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates) (store, cron, resume, import, quiesce, backend realm, checkpoint, Windows behavior) remain gated and disabled.
 - **WSL2 and native Windows are never collapsed** into one row — an adapter accepted in WSL2 does not establish native Windows support. See [§8.4](SPEC.md#84-providerplatform-matrix).
 - Known resume surfaces: Codex `codex resume UUID`; Pi `--session <path|id>` / `--continue` / `--resume` / `--session-dir`; Gemini UUID/session import; Muse `muse resume UUID`; Antigravity `agy --conversation <id>` / continue. See settled decisions § Providers and native stores and [SPEC.md §7](SPEC.md#7-provider-plugin-protocol).
@@ -273,7 +288,7 @@ Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-c
 
 ```
 .
-├── SPEC.md                          # normative v0.2.0 contract (only normative source)
+├── SPEC.md                          # normative v0.2.1 contract (only normative source)
 ├── README.md                        # this file — operator summary with links to SPEC
 ├── CONTRIBUTING.md                  # contributor workflow (traceability, diagrams, versioning, signing)
 ├── diagrams/
@@ -301,7 +316,7 @@ Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-c
 │   ├── validate_spec.py             # public repository-only validator (contracts, links, matrices, examples, metadata, fences, license, frozen-release integrity)
 │   └── test_expected_red.sh         # expected-red mutation suite (proves validator and run_validation.sh fail nonzero with actionable diagnostics)
 ├── .github/workflows/validate.yml   # CI path with pinned documentation-tool versions (single command + expected-red)
-├── .research/                       # required public provider evidence for the v0.2.0 specification package (do not weaken)
+├── .research/                       # retained provider evidence inherited by the v0.2.1 specification package (do not weaken)
 ├── .planning/                       # public planning and audit evidence
 ├── run_validation.sh                # single public whole-package validation command (contracts + diagrams + freshness)
 └── VERSION, LICENSE, CHANGELOG.md, RELEASE_NOTES.md  # publication metadata
@@ -328,7 +343,7 @@ Durable `ax` data roots, SQLite-derived index, and object stores are defined in 
 
 Provider binaries are not required to validate or publish this specification. Provider/platform runtime probes belong to the future implementation-conformance suites in [SPEC.md §19](SPEC.md#19-ax-implementation-conformance-and-product-release); publication is governed separately by [§20](SPEC.md#20-specification-publication-and-governance).
 
-For `v0.2.0`, the validator also compares LF-normalized SHA-256 digests for the five reviewed public claim documents (`SPEC.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and `RELEASE_NOTES.md`). This is a bounded frozen-release content-integrity control, not general natural-language theorem proving. A future specification revision must intentionally update the digest map in `scripts/validate_spec.py` after reviewing the changed prose and mutation coverage.
+For `v0.2.1`, the validator also compares LF-normalized SHA-256 digests for the five reviewed public claim documents (`SPEC.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and `RELEASE_NOTES.md`). This is a bounded frozen-release content-integrity control, not general natural-language theorem proving. A future specification revision must intentionally update the digest map in `scripts/validate_spec.py` after reviewing the changed prose and mutation coverage. The semantic gate separately validates the Section 13.13 outcome vocabulary, boundary families, evidence fields, duplicate-owner prohibition, and exact-native-identity prohibition; focused expected-red mutations must fail with actionable diagnostics.
 
 ### Exact validation commands
 
@@ -348,7 +363,7 @@ task-board validate
 echo "exit code: $?"
 ```
 
-Diagram sources and render are covered by the same single command; see the exact `structurizr-cli`/`plantuml` flags in [CONTRIBUTING.md](CONTRIBUTING.md#diagrams) and [diagrams/README.md](diagrams/README.md). The validator compares generated C4 PlantUML bytes exactly, validates committed SVG bytes against the v0.2.0 SHA-256 ledger, and compares PlantUML's embedded source/version metadata with a fresh render. This keeps source freshness strict while allowing font and Graphviz geometry to vary across supported documentation platforms. Verify links separately:
+Diagram sources and render are covered by the same single command; see the exact `structurizr-cli`/`plantuml` flags in [CONTRIBUTING.md](CONTRIBUTING.md#diagrams) and [diagrams/README.md](diagrams/README.md). The validator compares generated C4 PlantUML bytes exactly, validates committed SVG bytes against the v0.2.1 SHA-256 ledger, and compares PlantUML's embedded source/version metadata with a fresh render. This keeps source freshness strict while allowing font and Graphviz geometry to vary across supported documentation platforms. Verify links separately:
 
 ```shell
 git diff --check
@@ -374,7 +389,7 @@ Sources live in `diagrams/c4/*.dsl` (Structurizr) and `diagrams/plantuml/*.puml`
 
 ## License and release target
 
-The repository is intended for public release under the **MIT License**, default branch `main`. The initial specification release was `v0.1.0`; the current corrected specification release is `v0.2.0`. The signing and authorship metadata — author `Ivan Oparin <oparin@me.com>`, SSH key `~/.ssh/ivanopcode`, SSH-signed commit and annotated tag with local signature verification, no AI `Co-Authored-By` trailer, and an explicit human approval gate before stage/commit/tag/push — are normative in [SPEC.md §20](SPEC.md#20-specification-publication-and-governance) and summarized in [CONTRIBUTING.md](CONTRIBUTING.md#signing-release-and-attribution).
+The repository is intended for public release under the **MIT License**, default branch `main`. The initial specification release was `v0.1.0`; the current specification release is `v0.2.1`. Existing `v0.1.0` and `v0.2.0` tags remain immutable. The signing and authorship metadata — author `Ivan Oparin <oparin@me.com>`, SSH key `~/.ssh/ivanopcode`, SSH-signed commit and annotated tag with local signature verification, no AI `Co-Authored-By` trailer, and an explicit human approval gate before stage/commit/tag/push — are normative in [SPEC.md §20](SPEC.md#20-specification-publication-and-governance) and summarized in [CONTRIBUTING.md](CONTRIBUTING.md#signing-release-and-attribution).
 
 ## Contract map
 
@@ -388,6 +403,7 @@ Major implementation boundaries (see [SPEC.md](SPEC.md) for the normative defini
 - exact task-board Session/bridge projection and deterministic bundle-member paths, plus restart-stable import/open/adopt/resume journal recovery;
 - tagged active/passive workspace, provider, task-board, and composite materialization plans with closed kind/source/authority/action/validation/strategy combinations and stopped-session rules;
 - deterministic fork re-identification of workspace topology/manifests, epoch-1 bootstrap retry/abort semantics, and transactionally complete owner resume paths;
+- an exhaustive crash/restart outcome gate that classifies every inter-phase boundary as safe retry, explicit rollback, or recoverable parked state without duplicate owners or fresh-session substitution;
 - checkpoint-derived execution-profile authority across direct and task-board launch, takeover, resume, and fork, including providers whose two profiles map to the same native invocation;
 - one Windows-safe two-hex-shard/62-hex-leaf digest path grammar across every durable/object/bundle/marker store, plus isolated parent/submodule Git pack validation and exact staged/unstaged pointer state;
 - restart-stable provider object/transaction authorities, immutable managed-replica markers, derived workspace-group membership, fail-closed conflicts, version-gated provider capabilities, and explicit recovery transactions; and

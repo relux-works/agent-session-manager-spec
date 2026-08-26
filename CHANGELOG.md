@@ -5,6 +5,17 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.1] - 2026-08-23
+### Added
+- Defined `safe_retry`, `explicit_rollback`, and `recoverable_parked_state` as the mutually exclusive and collectively exhaustive outcomes for every inter-phase crash/restart boundary.
+- Added a closed crash-injection boundary registry covering launch, sync, materialization, graceful and force takeover, fork, stop, owner resume, and reboot restore.
+- Added runtime and specification-publication acceptance cases plus task traceability for the crash/restart outcome gate.
+
+### Changed
+- Recovery now fails closed unless it proves one allowed outcome with durable authority, external-effect, and exact native identity evidence.
+- Recovery explicitly rejects duplicate live/authoritative owners, unfenced continuation represented as safe, and silent fresh native provider or task-board manager sessions.
+- Advanced specification and publication metadata to `v0.2.1` without changing any wire-contract version or moving the existing `v0.1.0` and `v0.2.0` tags.
+
 ## [v0.2.0] - 2026-08-23
 ### Changed
 - Made Mesh `materialize.prepare` recoverable after a lost response by requiring caller-stable operation and materialization IDs plus a durable request receipt.

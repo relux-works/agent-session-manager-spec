@@ -1,6 +1,6 @@
 # Architecture Diagrams
 
-This directory contains the architecture diagrams for the Agent Session Manager (ax) v0.2.0, modeling settled architecture as defined in `SPEC.md`.
+This directory contains the architecture diagrams rendered for Agent Session Manager (ax) v0.2.0 and retained unchanged as the architecture baseline for v0.2.1. Section 13.13 adds a crash/restart conformance gate over existing flows without changing diagram topology.
 
 ## Matching SPEC.md References
 
@@ -34,7 +34,7 @@ This single command:
 1. Validates the C4 Structurizr workspace.
 2. Exports C4 to PlantUML in a temporary directory.
 3. Renders all SVGs (C4 and handwritten PlantUML) into the temporary directory.
-4. Compares generated C4 `.puml` bytes exactly, checks every committed SVG against the v0.2.0 SHA-256 ledger, and compares embedded PlantUML source/version metadata with the fresh render. Font and Graphviz geometry may vary by platform without weakening committed-byte integrity or source freshness.
+4. Compares generated C4 `.puml` bytes exactly, checks every committed SVG against the unchanged v0.2.1 SHA-256 ledger, and compares embedded PlantUML source/version metadata with the fresh render. Font and Graphviz geometry may vary by platform without weakening committed-byte integrity or source freshness.
 
 ## Artifact Map
 

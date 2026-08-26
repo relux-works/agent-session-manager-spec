@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for the normative ax v0.2.0 specification.
+"""Public, repository-only validation for the normative ax v0.2.1 specification.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
-and adds publication/metadata, anchor, matrix, and security closure for v0.2.0.
+and adds publication/metadata, anchor, matrix, and security closure for v0.2.1.
 Repository-only: no ax binary, provider CLI, or task-board runtime required.
 """
 
@@ -27,16 +27,16 @@ LICENSE_FILE = ROOT / "LICENSE"
 CHANGELOG = ROOT / "CHANGELOG.md"
 RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen v0.2.0 publication prose. Hashes use UTF-8 text with all line endings
+# Frozen v0.2.1 publication prose. Hashes use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. Future
 # specification releases must deliberately replace this bounded map after the
 # semantic checks and expected-red suite have been reviewed for the new prose.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "f40f6be201576ee1289f4e9a113b2681dea8b4fc5c835c9eb4295de8c30b0086",
-    "README.md": "040a157a667d59e88b789ad105c9d2862276754d97eed8428ba7479c23efe711",
-    "CONTRIBUTING.md": "9444e8332f9013459ca01b2f900e8f2947f04ebc283efeb618c2ce9071cc0be9",
-    "CHANGELOG.md": "cdc90658383cad5e8d04c6647d50e03ea2151fc3a49686c88052768717eeea47",
-    "RELEASE_NOTES.md": "76f6c1518809fba811815ad8ccc4d794497d79024bd500cff6c99c87b9b22927",
+    "SPEC.md": "ba8c72fd230e416fd770511f99b2039faf140d25b67534847ab8691133ce229f",
+    "README.md": "5db2705e219e07d0c7e75c3cd620b4fe4c793ba8977d1771771b645ce0e7ee27",
+    "CONTRIBUTING.md": "a1a518cc245d9688f474b5744a8bda54f09dcda46f77276ef9ea35c565eec277",
+    "CHANGELOG.md": "a058495e6d9902b9bdff68ab1940410597e1a2ff1b3d12ea9d3af44198d71e0a",
+    "RELEASE_NOTES.md": "f8e6608fb534a26b5ecb2418d0a1f8911c6ecde88b1db4f8fdeec33e30f447f3",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -250,7 +250,7 @@ def normalized_release_document_sha256(path: pathlib.Path) -> str:
 
 
 def check_frozen_release_baseline(errors: list[str]) -> None:
-    """Protect the reviewed v0.2.0 claim prose without pretending to parse English."""
+    """Protect the reviewed v0.2.1 claim prose without pretending to parse English."""
     expected_names = {path.name for path in PUBLIC_CLAIM_DOCUMENTS}
     configured_names = set(FROZEN_RELEASE_DOCUMENT_SHA256)
     if configured_names != expected_names:
@@ -267,7 +267,7 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual = normalized_release_document_sha256(document)
         if actual != expected:
             errors.append(
-                f"{document.name}: frozen v0.2.0 release baseline mismatch "
+                f"{document.name}: frozen v0.2.1 release baseline mismatch "
                 f"(expected LF-normalized SHA-256 {expected}, got {actual}); "
                 "review the prose and update FROZEN_RELEASE_DOCUMENT_SHA256 only for an intentional release revision"
             )
@@ -303,8 +303,8 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
 def check_publication_metadata(errors: list[str]) -> None:
     if VERSION_FILE.exists():
         v = VERSION_FILE.read_text(encoding="utf-8").strip()
-        if v != "0.2.0":
-            errors.append(f"VERSION must be exactly '0.2.0', got {v!r}")
+        if v != "0.2.1":
+            errors.append(f"VERSION must be exactly '0.2.1', got {v!r}")
     if LICENSE_FILE.exists():
         lic = LICENSE_FILE.read_text(encoding="utf-8")
         canonical_mit = """MIT License
@@ -333,15 +333,19 @@ SOFTWARE.
             errors.append("LICENSE differs from the complete canonical MIT text for Copyright (c) 2026 Ivan Oparin")
     if CHANGELOG.exists():
         cl = CHANGELOG.read_text(encoding="utf-8")
-        for required in ("## [v0.2.0] - 2026-08-23", "## [v0.1.0] - 2026-08-22"):
+        for required in (
+            "## [v0.2.1] - 2026-08-23",
+            "## [v0.2.0] - 2026-08-23",
+            "## [v0.1.0] - 2026-08-22",
+        ):
             if required not in cl:
                 errors.append(f"CHANGELOG.md missing release history entry {required!r}")
         # Caveats in CHANGELOG or RELEASE_NOTES
         # CHANGELOG must at least mention qwen prohibition (already checked), but also we check RELEASE_NOTES for full set
     if RELEASE_NOTES.exists():
         rn = RELEASE_NOTES.read_text(encoding="utf-8")
-        if "v0.2.0" not in rn:
-            errors.append("RELEASE_NOTES.md missing v0.2.0")
+        if "v0.2.1" not in rn:
+            errors.append("RELEASE_NOTES.md missing v0.2.1")
         if "specification" not in rn.lower():
             errors.append("RELEASE_NOTES.md missing specification disclosure")
         if "specification artifacts only" not in rn.lower() and "specification only" not in rn.lower():
@@ -467,8 +471,8 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         txt = doc.read_text(encoding="utf-8")
         if "relux-works/agent-session-manager-spec" not in txt:
             errors.append(f"{doc.name}: missing repository identity relux-works/agent-session-manager-spec")
-        if "v0.2.0" not in txt and "0.2.0" not in txt:
-            errors.append(f"{doc.name}: missing version v0.2.0/0.2.0")
+        if "v0.2.1" not in txt and "0.2.1" not in txt:
+            errors.append(f"{doc.name}: missing version v0.2.1/0.2.1")
     for doc in [SPEC, README, CONTRIBUTING]:
         if doc.exists():
             txt = doc.read_text(encoding="utf-8")
@@ -1055,7 +1059,7 @@ def check_critical_protocol_contracts(text: str, errors: list[str]) -> None:
         row = f"| {name} | <code>{identifier}</code> | <code>{version}</code> |"
         if row not in text:
             errors.append(
-                f"critical contract version mismatch: {name} must be {version} in v0.2.0"
+                f"critical contract version mismatch: {name} must be {version} in v0.2.1"
             )
     for required in (
         '<code>protocol_version = "2.0.0"</code>',
@@ -1153,6 +1157,207 @@ def check_critical_protocol_contracts(text: str, errors: list[str]) -> None:
             errors.append(f"materialization recovery cardinality mismatch: missing {required!r}")
 
 
+def check_crash_restart_outcome_gate(text: str, errors: list[str]) -> tuple[int, int]:
+    """Validate the v0.2.1 crash/restart gate inside its normative sections.
+
+    The frozen document hashes protect reviewed bytes. These scoped checks give
+    gate-specific diagnostics when a mutation weakens the recovery contract.
+    """
+
+    initial_error_count = len(errors)
+    checks = 0
+
+    def require(section: str, label: str, literal: str) -> None:
+        nonlocal checks
+        checks += 1
+        normalized_section = " ".join(re.sub(r"</?code>", "", section).split())
+        normalized_literal = " ".join(re.sub(r"</?code>", "", literal).split())
+        if normalized_literal not in normalized_section:
+            errors.append(
+                f"crash/restart gate {label}: missing normative requirement {literal!r}"
+            )
+
+    start = text.find("### 13.13 Crash/restart outcome gate")
+    end = text.find("## 14. CLI and operator experience", start)
+    checks += 1
+    if start == -1 or end == -1:
+        errors.append(
+            "crash/restart gate section missing or unbounded: expected Section 13.13 before Section 14"
+        )
+        return checks, len(errors) - initial_error_count
+    section = text[start:end]
+
+    outcome_rows = first_table_in_section(
+        text,
+        "### 13.13 Crash/restart outcome gate",
+        "These outcomes are mutually exclusive.",
+    )
+    expected_outcomes = (
+        "<code>safe_retry</code>",
+        "<code>explicit_rollback</code>",
+        "<code>recoverable_parked_state</code>",
+    )
+    actual_outcomes = tuple(row[0] for row in outcome_rows if row)
+    checks += 1
+    if actual_outcomes != expected_outcomes:
+        errors.append(
+            "crash/restart gate outcome registry mismatch: expected exactly and only "
+            f"{expected_outcomes}, got {actual_outcomes}"
+        )
+
+    required_outcome_clauses = (
+        (
+            "safe_retry identity-preserving replay",
+            "using every caller-stable operation/materialization/transaction/bridge ID and byte-identical immutable input",
+        ),
+        (
+            "safe_retry effect reconciliation",
+            "A retry MUST reconcile an uncertain external effect before issuing it again",
+        ),
+        (
+            "safe_retry allocation prohibition",
+            "MUST NOT allocate another process, manager, native handle, lease epoch, staging authority, or transaction root",
+        ),
+        (
+            "explicit_rollback durability and visibility",
+            "The terminal rollback/abort result is durable and visible through the existing journal, event, CLI/status, and audit surfaces",
+        ),
+        (
+            "explicit_rollback inactive external effect",
+            "no live provider/manager effect",
+        ),
+        (
+            "recoverable_parked_state fail-closed activation block",
+            "it fails closed",
+        ),
+        (
+            "recoverable_parked_state activation prohibition",
+            "input and activation are blocked",
+        ),
+        (
+            "recoverable_parked_state fresh-session evidence",
+            "proof that no new native session or manager was allocated",
+        ),
+        ("outcome mutual exclusivity", "These outcomes are mutually exclusive"),
+        ("outcome collective exhaustiveness", "They are collectively exhaustive"),
+        (
+            "ambiguous evidence parks",
+            "missing, stale, contradictory, unreachable, or ambiguous evidence MUST select recoverable_parked_state",
+        ),
+        (
+            "no fourth outcome",
+            "MUST NOT invent a fourth recovery outcome or report an unclassified successful restart",
+        ),
+        (
+            "durable-write injection side",
+            "after the named phase's durable write, before the next phase",
+        ),
+        (
+            "external-effect injection side",
+            "after the named external effect may have happened, before its result is durable",
+        ),
+    )
+    for label, literal in required_outcome_clauses:
+        require(section, label, literal)
+
+    evidence_fields = (
+        "boundary ID",
+        "path",
+        "operation IDs",
+        "pre/post durable facts",
+        "external effect and status probe",
+        "winning lease before/after",
+        "native identity/binding before/after",
+        "selected outcome",
+        "evidence satisfying that outcome",
+    )
+    for field in evidence_fields:
+        require(section, f"classification evidence field {field}", field)
+
+    expected_boundaries = (
+        "<code>CR-LAUNCH-D-01..05</code>",
+        "<code>CR-LAUNCH-TB-01..03</code>",
+        "<code>CR-SYNC-01..07</code>",
+        "<code>CR-MAT-01..08</code>",
+        "<code>CR-GRACE-01..13</code>",
+        "<code>CR-FORCE-01..07</code>",
+        "<code>CR-FORCE-D-01..05</code>",
+        "<code>CR-FORCE-TB-01..04</code>",
+        "<code>CR-FORK-01..08</code>",
+        "<code>CR-STOP-01..05</code>",
+        "<code>CR-RESUME-01..06</code>",
+        "<code>CR-RESTORE-01..07</code>",
+    )
+    actual_boundaries = tuple(
+        table_cells(line)[0]
+        for line in section.splitlines()
+        if line.startswith("| <code>CR-")
+    )
+    checks += 1
+    if actual_boundaries != expected_boundaries:
+        errors.append(
+            "crash/restart gate boundary registry mismatch: expected the closed 78-point "
+            f"registry {expected_boundaries}, got {actual_boundaries}"
+        )
+
+    for label, literal in (
+        (
+            "duplicate-owner prohibition",
+            "two hosts or two native processes/managers can both be treated as live or authoritative for the same logical session",
+        ),
+        (
+            "unfenced continuation is not safe_retry",
+            "A losing or unfenced external continuation is not safe_retry",
+        ),
+        (
+            "fresh native identity prohibition",
+            "invokes a new-session launch, allocates a fresh native handle or manager reference, relabels blank state, or resumes a different provider/account realm",
+        ),
+        (
+            "fresh native substitution rejects every outcome",
+            "Such substitution is never a successful retry, rollback, or parked recovery",
+        ),
+    ):
+        require(section, label, literal)
+
+    acceptance_start = text.find("### 19.4 End-to-end acceptance cases")
+    acceptance_end = text.find("### 19.5 ", acceptance_start)
+    acceptance = text[acceptance_start:acceptance_end] if acceptance_start != -1 and acceptance_end != -1 else ""
+    for label, literal in (
+        ("runtime acceptance case", "AC-CRASH-001"),
+        ("runtime exact classification", "classifies into exactly one of"),
+        ("runtime duplicate-owner rejection", "duplicate live/authoritative owners"),
+        ("runtime unfenced-effect rejection", "unfenced external continuation as safe"),
+        ("runtime native identity preservation", "fresh native provider/manager session"),
+    ):
+        require(acceptance, label, literal)
+
+    publication_start = text.find("### 20.2 Publication gate")
+    publication_end = text.find("## Appendix A.", publication_start)
+    publication = text[publication_start:publication_end] if publication_start != -1 and publication_end != -1 else ""
+    for label, literal in (
+        ("publication acceptance case", "SPEC-PUB-CRASH-001"),
+        ("publication outcome semantics", "mutually exclusive and collectively exhaustive"),
+        ("publication boundary coverage", "every boundary family and required evidence field is present"),
+        ("publication owner/identity rejection", "duplicate-owner and silent-fresh-native-session recovery are forbidden"),
+        ("publication actionable mutation diagnostic", "rather than only reporting a generic document digest mismatch"),
+    ):
+        require(publication, label, literal)
+
+    trace_start = text.find("### A.8 Crash/restart outcome-gate traceability")
+    trace_end = text.find("## Appendix B.", trace_start)
+    trace = text[trace_start:trace_end] if trace_start != -1 and trace_end != -1 else ""
+    for label, literal in (
+        ("task traceability", "TASK-260823-22b7zx"),
+        ("runtime traceability", "AC-CRASH-001"),
+        ("publication traceability", "SPEC-PUB-CRASH-001"),
+        ("wire compatibility traceability", "retain every wire-contract version"),
+    ):
+        require(trace, label, literal)
+
+    return checks, len(errors) - initial_error_count
+
+
 def check_semantic_coverage(text: str, errors: list[str]) -> tuple[int, int, int, dict[str,int]]:
     # Run exact registry checks first
     ledger = check_exact_registries(text, errors)
@@ -1178,7 +1383,7 @@ def check_semantic_coverage(text: str, errors: list[str]) -> tuple[int, int, int
     for provider in ["Codex", "Claude", "Gemini", "Muse", "Antigravity", "Pi"]:
         gate.has(f"provider {provider} row", provider)
     gate.normalized_has("Qwen task-board only", "Qwen through task-board")
-    gate.normalized_has("no direct qwen claim", "no v0.2.0 direct")
+    gate.normalized_has("no direct qwen claim", "no v0.2.1 direct")
     gate.has("ax-provider-qwen prohibited", "ax-provider-qwen")
     gate.normalized_has("Claude appserver unsupported", "appserver")
     gate.normalized_has("prompt_spawn capability", "prompt_spawn")
@@ -1321,6 +1526,7 @@ def main() -> int:
     check_balanced_fences(errors)
     check_jcs_canonicalizer(errors)
     check_critical_protocol_contracts(text, errors)
+    crash_checks, crash_failures = check_crash_restart_outcome_gate(text, errors)
 
     lines = text.splitlines()
     headings = sum(1 for line in lines if re.match(r"^#{1,6} ", line))
@@ -1363,6 +1569,9 @@ def main() -> int:
         errors.append(f"too few registered self-identities: {identity_count} (expected >= 10, accepted 20)")
 
     checks, failed, passed, ledger = check_semantic_coverage(text, errors)
+    checks += crash_checks
+    failed += crash_failures
+    passed += crash_checks - crash_failures
 
     local_link_count = 0
     for doc in [SPEC, README, CONTRIBUTING, DIAGRAMS_README]:
