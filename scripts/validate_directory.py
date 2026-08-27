@@ -521,19 +521,28 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         "identity vector coverage must contain exactly one vector for every immutable directory schema",
     )
 
-    def path_values(value: object, path: tuple[str, ...], location: str) -> list[tuple[object, str]]:
+    def path_values(
+        value: object,
+        path: tuple[str, ...],
+        location: str,
+    ) -> tuple[list[tuple[object, str]], list[tuple[str, bool]]]:
         if not path:
-            return [(value, location)]
+            return [(value, location)], []
         head, *tail = path
         if head == "*":
             if not isinstance(value, list):
-                return []
+                return [], [(location, value is None)]
             found: list[tuple[object, str]] = []
+            missing: list[tuple[str, bool]] = []
             for index, child in enumerate(value):
-                found.extend(path_values(child, tuple(tail), f"{location}[{index}]"))
-            return found
-        if not isinstance(value, dict) or head not in value:
-            return []
+                child_found, child_missing = path_values(child, tuple(tail), f"{location}[{index}]")
+                found.extend(child_found)
+                missing.extend(child_missing)
+            return found, missing
+        if not isinstance(value, dict):
+            return [], [(location, value is None)]
+        if head not in value:
+            return [], [(f"{location}.{head}", False)]
         return path_values(value[head], tuple(tail), f"{location}.{head}")
 
     def valid_uuid(value: object, version: int) -> bool:
@@ -604,7 +613,14 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         if rules is None:
             return
         for path, kind, nullable in rules:
-            for value, value_location in path_values(canonical_input, tuple(path.split(".")), location):
+            values, missing_locations = path_values(canonical_input, tuple(path.split(".")), location)
+            for missing_location, null_parent in missing_locations:
+                need(
+                    "self_id_jcs",
+                    nullable and null_parent,
+                    f"required schema-directed path missing at {missing_location}",
+                )
+            for value, value_location in values:
                 validate_typed_value(kind, value, nullable, value_location)
 
     for row in vectors:

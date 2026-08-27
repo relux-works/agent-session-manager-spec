@@ -1988,6 +1988,18 @@ refresh_frozen_spec_digest "$FIX"
 expect_fail "Directory Node immutable contract history narrowed" "Directory Node contract history missing immutable v1/v2 versions" "$FIX"
 
 echo ""
+echo "Mutation 189: Required nested continuation-step digest is omitted"
+FIX=$(fixture_copy "directory-required-nested-digest-missing")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'del row["canonical_input"]["steps"][0]["input_digest"]'
+expect_fail "required nested schema path omission" "required schema-directed path missing" "$FIX"
+
+echo ""
+echo "Mutation 190: Required nullable generator digest member is omitted"
+FIX=$(fixture_copy "directory-required-nullable-digest-missing")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-enrichment-profile" 'del row["canonical_input"]["generator"]["prompt_digest"]'
+expect_fail "required nullable schema path omission" "required schema-directed path missing" "$FIX"
+
+echo ""
 echo "=========================================="
 echo "Results: $PASS passed, $FAIL failed out of $TOTAL mutations"
 if [ $FAIL -ne 0 ]; then
