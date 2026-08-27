@@ -67,36 +67,36 @@
         "schema": "urn:ax:schema:environment-observation",
         "schema_version": "1.0.0",
         "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
-        "installation_id": "sha256:10",
+        "installation_id": "sha256:1000000000000000000000000000000000000000000000000000000000000000",
         "environment_id": "codex",
         "environment_version": "synthetic-1",
         "provider_id": "codex",
-        "platform": "darwin",
+        "platform": "macos",
         "architecture": "arm64",
-        "backend_realm_fingerprint": "sha256:11",
+        "backend_realm_fingerprint": "sha256:1100000000000000000000000000000000000000000000000000000000000000",
         "capabilities": {},
         "authentication_status": "available",
         "runtime_status": "available",
-        "observed_at": "2026-08-27T00:00:00Z",
+        "observed_at": "2026-08-27T00:00:00.000Z",
         "extensions": {}
       },
-      "expected_id": "sha256:5c9a0236ff0dd07a96f24c9ab472e403a9c818900358e6aaa21921ea8ebffdd7"
+      "expected_id": "sha256:e0836b129157f0272ac427caf6fe9c74349abb745617718ceb37cac2ffaaf901"
     },
     {
       "schema": "urn:ax:schema:native-session-observation",
       "canonical_input": {
         "schema": "urn:ax:schema:native-session-observation",
         "schema_version": "1.0.0",
-        "instance_id": "sha256:20",
+        "instance_id": "sha256:2000000000000000000000000000000000000000000000000000000000000000",
         "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
-        "installation_id": "sha256:10",
+        "installation_id": "sha256:1000000000000000000000000000000000000000000000000000000000000000",
         "observation_sequence": 1,
         "previous_observation_id": null,
         "managed_session_id": null,
         "provider_identity_record_id": null,
         "lineage_anchor_hint": null,
         "source_generation": "synthetic-1",
-        "head_digest": "sha256:21",
+        "head_digest": "sha256:2100000000000000000000000000000000000000000000000000000000000000",
         "identity_confidence": "exact",
         "presence": "present",
         "native_state": "idle",
@@ -104,17 +104,17 @@
         "workspace_identity": null,
         "provider_title": "Synthetic session",
         "created_at": null,
-        "updated_at": "2026-08-27T00:00:00Z",
+        "updated_at": "2026-08-27T00:00:00.000Z",
         "message_counts": {
           "user": 1,
           "assistant": 1
         },
         "preview_status": "current",
         "warnings": [],
-        "observed_at": "2026-08-27T00:00:00Z",
+        "observed_at": "2026-08-27T00:00:00.000Z",
         "extensions": {}
       },
-      "expected_id": "sha256:ec43cb737263ed6241e94584bcadd569216c6a74adb84a92af522d9cf9833174"
+      "expected_id": "sha256:2ff48cb964344b6b65362c8e5173cbe33cf0bd86437832696769b178ba6a96ce"
     },
     {
       "schema": "urn:ax:schema:session-inventory-batch",
@@ -127,28 +127,28 @@
         "cursor_before": null,
         "cursor_after": null,
         "environment_observation_ids": [
-          "sha256:30"
+          "sha256:3000000000000000000000000000000000000000000000000000000000000000"
         ],
         "native_observation_ids": [
-          "sha256:31"
+          "sha256:3100000000000000000000000000000000000000000000000000000000000000"
         ],
         "scan_root_authority_ids": [
-          "sha256:32"
+          "sha256:3200000000000000000000000000000000000000000000000000000000000000"
         ],
         "adapter_builds": [
           {
             "environment_id": "codex",
             "adapter_version": "1.0.0",
-            "executable_sha256": "sha256:33"
+            "executable_sha256": "sha256:3300000000000000000000000000000000000000000000000000000000000000"
           }
         ],
-        "started_at": "2026-08-27T00:00:00Z",
-        "completed_at": "2026-08-27T00:00:01Z",
+        "started_at": "2026-08-27T00:00:00.000Z",
+        "completed_at": "2026-08-27T00:00:01.000Z",
         "partial": false,
         "error_codes": [],
         "extensions": {}
       },
-      "expected_id": "sha256:8d609ff9c0dc120132bcdaedbf3e191321bdc302bfbec9225efde462ec8258b0"
+      "expected_id": "sha256:95f4fe31583c7aa75d1c865d02ade2cc376410b20f1c94af038976bd5f249388"
     },
     {
       "schema": "urn:ax:schema:conversation-lineage-link",
@@ -163,14 +163,14 @@
         "canonical_anchor_id": "0198f4c8-1111-7111-8111-1234567890ab",
         "member_root_id": "0198f4c8-2222-7222-8222-1234567890ab",
         "evidence_ids": [
-          "sha256:40"
+          "sha256:4000000000000000000000000000000000000000000000000000000000000000"
         ],
         "supersedes_link_ids": [],
         "authorized_by_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
-        "created_at": "2026-08-27T00:00:00Z",
+        "created_at": "2026-08-27T00:00:00.000Z",
         "extensions": {}
       },
-      "expected_id": "sha256:5e2b163bedc82979d80077a1baaa8621da525ded37ee4e3aeae6643618959b3d"
+      "expected_id": "sha256:8d6d09570cc321c06ca6e54ce4e24078ec97a25754bf390d1926e68314f0ac9d"
     },
     {
       "schema": "urn:ax:schema:session-annotation",
@@ -178,7 +178,7 @@
         "schema": "urn:ax:schema:session-annotation",
         "schema_version": "1.0.0",
         "subject_kind": "native_instance",
-        "subject_id": "sha256:20",
+        "subject_id": "sha256:2000000000000000000000000000000000000000000000000000000000000000",
         "binding": "identity",
         "subject_head_digest": null,
         "kind": "manual_title",
@@ -191,16 +191,16 @@
         "generator": null,
         "evidence_ids": [],
         "redaction_summary": {
-          "policy_digest": "sha256:50",
+          "policy_digest": "sha256:5000000000000000000000000000000000000000000000000000000000000000",
           "classes": [],
           "class_counts": {},
           "extensions": {}
         },
         "supersedes_annotation_ids": [],
-        "created_at": "2026-08-27T00:00:00Z",
+        "created_at": "2026-08-27T00:00:00.000Z",
         "extensions": {}
       },
-      "expected_id": "sha256:4c4be27569dde08f77193d90b705d51f734b519dec71acc395118a55208d84af"
+      "expected_id": "sha256:16b28e36272a2d21df8ac1a8c904470af0a4c836b62eba28dd4fe09b90aea88a"
     },
     {
       "schema": "urn:ax:schema:session-enrichment-profile",
@@ -220,7 +220,7 @@
         "max_events": 200,
         "max_bytes": 262144,
         "delta_window_events": 0,
-        "redaction_policy_id": "sha256:60",
+        "redaction_policy_id": "sha256:6000000000000000000000000000000000000000000000000000000000000000",
         "generator_kind": "deterministic",
         "generator": {
           "kind": "deterministic",
@@ -244,7 +244,7 @@
         "stale_after_seconds": 3600,
         "extensions": {}
       },
-      "expected_id": "sha256:5b93e72f9940e16af6fc75c322bdb2c2bc564c9a1703bd29e406d8b48ea0a5cb"
+      "expected_id": "sha256:59f79bd1b6e5ba24540ee9a2a0bb729b5030f8baff3e2b8c1a13dfea0c648fb9"
     },
     {
       "schema": "urn:ax:schema:session-enrichment-job-request",
@@ -253,24 +253,24 @@
         "schema_version": "1.0.0",
         "job_id": "0198f4c8-3333-7333-8333-1234567890ab",
         "subject_kind": "native_instance",
-        "subject_id": "sha256:20",
-        "expected_head_digest": "sha256:21",
+        "subject_id": "sha256:2000000000000000000000000000000000000000000000000000000000000000",
+        "expected_head_digest": "sha256:2100000000000000000000000000000000000000000000000000000000000000",
         "source_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
-        "source_instance_id": "sha256:20",
-        "profile_id": "sha256:61",
+        "source_instance_id": "sha256:2000000000000000000000000000000000000000000000000000000000000000",
+        "profile_id": "sha256:6100000000000000000000000000000000000000000000000000000000000000",
         "requested_kinds": [
           "summary"
         ],
         "prior_annotation_ids": [],
         "delta_start_evidence_id": null,
-        "idempotency_key": "sha256:62",
+        "idempotency_key": "sha256:6200000000000000000000000000000000000000000000000000000000000000",
         "requester": "synthetic-fixture",
         "priority": 50,
-        "deadline": "2026-08-27T00:05:00Z",
-        "created_at": "2026-08-27T00:00:00Z",
+        "deadline": "2026-08-27T00:05:00.000Z",
+        "created_at": "2026-08-27T00:00:00.000Z",
         "extensions": {}
       },
-      "expected_id": "sha256:335680508467560c27e59262a4155047f37451caf6b5ebe0cde153fd2e7cf261"
+      "expected_id": "sha256:7a82411db9736138883efa5fd93d0f2f271f779cdb547c68aafdf520a6d9e90a"
     },
     {
       "schema": "urn:ax:schema:session-enrichment-job-receipt",
@@ -278,21 +278,21 @@
         "schema": "urn:ax:schema:session-enrichment-job-receipt",
         "schema_version": "1.0.0",
         "previous_job_receipt_id": null,
-        "job_request_id": "sha256:70",
+        "job_request_id": "sha256:7000000000000000000000000000000000000000000000000000000000000000",
         "job_id": "0198f4c8-3333-7333-8333-1234567890ab",
-        "profile_id": "sha256:61",
-        "subject_head_digest": "sha256:21",
+        "profile_id": "sha256:6100000000000000000000000000000000000000000000000000000000000000",
+        "subject_head_digest": "sha256:2100000000000000000000000000000000000000000000000000000000000000",
         "state": "queued",
         "claim_host_id": null,
         "claim_lease_id": null,
         "claim_attempt": 0,
         "claim_acquired_at": null,
         "claim_expires_at": null,
-        "receipt_at": "2026-08-27T00:00:00Z",
+        "receipt_at": "2026-08-27T00:00:00.000Z",
         "input_event_count": 0,
         "input_byte_count": 0,
         "redaction_summary": {
-          "policy_digest": "sha256:50",
+          "policy_digest": "sha256:5000000000000000000000000000000000000000000000000000000000000000",
           "classes": [],
           "class_counts": {},
           "extensions": {}
@@ -314,7 +314,7 @@
         "superseded_by_head_digest": null,
         "extensions": {}
       },
-      "expected_id": "sha256:8b122ae53e004c20be93f3c3f27e1649e90bb52b2b252c755cb3e27f260b3337"
+      "expected_id": "sha256:11b046302c70a5c4f5f6d7c585543b7454d8bf38708cf09af76347c86da697fd"
     },
     {
       "schema": "urn:ax:schema:session-continuation-plan",
@@ -322,15 +322,15 @@
         "schema": "urn:ax:schema:session-continuation-plan",
         "schema_version": "1.0.0",
         "operation_id": "0198f4c8-4444-7444-8444-1234567890ab",
-        "created_at": "2026-08-27T00:00:00Z",
-        "expires_at": "2026-08-27T00:05:00Z",
-        "entry_id": "sha256:80",
-        "lineage_anchor_id": "sha256:81",
+        "created_at": "2026-08-27T00:00:00.000Z",
+        "expires_at": "2026-08-27T00:05:00.000Z",
+        "entry_id": "sha256:8000000000000000000000000000000000000000000000000000000000000000",
+        "lineage_anchor_id": "sha256:8100000000000000000000000000000000000000000000000000000000000000",
         "source_session_id": null,
-        "source_instance_id": "sha256:20",
+        "source_instance_id": "sha256:2000000000000000000000000000000000000000000000000000000000000000",
         "source_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
-        "source_observation_id": "sha256:82",
-        "source_head_digest": "sha256:21",
+        "source_observation_id": "sha256:8200000000000000000000000000000000000000000000000000000000000000",
+        "source_head_digest": "sha256:2100000000000000000000000000000000000000000000000000000000000000",
         "source_lease": null,
         "source_checkpoint_id": null,
         "source_runtime": {
@@ -338,16 +338,16 @@
           "resumability": "validated",
           "managed_runtime_ref": null,
           "evidence_kind": "native_observation",
-          "evidence_id": "sha256:82",
-          "observed_at": "2026-08-27T00:00:00Z",
+          "evidence_id": "sha256:8200000000000000000000000000000000000000000000000000000000000000",
+          "observed_at": "2026-08-27T00:00:00.000Z",
           "extensions": {}
         },
         "target": {
           "host_id": "0198f4c8-5555-7555-8555-1234567890ab",
-          "installation_id": "sha256:83",
+          "installation_id": "sha256:8300000000000000000000000000000000000000000000000000000000000000",
           "environment_tuple": {},
           "provider_id": "claude",
-          "backend_realm_fingerprint": "sha256:84",
+          "backend_realm_fingerprint": "sha256:8400000000000000000000000000000000000000000000000000000000000000",
           "authentication_status": "available",
           "reachability": "reachable",
           "extensions": {}
@@ -362,14 +362,14 @@
           "materialization_plan_id": null,
           "extensions": {}
         },
-        "policy_digest": "sha256:85",
+        "policy_digest": "sha256:8500000000000000000000000000000000000000000000000000000000000000",
         "intent": "clone",
         "route": "cross_environment_clone",
         "steps": [
           {
             "step_id": "validate",
             "subsystem": "directory",
-            "input_digest": "sha256:86",
+            "input_digest": "sha256:8600000000000000000000000000000000000000000000000000000000000000",
             "prerequisite_step_ids": [],
             "retry_policy": "never",
             "mutation": "read_only",
@@ -378,8 +378,8 @@
           }
         ],
         "adoption_plan_id": null,
-        "projection_plan_id": "sha256:87",
-        "fidelity_report_id": "sha256:88",
+        "projection_plan_id": "sha256:8700000000000000000000000000000000000000000000000000000000000000",
+        "fidelity_report_id": "sha256:8800000000000000000000000000000000000000000000000000000000000000",
         "expected_bytes": 0,
         "expected_model_calls": 0,
         "expected_processes": 1,
@@ -393,12 +393,12 @@
         ],
         "confirmations": [],
         "allowed_fallback_outcomes": [],
-        "request_digest": "sha256:89",
-        "adapter_digest": "sha256:8a",
-        "controller_digest": "sha256:8b",
+        "request_digest": "sha256:8900000000000000000000000000000000000000000000000000000000000000",
+        "adapter_digest": "sha256:8a00000000000000000000000000000000000000000000000000000000000000",
+        "controller_digest": "sha256:8b00000000000000000000000000000000000000000000000000000000000000",
         "extensions": {}
       },
-      "expected_id": "sha256:6f02a928420606e1160dc9e1f02fb9267097deeeb0c5bb72ad7c6987eaec2c96"
+      "expected_id": "sha256:7d69c88677d56c166feb42d34ef1fcbe2565856350d3074a360138d1230cb865"
     },
     {
       "schema": "urn:ax:schema:session-directory-operation-receipt",
@@ -407,20 +407,20 @@
         "schema_version": "1.0.0",
         "previous_directory_receipt_id": null,
         "operation_id": "0198f4c8-4444-7444-8444-1234567890ab",
-        "plan_id": "sha256:90",
-        "request_digest": "sha256:89",
+        "plan_id": "sha256:9000000000000000000000000000000000000000000000000000000000000000",
+        "request_digest": "sha256:8900000000000000000000000000000000000000000000000000000000000000",
         "actor": "synthetic-fixture",
         "initiating_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
         "responsible_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
         "step_index": 0,
         "step_id": "validate",
-        "idempotency_key": "sha256:91",
+        "idempotency_key": "sha256:9100000000000000000000000000000000000000000000000000000000000000",
         "validated_source": {
           "session_id": null,
-          "instance_id": "sha256:20",
+          "instance_id": "sha256:2000000000000000000000000000000000000000000000000000000000000000",
           "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
-          "observation_id": "sha256:82",
-          "head_digest": "sha256:21",
+          "observation_id": "sha256:8200000000000000000000000000000000000000000000000000000000000000",
+          "head_digest": "sha256:2100000000000000000000000000000000000000000000000000000000000000",
           "lease_id": null,
           "lease_epoch": null,
           "checkpoint_id": null,
@@ -429,8 +429,8 @@
             "resumability": "validated",
             "managed_runtime_ref": null,
             "evidence_kind": "native_observation",
-            "evidence_id": "sha256:82",
-            "observed_at": "2026-08-27T00:00:00Z",
+            "evidence_id": "sha256:8200000000000000000000000000000000000000000000000000000000000000",
+            "observed_at": "2026-08-27T00:00:00.000Z",
             "extensions": {}
           },
           "extensions": {}
@@ -438,17 +438,17 @@
         "validated_target": {
           "target": {
             "host_id": "0198f4c8-5555-7555-8555-1234567890ab",
-            "installation_id": "sha256:83",
+            "installation_id": "sha256:8300000000000000000000000000000000000000000000000000000000000000",
             "environment_tuple": {},
             "provider_id": "claude",
-            "backend_realm_fingerprint": "sha256:84",
+            "backend_realm_fingerprint": "sha256:8400000000000000000000000000000000000000000000000000000000000000",
             "authentication_status": "available",
             "reachability": "reachable",
             "extensions": {}
           },
-          "environment_observation_id": "sha256:92",
+          "environment_observation_id": "sha256:9200000000000000000000000000000000000000000000000000000000000000",
           "capability_evidence_ids": [
-            "sha256:93"
+            "sha256:9300000000000000000000000000000000000000000000000000000000000000"
           ],
           "workspace": {
             "workspace_group_id": null,
@@ -460,7 +460,7 @@
             "materialization_plan_id": null,
             "extensions": {}
           },
-          "policy_digest": "sha256:85",
+          "policy_digest": "sha256:8500000000000000000000000000000000000000000000000000000000000000",
           "contract_assertions": [
             {
               "contract_id": "urn:ax:schema:projection-plan",
@@ -468,7 +468,7 @@
               "extensions": {}
             }
           ],
-          "validated_at": "2026-08-27T00:00:00Z",
+          "validated_at": "2026-08-27T00:00:00.000Z",
           "extensions": {}
         },
         "effect_receipt_ids": [],
@@ -478,16 +478,16 @@
         "durable_effects": [],
         "compensations": [],
         "outcome": null,
-        "created_at": "2026-08-27T00:00:00Z",
+        "created_at": "2026-08-27T00:00:00.000Z",
         "extensions": {}
       },
-      "expected_id": "sha256:cf8f1771bc1b33b93c1e9b0353be000b7caf22d10f8144c2af0c61e7fac6c06c"
+      "expected_id": "sha256:82e943f52c2dd61702dbe4a4a77ee46f182daa0d512b9e045d88797487d4bd01"
     }
   ],
   "sorted_id_fixture": [
-    "sha256:01",
-    "sha256:02",
-    "sha256:03"
+    "sha256:0100000000000000000000000000000000000000000000000000000000000000",
+    "sha256:0200000000000000000000000000000000000000000000000000000000000000",
+    "sha256:0300000000000000000000000000000000000000000000000000000000000000"
   ],
   "strict_examples": {
     "json": true,
@@ -526,7 +526,7 @@
       "deadline_ms",
       "body"
     ],
-    "directory_response": [
+    "directory_response_success": [
       "schema",
       "schema_version",
       "protocol",
@@ -534,7 +534,16 @@
       "request_id",
       "operation",
       "ok",
-      "body",
+      "body"
+    ],
+    "directory_response_failure": [
+      "schema",
+      "schema_version",
+      "protocol",
+      "protocol_version",
+      "request_id",
+      "operation",
+      "ok",
       "error"
     ],
     "environment_observation": [
@@ -1126,6 +1135,16 @@
     "idempotency": {
       "same_mutation_same_input": "same_receipt",
       "same_mutation_changed_input": "idempotency_mismatch"
+    },
+    "platforms": [
+      "macos",
+      "linux",
+      "wsl2",
+      "windows"
+    ],
+    "response_union": {
+      "success": "body_without_error",
+      "failure": "error_without_body"
     }
   },
   "mesh": {
@@ -1233,9 +1252,9 @@
     },
     "merkle_fixture": {
       "ids": [
-        "sha256:01",
-        "sha256:02",
-        "sha256:03"
+        "sha256:0100000000000000000000000000000000000000000000000000000000000000",
+        "sha256:0200000000000000000000000000000000000000000000000000000000000000",
+        "sha256:0300000000000000000000000000000000000000000000000000000000000000"
       ],
       "cardinality": 3
     },
@@ -1262,6 +1281,7 @@
       "evidence_ids"
     ],
     "manual_precedence": true,
+    "generator_discriminators": "must_match",
     "conflict_resolution": "supersede_all_concurrent_heads",
     "clock_is_authority": false
   },
@@ -1355,7 +1375,14 @@
     ],
     "suggested_relation_authoritative": false,
     "cycles_allowed": false,
-    "ambiguity": "visible_until_explicit_resolution"
+    "ambiguity": "visible_until_explicit_resolution",
+    "representative": {
+      "required_for_lineage_row": true,
+      "singular_fields_bind_to_representative": true,
+      "selection_is_authority": false,
+      "clock_is_tiebreaker": false,
+      "stable_final_tiebreaker": "member_id_bytewise"
+    }
   },
   "disclosure": {
     "modes": [
@@ -1458,9 +1485,11 @@
   ],
   "remote_unmanaged": {
     "open_allowed": false,
+    "move_allowed": false,
     "alternatives": [
       "source_local_adoption",
-      "managed_clone"
+      "managed_clone",
+      "adoption_then_managed_move"
     ]
   },
   "cloning": {
@@ -1508,7 +1537,47 @@
     ],
     "delete_mutation": false,
     "default_contains_raw_transcript": false,
-    "tui_uses_typed_engine": true
+    "tui_uses_typed_engine": true,
+    "human_cli_leaves": [
+      "list",
+      "inspect",
+      "lineage",
+      "scan",
+      "enrich",
+      "jobs",
+      "plan",
+      "continue",
+      "operation",
+      "attach",
+      "doctor"
+    ],
+    "agent_cli_leaves": [
+      "q",
+      "grep",
+      "m"
+    ],
+    "query_correlation": {
+      "request": [
+        {
+          "operation_index": 0,
+          "name": "sessions"
+        },
+        {
+          "operation_index": 1,
+          "name": "count"
+        }
+      ],
+      "response": [
+        {
+          "operation_index": 0,
+          "operation_name": "sessions"
+        },
+        {
+          "operation_index": 1,
+          "operation_name": "count"
+        }
+      ]
+    }
   },
   "tuple_matrix": {
     "claude-code/claude/macos/arm64": "acceptance_required",
@@ -1580,7 +1649,7 @@
     "AC-DIR-SEC-001"
   ],
   "publication": {
-    "spec_version": "0.4.0",
+    "spec_version": "0.4.1",
     "frozen_digest_owner": "publication-task",
     "required_documents": [
       "SPEC.md",
@@ -1591,7 +1660,7 @@
       "VERSION",
       "STANDALONE_TO_AX_TRACEABILITY.md"
     ],
-    "claim": "AX v0.4.0 Session Directory is specification-only until conforming implementations publish tuple evidence."
+    "claim": "AX v0.4.1 Session Directory is specification-only until conforming implementations publish tuple evidence."
   },
   "closed_body_unions": {
     "directory_node_request": {
@@ -2348,7 +2417,7 @@
       {
         "case": "manual_title",
         "heads": [
-          "sha256:a1"
+          "sha256:a100000000000000000000000000000000000000000000000000000000000000"
         ],
         "expected_source": "manual",
         "conflict": false
@@ -2356,7 +2425,7 @@
       {
         "case": "provider_title",
         "heads": [
-          "sha256:a2"
+          "sha256:a200000000000000000000000000000000000000000000000000000000000000"
         ],
         "expected_source": "provider",
         "conflict": false
@@ -2364,7 +2433,7 @@
       {
         "case": "generated_title",
         "heads": [
-          "sha256:a3"
+          "sha256:a300000000000000000000000000000000000000000000000000000000000000"
         ],
         "expected_source": "generated",
         "conflict": false
@@ -2378,8 +2447,8 @@
       {
         "case": "concurrent_manual_heads",
         "heads": [
-          "sha256:a4",
-          "sha256:a5"
+          "sha256:a400000000000000000000000000000000000000000000000000000000000000",
+          "sha256:a500000000000000000000000000000000000000000000000000000000000000"
         ],
         "expected_source": "manual",
         "conflict": true
@@ -2445,16 +2514,16 @@
       {
         "case": "reorder",
         "input_ids": [
-          "sha256:b2",
-          "sha256:b1"
+          "sha256:b200000000000000000000000000000000000000000000000000000000000000",
+          "sha256:b100000000000000000000000000000000000000000000000000000000000000"
         ],
         "expected": "bytewise_sorted"
       },
       {
         "case": "duplicate",
         "input_ids": [
-          "sha256:b1",
-          "sha256:b1"
+          "sha256:b100000000000000000000000000000000000000000000000000000000000000",
+          "sha256:b100000000000000000000000000000000000000000000000000000000000000"
         ],
         "expected": "deduplicated"
       },
@@ -2478,15 +2547,16 @@
       {
         "case": "clock_skew",
         "timestamps": [
-          "2026-08-27T01:00:00Z",
-          "2026-08-27T00:00:00Z"
+          "2026-08-27T01:00:00.000Z",
+          "2026-08-27T00:00:00.000Z"
         ],
         "expected": "predecessor_chain_wins"
       }
     ],
     "routes": [
       {
-        "route": "managed_local_attach",
+      "route": "managed_local_attach",
+      "source_kind": "managed",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "attached",
@@ -2494,7 +2564,8 @@
         ]
       },
       {
-        "route": "managed_remote_attach",
+      "route": "managed_remote_attach",
+      "source_kind": "managed",
         "scope": "remote",
         "expected_outcomes": [
           "attached",
@@ -2502,7 +2573,8 @@
         ]
       },
       {
-        "route": "managed_local_resume",
+      "route": "managed_local_resume",
+      "source_kind": "managed",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "resumed_managed",
@@ -2510,7 +2582,8 @@
         ]
       },
       {
-        "route": "managed_takeover",
+      "route": "managed_takeover",
+      "source_kind": "managed",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "taken_over",
@@ -2518,7 +2591,8 @@
         ]
       },
       {
-        "route": "managed_fork",
+      "route": "managed_fork",
+      "source_kind": "managed",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "forked",
@@ -2526,7 +2600,8 @@
         ]
       },
       {
-        "route": "adopt_existing_native",
+      "route": "adopt_existing_native",
+      "source_kind": "unmanaged",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "adopted",
@@ -2534,7 +2609,8 @@
         ]
       },
       {
-        "route": "same_environment_clone",
+      "route": "same_environment_clone",
+      "source_kind": "managed_or_unmanaged",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "cloned",
@@ -2542,7 +2618,8 @@
         ]
       },
       {
-        "route": "cross_environment_clone",
+      "route": "cross_environment_clone",
+      "source_kind": "managed_or_unmanaged",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "cloned",
@@ -2550,7 +2627,8 @@
         ]
       },
       {
-        "route": "cross_environment_move",
+      "route": "cross_environment_move",
+      "source_kind": "managed",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "moved_cross_environment",
@@ -2559,7 +2637,8 @@
         ]
       },
       {
-        "route": "open_unmanaged_local",
+      "route": "open_unmanaged_local",
+      "source_kind": "unmanaged",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "opened_unmanaged_local",
@@ -2567,7 +2646,8 @@
         ]
       },
       {
-        "route": "archive_or_context_fallback",
+      "route": "archive_or_context_fallback",
+      "source_kind": "any",
         "scope": "local_or_planned",
         "expected_outcomes": [
           "archive_or_context_fallback",

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Expected-red mutation suite for v0.4.0 ==="
+echo "=== Expected-red mutation suite for v0.4.1 ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -564,25 +564,25 @@ echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.4.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.4.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.4.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.4.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
 printf '\nQwen sessions do not need task-board in v0.2.1.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.4.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.4.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.4.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.4.1 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
@@ -1312,13 +1312,13 @@ echo ""
 echo "Mutation 105: Internal v0.3.0 task ownership ID leaks into public docs"
 FIX=$(fixture_copy "clone-public-internal-task-id")
 printf '\nGate owner: TASK-260826-example.\n' >> "$FIX/README.md"
-expect_fail "public package must not expose active internal task ownership" "stale/internal v0.4.0 publication marker" "$FIX"
+expect_fail "public package must not expose active internal task ownership" "stale/internal v0.4.1 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 106: Stale v0.2.1 diagram-ledger wording returns"
 FIX=$(fixture_copy "clone-stale-diagram-ledger")
 printf '\nUses the unchanged v0.2.1 SHA-256 ledger.\n' >> "$FIX/diagrams/README.md"
-expect_fail "diagram docs must describe the v0.4.0 ledger" "stale/internal v0.4.0 publication marker" "$FIX"
+expect_fail "diagram docs must describe the v0.4.1 ledger" "stale/internal v0.4.1 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 107: Target derivation mutates the source provider identity after digest refresh"
@@ -1631,7 +1631,7 @@ expect_fail "raw transcript in default output" "default output must exclude raw 
 echo ""
 echo "Mutation 139: Unsupported v0.4 implementation claim in README"
 FIX=$(fixture_copy "directory-unsupported-readme-claim")
-printf '\nAX v0.4.0 directory implementation is shipped and available.\n' >> "$FIX/README.md"
+printf '\nAX v0.4.1 directory implementation is shipped and available.\n' >> "$FIX/README.md"
 refresh_frozen_document_digest "$FIX" "README.md"
 expect_fail "unsupported README implementation claim" "README/release claim is not supported by SPEC and fixtures" "$FIX"
 
@@ -1835,6 +1835,72 @@ path.write_text(text.replace(old, new, 1), encoding="utf-8")
 PY
 refresh_frozen_document_digest "$FIX" "STANDALONE_TO_AX_TRACEABILITY.md"
 expect_fail "traceability stale SPEC anchor" "STANDALONE_TO_AX_TRACEABILITY.md: broken anchor '1314-cross-environment-session-cloning' in link to SPEC.md" "$FIX"
+
+echo ""
+echo "Mutation 168: Positive directory vector contains a shortened digest"
+FIX=$(fixture_copy "directory-vector-short-digest")
+mutate_directory_fixture "$FIX" 'data["identity_vectors"][0]["canonical_input"]["installation_id"]="sha256:10"'
+expect_fail "directory vector shortened digest" "invalid SHA-256 digest identifier" "$FIX"
+
+echo ""
+echo "Mutation 169: Positive directory vector timestamp loses millisecond precision"
+FIX=$(fixture_copy "directory-vector-coarse-timestamp")
+mutate_directory_fixture "$FIX" 'data["identity_vectors"][0]["canonical_input"]["observed_at"]="2026-08-27T00:00:00Z"'
+expect_fail "directory vector timestamp without milliseconds" "timestamp must be UTC RFC 3339 with at least millisecond precision" "$FIX"
+
+echo ""
+echo "Mutation 170: Environment Observation uses non-AX darwin platform"
+FIX=$(fixture_copy "directory-vector-darwin-platform")
+mutate_directory_fixture "$FIX" 'data["identity_vectors"][0]["canonical_input"]["platform"]="darwin"'
+expect_fail "directory vector non-AX platform" "platform must use the AX enum macos|linux|wsl2|windows" "$FIX"
+
+echo ""
+echo "Mutation 171: Enrichment profile generator discriminators disagree"
+FIX=$(fixture_copy "directory-generator-discriminator-mismatch")
+mutate_directory_fixture "$FIX" 'data["identity_vectors"][5]["canonical_input"]["generator"]["kind"]="remote_model"'
+expect_fail "enrichment generator discriminator mismatch" "generator_kind must equal generator.kind" "$FIX"
+
+echo ""
+echo "Mutation 172: Directory Node response success admits both body and error"
+FIX=$(fixture_copy "directory-response-body-and-error")
+mutate_directory_fixture "$FIX" 'data["directory_node"]["response_union"]["success"]="body_and_error"'
+expect_fail "Directory Node response body and error" "Directory Node response must be body XOR error" "$FIX"
+
+echo ""
+echo "Mutation 173: Directory Query reuses an operation index"
+FIX=$(fixture_copy "directory-query-duplicate-index")
+mutate_directory_fixture "$FIX" 'data["interfaces"]["query_correlation"]["request"][1]["operation_index"]=0'
+expect_fail "Directory Query duplicate operation index" "operation_index must be unique, contiguous, and equal array position" "$FIX"
+
+echo ""
+echo "Mutation 174: QueryResult name no longer echoes its request"
+FIX=$(fixture_copy "directory-query-result-name-mismatch")
+mutate_directory_fixture "$FIX" 'data["interfaces"]["query_correlation"]["response"][1]["operation_name"]="sessions"'
+expect_fail "QueryResult request correlation mismatch" "QueryResult must preserve request order and exact operation index/name correlation" "$FIX"
+
+echo ""
+echo "Mutation 175: Direct unmanaged cross-environment move is admitted"
+FIX=$(fixture_copy "directory-unmanaged-move-admitted")
+mutate_directory_fixture "$FIX" 'data["remote_unmanaged"]["move_allowed"]=True'
+expect_fail "direct unmanaged move admitted" "direct unmanaged move is forbidden" "$FIX"
+
+echo ""
+echo "Mutation 176: Lineage representative is selected by wall clock"
+FIX=$(fixture_copy "directory-lineage-clock-representative")
+mutate_directory_fixture "$FIX" 'data["lineage"]["representative"]["clock_is_tiebreaker"]=True'
+expect_fail "lineage representative wall-clock selection" "non-authoritative deterministic representative" "$FIX"
+
+echo ""
+echo "Mutation 177: Agent CLI leaf registry omits mutation surface"
+FIX=$(fixture_copy "directory-agent-cli-leaf-missing")
+mutate_directory_fixture "$FIX" 'data["interfaces"]["agent_cli_leaves"].remove("m")'
+expect_fail "agent CLI exact leaf registry narrowed" "human and agent CLI leaf registries mismatch" "$FIX"
+
+echo ""
+echo "Mutation 178: Cross-environment move admits an unmanaged source"
+FIX=$(fixture_copy "directory-route-unmanaged-move")
+mutate_directory_fixture "$FIX" 'next(row for row in data["synthetic_cases"]["routes"] if row["route"] == "cross_environment_move")["source_kind"]="managed_or_unmanaged"'
+expect_fail "cross-environment move source-kind widened" "exact outcome matrix and source-kind" "$FIX"
 
 echo ""
 echo "=========================================="

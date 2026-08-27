@@ -1,6 +1,8 @@
-# Standalone Subsystems to AX v0.4.0 Traceability
+# Standalone Subsystems to AX v0.4.1 Traceability
 
 This document is a non-normative migration index. [SPEC.md](SPEC.md) is the only normative source; this file does not restate or extend its requirements. It accounts for the standalone *Cross-Environment Agent Session Cloning Specification v0.1.0* source identified by SHA-256 `d8e2ef73f6a07ef58219fd2c4e8e16dff681728ec0b153653fc87f1f200af475` and the standalone *AX Session Directory and Orchestration Specification v0.1.0* source identified by SHA-256 `486612e4c1a10dcfc6e75cf17c60beb974c6989b82c333a9350fa1befd1a448f`.
+
+AX v0.4.1 preserves the v0.3.0/v0.4.0 integration mapping below and corrects its implementation baseline without renaming or re-versioning any independently negotiated contract. In particular, direct unmanaged move is superseded by unmanaged clone or source-local adoption followed by a newly planned managed move.
 
 Disposition codes:
 
@@ -154,7 +156,7 @@ accepted mapping authority is
 `.research/260827_session-directory-merge-audit.md` and board outcome
 `TASK-260827-32hife_session-directory-merge-audit.md`.
 
-| Standalone directory section | AX v0.4.0 target | Disposition and migration result |
+| Standalone directory section | AX v0.4.1 target | Disposition and migration result |
 | --- | --- | --- |
 | 1. Conformance, scope, and product boundary | §§1–2, 19 | N/S — product outcomes are integrated and all 45 merge invariants are individually registered as `DIR-INV-01..45`. |
 | 2. Architecture and responsibility boundaries | §§3.1, 7.9, 10.8, 11.8 | R/N — local-first topology is retained; Directory Node is a companion façade backed by the same environment implementation and gains no separate Provider/workspace authority. |
@@ -170,7 +172,7 @@ accepted mapping authority is
 | 12. Mesh catalog and convergence | §§11.4, 11.8, 17.5 | R/N — RPC 3 adds one disjoint `directory_record` namespace and remains dual-stack with RPC 2; no transcript/index server is introduced. |
 | 13. Security and privacy | §§16.1–16.7 | R/N — AX trust/path/process rules are reused and directory disclosure, enrichment, query, log, metric, and terminal exclusions are added. |
 | 14. Errors and exit semantics | §15.3 | N — Structured Error 1.2 adds exact directory codes and bindings without changing older envelopes. |
-| 15. Compatibility and versioning | §§1.5, 17.5 | N/S — v0.4.0 version changes are explicit; the entire v0.3 cloning/workspace/transfer/materialization authority is reused unchanged. |
+| 15. Compatibility and versioning | §§1.5, 17.5 | N/S — v0.4.1 version changes are explicit; the entire v0.3 cloning/workspace/transfer/materialization authority is reused unchanged. |
 | 16. Observability and operation | §§18.1–18.4 | R/N — the open Observation Event 1 grammar is reused and directory lifecycle, doctor, metric, and audit requirements are added. |
 | 17. Conformance and test requirements | §§19.1–19.5, Appendix D | N/S — AX production-path and focused-negative fixture gates replace the standalone harness layout. |
 | 18. AX integration and merge contract | §§1.5, 5, 7.9, 10.8, 11.8, 13.15, 17.5 | N/S — all merge decisions are closed; duplicate Provider/workspace/blob/transfer/materialization/lease/terminal/cloning authority is forbidden. |

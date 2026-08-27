@@ -1,8 +1,8 @@
-# Agent Session Manager (<code>ax</code>) v0.4.0 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.4.1 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.4.0</code> |
+| Specification release | <code>v0.4.1</code> |
 | Document status | Review candidate and implementation contract |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.4.0. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.4.1. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -56,7 +56,7 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
     AX ownership, workspace, transfer, materialization, cloning, and terminal
     authority.
 
-The v0.4.0 product is a Go CLI, optional per-user background service, provider
+The v0.4.1 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -113,7 +113,7 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following versions are active in v0.4.0. Historical Session Record/Event
+The following versions are active in v0.4.1. Historical Session Record/Event
 1.0.0, Materialization Plan 1.0.0, Materialization Journal 2.0.0, CLI Result
 1.0.0, and Structured Error 1.0.0 objects remain readable and immutable.
 
@@ -660,7 +660,7 @@ specification permits them, but cross-platform file transfer/chunking MUST be
 Go-native and MUST NOT depend on <code>rsync</code> or
 <code>robocopy</code>.
 
-The v0.4.0 diagram deliverable MUST render this model as C4 System Context and
+The v0.4.1 diagram deliverable MUST render this model as C4 System Context and
 Container views, including the Directory Control Plane, source-local Directory
 Node, isolated enrichment worker, cloning boundary, and their relationships to
 existing AX authority. Runtime takeover, state, mesh, cloning, directory
@@ -884,8 +884,12 @@ ownership.
 
 ### 5.1 Session Record
 
-The Session Record is immutable and created exactly once. Its schema is
-<code>urn:ax:schema:session-record</code> version <code>1.0.0</code>.
+This subsection defines the immutable Session Record <code>1.0.0</code> base
+variant. It is created exactly once and uses schema
+<code>urn:ax:schema:session-record</code> version <code>1.0.0</code>. Sections
+5.1.1 and 5.1.2 define the independently closed <code>2.0.0</code> and
+<code>3.0.0</code> variants used by clone and unified-derivation writers; they do
+not mutate or widen the base variant.
 
 | Field | Type | Constraint |
 | --- | --- | --- |
@@ -1138,8 +1142,12 @@ place.
 
 ### 5.2 Session Event
 
-Every change after creation is an immutable Session Event with schema
-<code>urn:ax:schema:session-event</code> version <code>1.0.0</code>.
+This subsection defines the immutable Session Event <code>1.0.0</code> base
+variant used for post-creation changes under Session Record 1. It uses schema
+<code>urn:ax:schema:session-event</code> version <code>1.0.0</code>. Sections
+13.14.12 and 13.15 define the independently closed <code>2.0.0</code> and
+<code>3.0.0</code> event variants; a reader MUST select the exact registered
+major and MUST NOT interpret this base definition as their complete schema.
 
 Required fields are <code>event_id</code> digest, <code>subject_id</code> and
 <code>session_id</code> with the same UUID,
@@ -1351,7 +1359,7 @@ An owner process MUST revalidate its fencing token before:
 - resuming after any transport or sleep interruption longer than the configured
   lease refresh interval.
 
-There is no time-expiring ownership lease in v0.4.0. Liveness is not authority.
+There is no time-expiring ownership lease in v0.4.1. Liveness is not authority.
 A host being offline does not make a replica owner; only a takeover or fork
 does.
 
@@ -2991,8 +2999,11 @@ The request envelope contains exactly <code>schema</code>,
 <code>protocol_version</code>, <code>request_id:UUIDv7</code>,
 <code>operation</code>, <code>deadline_ms:uint53[1..3600000]</code>, and the
 closed operation <code>body</code>. The response echoes protocol/version,
-request/operation and contains exactly <code>ok=true</code> plus body or
-<code>ok=false</code> plus Structured Error 1.2.0. Unknown fields, invalid
+request/operation. A success response contains exactly the common envelope
+members, <code>ok=true</code>, and <code>body</code>, with no <code>error</code>
+member. A failure response contains exactly the common envelope members,
+<code>ok=false</code>, and Structured Error 1.2.0 in <code>error</code>, with no
+<code>body</code> member. Unknown fields, both or neither branch members, invalid
 UTF-8/JSON, multiple frames, wrong echo, oversize, timeout, or exit without one
 valid response fail with no partial trusted data. Stdout is protocol-only;
 redacted diagnostics use stderr.
@@ -3034,7 +3045,7 @@ The exact operation registry and bodies are:
 | Operation | Exact request body | Exact success body | Mutation |
 | --- | --- | --- | --- |
 | <code>manifest</code> | empty object | complete Directory Node Manifest | none |
-| <code>probe</code> | <code>{platform:darwin\|linux\|windows,architecture:amd64\|arm64,requested_environment_ids:sorted unique environment-id[0..64],requested_capabilities:sorted unique directory-capability[0..8],extensions}</code> | <code>{host_id:UUIDv7,node_build:DirectoryNodeBuild,policy_digest:digest,environments:EnvironmentObservation[0..256],findings:AdapterFinding[0..4096],extensions}</code> | none |
+| <code>probe</code> | <code>{platform:macos\|linux\|wsl2\|windows,architecture:amd64\|arm64,requested_environment_ids:sorted unique environment-id[0..64],requested_capabilities:sorted unique directory-capability[0..8],extensions}</code> | <code>{host_id:UUIDv7,node_build:DirectoryNodeBuild,policy_digest:digest,environments:EnvironmentObservation[0..256],findings:AdapterFinding[0..4096],extensions}</code> | none |
 | <code>scan</code> | <code>{operation_id:UUIDv7,installation_ids:sorted unique digest[1..256],prior_batch_id:digest|null,cursor:string[1..4096]|null,max_instances:uint53[1..65536],extensions}</code> | <code>{batch:InventoryBatch,environment_observation_ids:sorted unique digest[1..256],native_observation_ids:sorted unique digest[0..65536],next_cursor:string[1..4096]|null,extensions}</code> | directory records only |
 | <code>inventory</code> | <code>{installation_ids:sorted unique digest[1..256],fields:sorted unique observation-field[1..32],after:string[1..4096]|null,take:uint53[1..1000],extensions}</code> | <code>{observations:NativeSessionObservation[0..1000],next_cursor:string[1..4096]|null,partial:boolean,extensions}</code> | none |
 | <code>preview</code> | <code>{instance_id:digest,expected_observation_id:digest,expected_head_digest:digest,roles:sorted unique user\|assistant[1..2],excerpt_count:uint53[0..20],excerpt_bytes:uint53[0..4096],redaction_policy_id:digest,extensions}</code> | <code>{host_id:UUIDv7,instance_id:digest,observation_id:digest,head_digest:digest,excerpts:PreviewExcerpt[0..20],truncated:boolean,redaction_summary:RedactionSummary,freshness:DirectoryFreshness,extensions}</code> | none |
@@ -5669,6 +5680,12 @@ Session Enrichment Profile contains exactly <code>schema</code>,
 <code>extensions</code>. Remote model requires configured endpoint and explicit
 data policy; the default profile is deterministic/public-user-and-assistant,
 has <code>network_policy=none</code>, and there is no silent remote generator.
+<code>generator_kind</code> MUST equal <code>generator.kind</code>. A mismatch is
+an invalid profile and MUST fail before disclosure policy evaluation, endpoint
+selection, model invocation, external-command execution, or worker launch; an
+implementation MUST NOT choose either discriminator as a fallback. The
+redundant top-level discriminator remains only for the closed 1.0.0 wire shape
+and may be removed only by a future major version.
 When <code>incremental_policy=disabled</code>,
 <code>delta_window_events</code>, both <code>full_rebuild_after_*</code>
 members are zero, and <code>minimum_incremental_confidence</code> is null. When
@@ -6021,6 +6038,11 @@ below, <code>fields:sorted unique directory-field[0..128]|null</code>,
 <code>sort:QuerySort[0..8]</code>, <code>dry_run:boolean</code>,
 <code>confirm:boolean</code>, <code>expectation_digest:digest|null</code>,
 <code>idempotency_key:digest|null</code>, and <code>extensions</code>.
+For a Directory Query containing <code>N</code> operations, each
+<code>operation_index</code> MUST equal that operation's zero-based array
+position; the indexes therefore form the unique contiguous sequence
+<code>0..N-1</code>. Duplicate, sparse, reordered, or position-mismatched indexes
+invalidate the whole query before any operation executes.
 <code>fields</code> and <code>preset</code> are mutually exclusive; both are
 null for mutations and count. Read operations require
 <code>dry_run=false</code>, <code>confirm=false</code>, and null expectation and
@@ -6146,9 +6168,26 @@ The exact result projection types are:
   <code>branch_count:uint53</code>, <code>clone_count:uint53</code>,
   <code>warnings:sorted unique string[0..256]</code>,
   <code>available_intents:sorted unique attach|resume|takeover|fork|adopt|clone|move|open_unmanaged|archive_context[0..9]</code>,
-  and <code>extensions</code>. Exactly one selected ID is non-null for physical
-  rows; a lineage row may have both null. <code>SummaryPayload</code> is the
-  exact summary payload defined in Section 10.8.2.
+  and <code>extensions</code>. Exactly one selected ID is non-null for every
+  physical row and every non-empty lineage row. For a lineage row it identifies
+  the representative member from which the singular provider, environment,
+  host, workspace, owner, state, activity, freshness, reachability,
+  authentication, and available-intent fields are projected. An explicit valid
+  caller selection wins; otherwise the local projection sorts eligible members
+  by reachability (<code>local</code>, <code>reachable</code>,
+  <code>unreachable</code>, <code>unknown</code>), management state
+  (<code>managed</code>, <code>unmanaged</code>, <code>conflicted</code>),
+  resumability (<code>validated</code>, <code>likely</code>,
+  <code>unknown</code>, <code>unavailable</code>), member kind
+  (<code>ax_session</code>, <code>native_instance</code>), then the bytewise
+  stable member ID. This representative is derived presentation state, is
+  exposed by the selected ID and <code>LineageNode.selected</code>, and creates
+  no lineage, identity, lease, or ownership authority. Wall-clock recency never
+  selects it. <code>SummaryPayload</code> is the exact summary payload defined in
+  Section 10.8.2. When the representative is unmanaged,
+  <code>available_intents</code> MUST omit <code>move</code> until source-local
+  adoption has created the managed Session, lease, and Checkpoint required by
+  the managed move route.
 - <code>LineageNode</code>: <code>node_kind:ax_session|native_instance</code>,
   matching <code>node_id:UUIDv7|digest</code>,
   <code>anchor_id:UUIDv7|digest</code>, <code>head_digest:digest</code>,
@@ -6204,6 +6243,13 @@ from the table above; schema references cannot loosen those shapes.
 <code>operation_index:uint53[0..63]</code>, <code>operation_name</code> from the
 closed operation registry, <code>result_tag</code> from the union below,
 <code>body</code> matching that tag, and <code>extensions</code>:
+
+The response contains exactly one <code>QueryResult</code> for every request
+operation, in the same array order. Its <code>operation_index</code> and
+<code>operation_name</code> MUST exactly echo the corresponding request
+operation. Missing, duplicate, sparse, reordered, or name-mismatched results
+invalidate the complete response; a client MUST NOT correlate by arrival time
+or message text.
 
 | Result tag | Exact <code>body</code> members |
 | --- | --- |
@@ -9194,7 +9240,7 @@ The deterministic route matrix is:
 | Unmanaged exact instance / adopt | owning host only | <code>adopt_existing_native</code>; gated transaction below |
 | Managed or unmanaged / clone | same environment | <code>same_environment_clone</code>; safe native fast path or v0.3 canonical pipeline |
 | Managed or unmanaged / clone | different environment | <code>cross_environment_clone</code>; Section 13.14 plus AX transfer/launch |
-| Managed or unmanaged / move | different environment | <code>cross_environment_move</code>; clone target first, then source release |
+| Managed / move | different environment | <code>cross_environment_move</code>; clone target first, then fenced source release |
 | Unmanaged / open | owning host only | <code>open_unmanaged_local</code>; explicit absence of AX guarantees |
 | Any / unsupported tuple | no native target | <code>archive_or_context_fallback</code>; never reported as clone |
 
@@ -9203,6 +9249,16 @@ cloned into a managed target. Workspace transfer precedes session
 materialization when required. Shared Workspace Groups obey the existing whole-
 cohort/separate-worktree rules; the directory cannot invent another workspace
 copy mode.
+
+A direct unmanaged move is unavailable. An unmanaged source has no AX Session,
+winning lease, ownership epoch, or fenced release authority with which to
+satisfy Session Event 3. The operator MAY perform a same- or cross-environment
+clone while retaining the unmanaged source, or MAY first complete source-local
+adoption and then create a new exact plan for a managed move. A planner MUST
+reject <code>intent=move</code>, <code>route=cross_environment_move</code>, or
+<code>source_after_success=stop_and_release</code> when
+<code>source_session_id</code>, the winning source lease, or the source
+Checkpoint is absent; it MUST NOT silently insert adoption into the plan.
 
 Execution accepts exactly <code>plan_id</code>, the plan's
 <code>operation_id</code>, every named confirmation, and optional exact
@@ -9233,6 +9289,12 @@ Checkpoint finalization, and lineage publication all precede any source stop or
 lease release. Target finalization is the commit boundary. A later source
 failure returns <code>cloned_source_still_active</code>, records both resumable
 authorities, and cannot delete or invalidate the target.
+
+Accordingly, every <code>cross_environment_move</code> Continuation Plan has a
+non-null managed <code>source_session_id</code>, matching source lease epoch and
+lease ID, and source Checkpoint. Its Session Event 3 chain is written only for
+that managed source and the new managed target. No unmanaged native instance is
+encoded by inventing an AX Session or lease identifier.
 
 Launch uses the exact target Environment Observation, argv array, explicit
 workspace-derived cwd, and environment-name/literal allowlists. No title,
@@ -9790,11 +9852,12 @@ bundle contents by default.
 
 ### 14.5 Session Directory CLI Result 3, query, and TUI
 
-The merged human namespace is <code>ax sessions</code> with exact leaves
+The merged human namespace is <code>ax sessions</code> with exact human-oriented leaves
 <code>list</code>, <code>inspect</code>, <code>lineage</code>,
 <code>scan</code>, <code>enrich</code>, <code>jobs</code>,
 <code>plan</code>, <code>continue</code>, <code>operation</code>,
-<code>attach</code>, and <code>doctor</code>. Existing <code>ax list</code>,
+<code>attach</code>, and <code>doctor</code>, plus exact agent-oriented leaves
+<code>q</code>, <code>grep</code>, and <code>m</code>. Existing <code>ax list</code>,
 <code>ax status</code>, and <code>ax session clone</code> retain their v0.3
 managed/clone semantics. The directory does not widen those older result types.
 
@@ -10137,7 +10200,7 @@ provider plugin, or a compromised local user account.
 
 Peers MUST be explicitly allowlisted by stable host ID and SSH endpoint.
 Tailscale discovery MAY propose hosts but MUST NOT authorize them. SSH protects
-authentication, integrity, and confidentiality in transport. v0.4.0 provides no
+authentication, integrity, and confidentiality in transport. v0.4.1 provides no
 default payload encryption at rest and MUST NOT claim otherwise.
 
 Machine-local credentials are a prerequisite at the destination. A successful
@@ -10166,7 +10229,7 @@ MUST NOT be treated as current process, ownership, or routing authority. This
 does not permit copying a live PID/lock control artifact.
 
 Transcripts and tool outputs can themselves contain secrets entered by an
-operator or printed by tools. v0.4.0 does not claim reliable content-level
+operator or printed by tools. v0.4.1 does not claim reliable content-level
 secret scrubbing. Operators MUST therefore treat all payloads as sensitive and
 authorize only trusted project peers. An implementation SHOULD offer a
 best-effort scanner and warning, but scanner success MUST NOT be described as a
@@ -10225,7 +10288,7 @@ Force takeover MUST therefore:
 
 ### 16.6 Out of scope
 
-v0.4.0 does not provide Byzantine consensus, hostile-peer isolation,
+v0.4.1 does not provide Byzantine consensus, hostile-peer isolation,
 multi-tenant access control, end-to-end snapshot encryption, secret
 distribution, provider-account migration, revocation of actions already sent
 to external services, live-process cloning, task-board authority cloning, or
@@ -10363,7 +10426,7 @@ and Antigravity unknowns in Section 8 remain explicit version gates.
 
 ### 17.5 Directory release compatibility
 
-AX/spec v0.4.0 adds Directory Node/records/query at 1.0.0, Mesh RPC 3.0.0,
+AX/spec v0.4.0 introduced Directory Node/records/query at 1.0.0, Mesh RPC 3.0.0,
 Configuration 2.0.0, CLI Result 3.0.0, Session Record/Event 3.0.0, and
 Structured Error 1.2.0. Observation Event remains 1.0.0 because its event name
 is an open grammar and its object shape is unchanged. Provider Protocol remains
@@ -10371,6 +10434,20 @@ is an open grammar and its object shape is unchanged. Provider Protocol remains
 all v0.3 clone schemas, Materialization Plan 1/2, Journal 2/3, Checkpoint,
 Provider Identity, Workspace Group, Blob/Chunk/Transfer, lease, terminal, and
 tombstone contracts are reused unchanged.
+
+AX/spec v0.4.1 is a patch errata over that publication. It adds no field,
+operation, outcome, namespace, or authority and retains every Section 1.5
+contract version. It resolves combinations that were already impossible under
+the stronger global rules: direct unmanaged move cannot satisfy AX lease/event
+requirements; Directory Node probe uses the one AX platform enum rather than
+the non-AX token <code>darwin</code>; response and query correlation obey their
+existing tags and array positions; the two enrichment generator discriminators
+must agree; and a lineage projection identifies which existing member supplies
+its singular display fields. These are compatibility-neutral constraint
+clarifications and validator/fixture corrections under Section 17.1, not new
+wire behavior. The contradictory v0.4.0 text and invalid positive vectors MUST
+NOT be used as implementation evidence; v0.4.1 supersedes them as the first
+Directory implementation baseline.
 
 RPC 3 and RPC 2 are dual-stack for at least one stable release. Config 2 has
 the explicit backup/atomic migration and read-only downgrade behavior in
@@ -10637,7 +10714,7 @@ Events are not.
 ### 19.1 Implementation phases
 
 These are ordered phases for an implementation that intends to claim
-<code>ax</code> product conformance version 0.4.0. They are not prerequisites
+<code>ax</code> product conformance version 0.4.1. They are not prerequisites
 for publishing this specification and are not permission to ship a required
 core target half-implemented:
 
@@ -10847,7 +10924,7 @@ signed Environment Tuple under Section 13.14.5.
 
 ### 19.5 <code>ax</code> implementation release acceptance rule
 
-An implementation MAY claim <code>ax</code> product conformance 0.4.0 only when:
+An implementation MAY claim <code>ax</code> product conformance 0.4.1 only when:
 
 1. all product-release-blocking core platform lanes pass;
 2. every A provider cell passes its suites;
@@ -10875,7 +10952,7 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
 the default branch, and carry the MIT License. The current specification
-release is <code>v0.4.0</code>. Existing release tags are immutable history and
+release is <code>v0.4.1</code>. Existing release tags are immutable history and
 MUST NOT be moved or rewritten. The v0.3.0 specification baseline remains the
 normative cloning authority whether consumed from its release package or the
 accepted baseline commit; this sentence does not claim that a particular tag
@@ -10902,7 +10979,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-specification release <code>v0.4.0</code>, not an <code>ax</code> executable
+specification release <code>v0.4.1</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -10914,7 +10991,7 @@ release. The publication task MUST:
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
 4. verify <code>VERSION</code>, current document metadata, changelog, release
-   notes, and the proposed tag all say <code>v0.4.0</code>, while every existing
+   notes, and the proposed tag all say <code>v0.4.1</code>, while every existing
    historical tag remains unchanged;
 5. run the semantic crash/restart gate and its focused expected-red mutations;
    validation MUST emit an actionable diagnostic when the three-outcome
@@ -10925,14 +11002,14 @@ release. The publication task MUST:
    <code>Ivan Oparin &lt;oparin@me.com&gt;</code> and no AI trailer, and hand it
    to the user for explicit review; automation MUST NOT stage or commit before
    human approval;
-7. prepare the exact signed annotated <code>v0.4.0</code> tag command and hand it
+7. prepare the exact signed annotated <code>v0.4.1</code> tag command and hand it
    to the user for explicit review; automation MUST NOT create the tag before
    human approval;
 8. after the human creates the commit and tag, verify both signatures locally
    with <code>git log --show-signature -1</code> and
-   <code>git tag --verify v0.4.0</code>;
+   <code>git tag --verify v0.4.1</code>;
 9. hand the exact <code>git push</code> commands for <code>main</code> and the
-   <code>v0.4.0</code> tag to the user; automation MUST NOT push before explicit
+   <code>v0.4.1</code> tag to the user; automation MUST NOT push before explicit
    human approval and only after accepted validation/review;
 10. verify the public repository, default branch, license, commit signature, tag
    signature, and release URL; and
@@ -10984,7 +11061,7 @@ requirement rather than only reporting a generic document digest mismatch.
 | All settled decisions are traceable | Appendix A.1 |
 | Independent reviewer accepts the artifact | Required board reviewer route after this task's <code>to-review</code> handoff |
 
-The Epic criterion for a signed public <code>v0.4.0</code> specification release
+The Epic criterion for a signed public <code>v0.4.1</code> specification release
 maps only to Section 20 and remains owned by the downstream validation and
 publication tasks. Section 19 governs a future product implementation and is
 not a prerequisite for that publication.
@@ -11063,7 +11140,7 @@ not a prerequisite for that publication.
 | No duplicate owner or silent fresh native session | Section 13.13 rejects two live/authoritative owners, unfenced continuation presented as safe recovery, new-session launch, fresh native handles/manager references, blank relabeling, and realm substitution. |
 | Runtime conformance acceptance | Section 19.4 <code>AC-CRASH-001</code> executes every applicable boundary with exact classification and evidence. |
 | Specification publication acceptance and mutation gate | Section 20.2 <code>SPEC-PUB-CRASH-001</code> requires semantic validation plus an actionable focused expected-red mutation. |
-| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version and its immutable history; Section 20.1 identifies <code>v0.4.0</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
+| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version and its immutable history; Section 20.1 identifies <code>v0.4.1</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
 
 ### A.9 Cross-environment cloning traceability
 
@@ -11089,7 +11166,7 @@ The accepted audit is
 includes every subsection of the named standalone section; no standalone
 section remains a normative runtime dependency.
 
-| Standalone directory section | Normative AX v0.4.0 destination and disposition |
+| Standalone directory section | Normative AX v0.4.1 destination and disposition |
 | --- | --- |
 | 1. Conformance, scope, and product boundary | Sections 1–2 and 19: integrated; all 45 accepted merge invariants are individually fixed as <code>DIR-INV-01..45</code>. |
 | 2. Architecture and responsibility boundaries | Sections 3.1, 7.9, 10.8, and 11.8: integrated; Directory Node remains a companion façade backed by the same environment implementation, not new authority. |
@@ -11105,7 +11182,7 @@ section remains a normative runtime dependency.
 | 12. Mesh catalog and convergence | Sections 11.4, 11.8, and 17.5: integrated through RPC 3 dual stack and the disjoint <code>directory_record</code> namespace; transcript/index centralization is rejected. |
 | 13. Security and privacy | Sections 16.1–16.7: integrated with metadata exclusions, source-local preview, worker isolation, server-side field authorization, and hardened terminal/launch boundaries. |
 | 14. Errors and exit semantics | Section 15: integrated as Structured Error 1.2 with exact directory code mappings and bootstrap behavior. |
-| 15. Compatibility and versioning | Sections 1.5 and 17.5: integrated with the accepted v0.4.0 SemVer matrix and unchanged v0.3 cloning authority. |
+| 15. Compatibility and versioning | Sections 1.5 and 17.5: integrated with the corrected v0.4.1 SemVer matrix and unchanged v0.3 cloning authority. |
 | 16. Observability and operation | Sections 18.1–18.4: integrated into the open Observation Event 1 grammar, metrics, doctor, and immutable audit evidence. |
 | 17. Conformance and test requirements | Sections 19.1–19.5 and Appendix D: integrated with production-path, focused-negative, rebuild, mesh, plan, execution, security, and terminal gates. |
 | 18. AX integration and merge contract | Sections 1.5, 5, 7.9, 10.8, 11.8, 13.15, and 17.5: resolved; duplicated Provider/workspace/blob/transfer/materialization/lease/terminal/cloning authority is explicitly forbidden. |

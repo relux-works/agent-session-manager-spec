@@ -48,18 +48,6 @@ hide stereotype
     Shadowing: 0;
     MaximumWidth: 450;
   }
-  // Element,Software System
-  .Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0= {
-    BackgroundColor: #1168bd;
-    LineColor: #0b4884;
-    LineStyle: 0;
-    LineThickness: 2;
-    FontColor: #ffffff;
-    FontSize: 24;
-    HorizontalAlignment: center;
-    Shadowing: 0;
-    MaximumWidth: 450;
-  }
   // Relationship
   .Relationship-UmVsYXRpb25zaGlw {
     LineThickness: 2;
@@ -83,9 +71,6 @@ hide stereotype
 
 person "==Operator\n<size:16>[Person]</size>\n\nSoftware developer running AI agents." <<Element-RWxlbWVudCxQZXJzb24=>> as Operator
 person "==Automation / Agent\n<size:16>[Person]</size>\n\nUses typed directory queries and guarded mutations." <<Element-RWxlbWVudCxQZXJzb24=>> as AutomationAgent
-rectangle "==Task-Board / Session Manager\n<size:16>[Software System]</size>\n\nDistinct persistence and ownership boundary for AI agents." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as TaskBoardSessionManager
-rectangle "==Mesh Network\n<size:16>[Software System]</size>\n\nTailscale / OpenSSH trusted mesh transport." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as MeshNetwork
-rectangle "==Native Provider Stores\n<size:16>[Software System]</size>\n\nSource-local Claude, Codex, and future environment stores; transcripts and credentials are not directory records." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as NativeProviderStores
 
 rectangle "Agent Session Manager (ax)\n<size:16>[Software System]</size>" <<Boundary-QWdlbnQgU2Vzc2lvbiBNYW5hZ2VyIChheCk=>> {
   rectangle "==Session Cloning Core\n<size:16>[Container: Go + Session Adapter 1.0]</size>\n\nCaptures, canonicalizes, projects, validates, and publishes cross-environment continuation lineage." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.SessionCloningCore
@@ -103,7 +88,6 @@ AutomationAgent --> AgentSessionManagerax.axCLIandSessionBrowserTUI <<Relationsh
 AgentSessionManagerax.axCLIandSessionBrowserTUI --> AgentSessionManagerax.DirectoryControlPlane <<Relationship-UmVsYXRpb25zaGlw>> : "Queries and confirms exact directory plans"
 AgentSessionManagerax.DirectoryControlPlane --> AgentSessionManagerax.DerivedSQLiteIndex <<Relationship-UmVsYXRpb25zaGlw>> : "Rebuilds derived catalog and search index"
 AgentSessionManagerax.DirectoryControlPlane --> AgentSessionManagerax.ImmutableAXandDirectoryRecords <<Relationship-UmVsYXRpb25zaGlw>> : "Reads immutable observations and batches"
-AgentSessionManagerax.DirectoryControlPlane --> NativeProviderStores <<Relationship-UmVsYXRpb25zaGlw>> : "Reads allowlisted source-local metadata and exact heads"
 AgentSessionManagerax.DirectoryControlPlane --> AgentSessionManagerax.SessionCloningCore <<Relationship-UmVsYXRpb25zaGlw>> : "Delegates cross-environment continuation"
 AgentSessionManagerax.DirectoryControlPlane --> AgentSessionManagerax.TerminalBackend <<Relationship-UmVsYXRpb25zaGlw>> : "Delegates managed launch or attach"
 AgentSessionManagerax.DirectoryControlPlane --> AgentSessionManagerax.ProviderPlugins <<Relationship-UmVsYXRpb25zaGlw>> : "Delegates existing AX ownership and provider effects"
@@ -115,12 +99,6 @@ AgentSessionManagerax.axDaemon --> AgentSessionManagerax.DerivedSQLiteIndex <<Re
 AgentSessionManagerax.axDaemon --> AgentSessionManagerax.ImmutableAXandDirectoryRecords <<Relationship-UmVsYXRpb25zaGlw>> : "Syncs records and blobs"
 AgentSessionManagerax.axDaemon --> AgentSessionManagerax.DirectoryControlPlane <<Relationship-UmVsYXRpb25zaGlw>> : "Schedules source-local inventory and health"
 AgentSessionManagerax.axCLIandSessionBrowserTUI --> AgentSessionManagerax.TerminalBackend <<Relationship-UmVsYXRpb25zaGlw>> : "Runs 'ax pane' wrapper in durable pane"
-TaskBoardSessionManager --> AgentSessionManagerax.TerminalBackend <<Relationship-UmVsYXRpb25zaGlw>> : "Provides task-board abstraction inside terminal"
-AgentSessionManagerax.axCLIandSessionBrowserTUI --> TaskBoardSessionManager <<Relationship-UmVsYXRpb25zaGlw>> : "Imports/exports opaque session bundles (Bridge Contract)"
 AgentSessionManagerax.axCLIandSessionBrowserTUI --> AgentSessionManagerax.ProviderPlugins <<Relationship-UmVsYXRpb25zaGlw>> : "Launches and orchestrates transactions via JSON-over-stdio"
-AgentSessionManagerax.ProviderPlugins --> NativeProviderStores <<Relationship-UmVsYXRpb25zaGlw>> : "Materializes native state as directed by ax"
-AgentSessionManagerax.axCLIandSessionBrowserTUI --> MeshNetwork <<Relationship-UmVsYXRpb25zaGlw>> : "Executes RPC (ax rpc serve --stdio) via SSH"
-AgentSessionManagerax.axDaemon --> MeshNetwork <<Relationship-UmVsYXRpb25zaGlw>> : "Periodically synchronizes across mesh"
-AgentSessionManagerax.ImmutableAXandDirectoryRecords --> MeshNetwork <<Relationship-UmVsYXRpb25zaGlw>> : "Exchanges allowlisted immutable namespaces, including directory_record"
 
 @enduml

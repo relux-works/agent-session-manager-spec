@@ -1,16 +1,21 @@
-# Agent Session Manager (`ax`) v0.4.0 — Specification Repository
+# Agent Session Manager (`ax`) v0.4.1 — Specification Repository
 
 | Field | Value |
 | --- | --- |
 | Public command | `ax` |
-| Specification release | `v0.4.0` |
+| Specification release | `v0.4.1` |
 | Repository | `relux-works/agent-session-manager-spec` |
 | Default branch | `main` |
 | License | MIT |
 | Normative contract | [`SPEC.md`](SPEC.md) |
 | Status | Specification only — no `ax` product binary in this repository |
 
-> This repository publishes the normative, implementation-ready contract for Agent Session Manager v0.4.0. It specifies behavior; it does not implement `ax`. Publishing the specification does not claim that any future product acceptance matrix has passed. See [SPEC.md §1](SPEC.md#1-conformance-language-and-scope), [§19](SPEC.md#19-ax-implementation-conformance-and-product-release), and [§20](SPEC.md#20-specification-publication-and-governance).
+> This repository publishes the normative, implementation-ready contract for Agent Session Manager v0.4.1. It specifies behavior; it does not implement `ax`. Publishing the specification does not claim that any future product acceptance matrix has passed. See [SPEC.md §1](SPEC.md#1-conformance-language-and-scope), [§19](SPEC.md#19-ax-implementation-conformance-and-product-release), and [§20](SPEC.md#20-specification-publication-and-governance).
+
+> **Errata baseline:** v0.4.1 supersedes v0.4.0 for implementation. It closes
+> the unmanaged-move/Event-3 contradiction, repairs positive conformance
+> vectors, and makes response, enrichment, query, lineage, platform, and CLI
+> constraints executable without changing any registered wire-contract version.
 
 ## Read first
 
@@ -61,7 +66,7 @@ Support is not inferred from a provider name, a successful probe, or self-minted
 
 ## Session Directory and continuation boundary
 
-The v0.4.0 human namespace is `ax sessions`, with the closed leaves `list`, `inspect`, `lineage`, `scan`, `enrich`, `jobs`, `plan`, `continue`, `operation`, `attach`, and `doctor`. Agents use the same typed engine through `ax sessions q`, `ax sessions grep`, and `ax sessions m`; they must not scrape TUI text. Existing `ax list`, `ax status`, and `ax session clone` retain their v0.3 meanings. See [SPEC.md §14.5](SPEC.md#145-session-directory-cli-result-3-query-and-tui).
+The v0.4.1 human namespace is `ax sessions`, with the closed leaves `list`, `inspect`, `lineage`, `scan`, `enrich`, `jobs`, `plan`, `continue`, `operation`, `attach`, and `doctor`. Agents use the same typed engine through `ax sessions q`, `ax sessions grep`, and `ax sessions m`; they must not scrape TUI text. Existing `ax list`, `ax status`, and `ax session clone` retain their v0.3 meanings. See [SPEC.md §14.5](SPEC.md#145-session-directory-cli-result-3-query-and-tui).
 
 ```shell
 ax sessions list
@@ -76,7 +81,7 @@ ax sessions doctor
 
 Inventory and exact-head preview remain source-local. Mesh RPC 3 replicates sanitized immutable `directory_record` objects, never raw transcripts, preview bodies, credentials, absolute native-store paths, model-provider payloads, terminal output, live process facts, or the derived SQLite index. Default list/query output contains no raw excerpt. Enrichment receives bounded, redacted, policy-selected input and runs without AX, provider, shell, filesystem, network, or mutation authority unless an immutable profile explicitly authorizes a narrower input/model surface. See [SPEC.md §10.8](SPEC.md#108-directory-records-lineage-enrichment-query-and-continuation), [§11.8](SPEC.md#118-mesh-rpc-300-directory-replication), and [§16.7](SPEC.md#167-directory-enrichment-query-and-terminal-safety).
 
-Planning is pure and content-addressed. Execution revalidates the exact source head, lease/runtime facts, target tuple, workspace/auth facts, route, and expiry; it never silently replans or substitutes a route. The planner delegates effects to existing AX ownership/materialization or v0.3 cloning transactions. A cross-environment move commits and validates the target before attempting source stop/release; failure of that last step is the truthful partial success `cloned_source_still_active`. See [SPEC.md §13.15](SPEC.md#1315-directory-continuation-planning-and-execution).
+Planning is pure and content-addressed. Execution revalidates the exact source head, lease/runtime facts, target tuple, workspace/auth facts, route, and expiry; it never silently replans or substitutes a route. The planner delegates effects to existing AX ownership/materialization or v0.3 cloning transactions. A managed cross-environment move commits and validates the target before attempting fenced source stop/release; failure of that last step is the truthful partial success `cloned_source_still_active`. An unmanaged source must be retained and cloned, or adopted source-locally before a newly planned managed move. See [SPEC.md §13.15](SPEC.md#1315-directory-continuation-planning-and-execution).
 
 ## Crash/restart recovery gate
 
@@ -95,7 +100,7 @@ with runtime acceptance in `AC-CRASH-001` and publication acceptance in
 
 ## Installation and status caveat
 
-This is a **specification-only** repository at `v0.4.0`. There is no `ax` binary to install, no provider runtime requirement to validate or publish the spec, and no Section 19 product-conformance result implied by publication. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20.2](SPEC.md#202-publication-gate).
+This is a **specification-only** repository at `v0.4.1`. There is no `ax` binary to install, no provider runtime requirement to validate or publish the spec, and no Section 19 product-conformance result implied by publication. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20.2](SPEC.md#202-publication-gate).
 
 To work with the spec:
 
@@ -276,7 +281,7 @@ Change the profile with `ax session set-profile NAME standard|yolo`, which requi
 
 Peers are explicitly allowlisted in `~/.config/ax/config.toml` (or the platform-equivalent directory — see [SPEC.md §3.2](SPEC.md#32-platform-paths) and [§6](SPEC.md#6-configuration-contract)) with stable host ID, Tailscale/OpenSSH endpoint, platform, and workspace-root mappings. Tailscale discovery may suggest hosts but may not auto-authorize them. Transport is Tailscale SSH or ordinary OpenSSH; the remote side is `ax rpc serve --stdio`; no permanent public TCP listener is required. See [SPEC.md §11.1](SPEC.md#111-transport-and-peer-authentication).
 
-The project owner does not require payload encryption at rest. The spec must not claim default snapshot encryption — and this README does not. SSH protects transport. The security boundary remains a trusted project mesh. `mesh.payload_encryption` must be `none` in `v0.4.0`; any other value fails as unsupported. See [SPEC.md §6.3](SPEC.md#63-field-constraints) and [§16.1](SPEC.md#161-trusted-mesh-model).
+The project owner does not require payload encryption at rest. The spec must not claim default snapshot encryption — and this README does not. SSH protects transport. The security boundary remains a trusted project mesh. `mesh.payload_encryption` must be `none` in `v0.4.1`; any other value fails as unsupported. See [SPEC.md §6.3](SPEC.md#63-field-constraints) and [§16.1](SPEC.md#161-trusted-mesh-model).
 
 Never replicated: credentials/tokens, SSH private keys, environment secrets, live PIDs, sockets, tmux server sockets, transient locks, machine-local authentication state, or the live SQLite database file (rebuildable derived index). Opaque durable history may contain historical path/PID facts as inert bytes required for native resume, but they are not current authority. See [SPEC.md §2.2](SPEC.md#22-global-invariants), [§10-§11](SPEC.md#10-immutable-records-blobs-manifests-and-tombstones), and [§16.2](SPEC.md#162-mandatory-exclusions).
 
@@ -317,7 +322,7 @@ Capabilities are `native_resume`, `portable_store`, `managed_pty`, `appserver`, 
 Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-contracts) and [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates)):
 
 - **Pi 0.73.1** has no YOLO flag; both `ax` profiles map to `default_unrestricted_tool_set` but remain distinct `ax` authority — see [§2.4](SPEC.md#24-execution-profiles).
-- **Qwen** has no direct `ax-provider-qwen` claim in `v0.4.0`; task-board prompt-mode bundles only — see [§8.2](SPEC.md#82-native-store-contract-matrix).
+- **Qwen** has no direct `ax-provider-qwen` claim in `v0.4.1`; task-board prompt-mode bundles only — see [§8.2](SPEC.md#82-native-store-contract-matrix).
 - **Muse** and **Antigravity** unknowns in [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates) (store, cron, resume, import, quiesce, backend realm, checkpoint, Windows behavior) remain gated and disabled.
 - **WSL2 and native Windows are never collapsed** into one row — an adapter accepted in WSL2 does not establish native Windows support. See [§8.4](SPEC.md#84-providerplatform-matrix).
 - Known resume surfaces: Codex `codex resume UUID`; Pi `--session <path|id>` / `--continue` / `--resume` / `--session-dir`; Gemini UUID/session import; Muse `muse resume UUID`; Antigravity `agy --conversation <id>` / continue. See settled decisions § Providers and native stores and [SPEC.md §7](SPEC.md#7-provider-plugin-protocol).
@@ -326,7 +331,7 @@ Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-c
 
 ```
 .
-├── SPEC.md                          # normative v0.4.0 contract (only normative source)
+├── SPEC.md                          # normative v0.4.1 contract (only normative source)
 ├── README.md                        # this file — operator summary with links to SPEC
 ├── CONTRIBUTING.md                  # contributor workflow (traceability, diagrams, versioning, signing)
 ├── STANDALONE_TO_AX_TRACEABILITY.md # non-normative standalone migration index
@@ -365,7 +370,7 @@ Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-c
 │   ├── validate_spec.py             # public repository-only validator (contracts, links, matrices, examples, metadata, fences, license, frozen-release integrity)
 │   └── test_expected_red.sh         # expected-red mutation suite (proves validator and run_validation.sh fail nonzero with actionable diagnostics)
 ├── .github/workflows/validate.yml   # CI path with pinned documentation-tool versions (single command + expected-red)
-├── .research/                       # retained provider/directory evidence inherited by v0.4.0 (do not weaken)
+├── .research/                       # retained provider/directory evidence inherited by v0.4.1 (do not weaken)
 ├── .planning/                       # public planning and audit evidence
 ├── run_validation.sh                # single public whole-package validation command (contracts + diagrams + freshness)
 └── VERSION, LICENSE, CHANGELOG.md, RELEASE_NOTES.md  # publication metadata
@@ -392,9 +397,9 @@ Durable `ax` data roots, SQLite-derived index, and object stores are defined in 
 
 Provider binaries are not required to validate or publish this specification. Provider/platform runtime probes belong to the future implementation-conformance suites in [SPEC.md §19](SPEC.md#19-ax-implementation-conformance-and-product-release); publication is governed separately by [§20](SPEC.md#20-specification-publication-and-governance).
 
-For `v0.4.0` publication, the validator compares LF-normalized SHA-256 digests for the five reviewed public claim documents (`SPEC.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and `RELEASE_NOTES.md`). This is a bounded frozen-release content-integrity control, not general natural-language theorem proving. A future specification revision must intentionally update the digest map in `scripts/validate_spec.py` after reviewing the changed prose and mutation coverage. The semantic gate validates the Section 13.13 recovery outcomes, Section 13.14 cloning contracts, and the Directory contracts, namespaces, query/result mappings, continuation routes, and security invariants introduced in v0.4.0; focused expected-red mutations must fail with actionable diagnostics.
+For `v0.4.1` publication, the validator compares LF-normalized SHA-256 digests for the five reviewed public claim documents (`SPEC.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and `RELEASE_NOTES.md`). This is a bounded frozen-release content-integrity control, not general natural-language theorem proving. A future specification revision must intentionally update the digest map in `scripts/validate_spec.py` after reviewing the changed prose and mutation coverage. The semantic gate validates the Section 13.13 recovery outcomes, Section 13.14 cloning contracts, and the Directory contracts, namespaces, query/result mappings, continuation routes, and security invariants introduced in v0.4.1; focused expected-red mutations must fail with actionable diagnostics.
 
-The `v0.4.0` publication gate freezes the reviewed public claim documents, validates the retained crash/restart and cloning semantics plus Directory conformance, and runs focused expected-red mutations with actionable diagnostics. Every command below must exit `0`; a nonzero result is a gate failure, never publication evidence. This does not relax [SPEC.md §20.2](SPEC.md#202-publication-gate).
+The `v0.4.1` publication gate freezes the reviewed public claim documents, validates the retained crash/restart and cloning semantics plus Directory conformance, and runs focused expected-red mutations with actionable diagnostics. Every command below must exit `0`; a nonzero result is a gate failure, never publication evidence. This does not relax [SPEC.md §20.2](SPEC.md#202-publication-gate).
 
 ### Exact validation commands
 
@@ -441,7 +446,7 @@ Sources live in `diagrams/c4/*.dsl` (Structurizr) and `diagrams/plantuml/*.puml`
 
 ## License and release target
 
-The repository is intended for public release under the **MIT License**, default branch `main`. The initial specification release was `v0.1.0`; the current specification release is `v0.4.0`. Existing release tags remain immutable; the accepted v0.3 baseline remains cloning authority without asserting that a particular historical tag exists. The signing and authorship metadata — author `Ivan Oparin <oparin@me.com>`, SSH key `~/.ssh/ivanopcode`, SSH-signed commit and annotated tag with local signature verification, no AI `Co-Authored-By` trailer, and an explicit human approval gate before stage/commit/tag/push — are normative in [SPEC.md §20](SPEC.md#20-specification-publication-and-governance) and summarized in [CONTRIBUTING.md](CONTRIBUTING.md#signing-release-and-attribution).
+The repository is intended for public release under the **MIT License**, default branch `main`. The initial specification release was `v0.1.0`; the current specification release is `v0.4.1`. Existing release tags remain immutable; the accepted v0.3 baseline remains cloning authority without asserting that a particular historical tag exists. The signing and authorship metadata — author `Ivan Oparin <oparin@me.com>`, SSH key `~/.ssh/ivanopcode`, SSH-signed commit and annotated tag with local signature verification, no AI `Co-Authored-By` trailer, and an explicit human approval gate before stage/commit/tag/push — are normative in [SPEC.md §20](SPEC.md#20-specification-publication-and-governance) and summarized in [CONTRIBUTING.md](CONTRIBUTING.md#signing-release-and-attribution).
 
 ## Contract map
 

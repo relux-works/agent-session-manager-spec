@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for AX v0.4.0.
+"""Public, repository-only validation for AX v0.4.1.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
-and adds publication/metadata, recovery, cloning, and Directory closure for v0.4.0.
+and adds publication/metadata, recovery, cloning, and Directory closure for v0.4.1.
 Repository-only: no ax binary, provider CLI, or task-board runtime required.
 """
 
@@ -31,16 +31,16 @@ RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
 TRACEABILITY = ROOT / "STANDALONE_TO_AX_TRACEABILITY.md"
 DIRECTORY_FIXTURE = ROOT / "fixtures" / "session_directory_conformance.json"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen v0.4.0 publication prose. Hashes use UTF-8 text with all line endings
+# Frozen v0.4.1 publication prose. Hashes use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. Future
 # specification releases must deliberately replace this bounded map after the
 # semantic checks and expected-red suite have been reviewed for the new prose.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "a5a8a107aed85cd8b7b90c5110a18a80daa339149711385b8eaf6c1f2245e80a",
-    "README.md": "094cd189b9562e70e51730a234109acad45b5f106cccff9009720d2dbe68d77d",
-    "CONTRIBUTING.md": "6c625f4fb75431dc447e2a1716c5009858ca41246ea0ee48ab042a276b02ccc4",
-    "CHANGELOG.md": "e973bf8313450f9d8e71a7e6a6678a03e63a99bac23af7990939f733bd13f744",
-    "RELEASE_NOTES.md": "bcf51a97090dc80efcf0cf8db3392361eb25659288ad75f47dc464333b30047f",
+    "SPEC.md": "df678280b622220d1a8dcddef0cbc149ae136a4e22b03af0713af4cd97d179ee",
+    "README.md": "611fdf40cfdfba41b8fcc1cc2ab9c6ef3641a268bae189509bcbdac1ea9e01ac",
+    "CONTRIBUTING.md": "519b1f47d1bf45b7b738df85e1dadf917ef1ce990577ce17e9c125b8c928f37d",
+    "CHANGELOG.md": "a6d65ea8188d3878ee2e099f1ff15898f2a63d17d217c004272966c07fe9ad6c",
+    "RELEASE_NOTES.md": "cfe5dff8f5760293e5316e9ef27b2ddc33734c7066e7d98e8911d3a47bb2f30f",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -55,12 +55,12 @@ EXPECTED_SVG_SHA256 = {
     "cloning_components.svg": "d9521205b83419a37582696699f43f178ed68f57a7846a2328f9aaff11a0bfbc",
     "cloning_transaction.svg": "03ec313c341ff0903ab4aa03e59e3e43c710e293059359510497a84472019d89",
     "mesh_deployment.svg": "0b38e885aac889795b1464ce8227ae6ae858ff2590229a9163a6701d9b99dd8e",
-    "session_directory_components.svg": "1551437d79e2d668dc670611e2ca536896ffb58ffc2b8bb3a1e9ea7891bc973d",
+    "session_directory_components.svg": "fad87564d3d5877a1478728d21d321c6ef0e769798c792ade46e165cb708066a",
     "session_directory_continuation.svg": "37fa72309376dde5cbd2c47af37c2bb4ac8fb285f610ef3698e1d768afaa6e27",
     "session_directory_enrichment.svg": "4b61c7b2508a07e15f1bb3ef87a94f5cb85bda6d4bf4b552333a0c1b403b8813",
     "session_state.svg": "fae377f21fd374a40c2b831c6ced4e9f61c662a993c0b550d1c9ca0f0c0be507",
-    "structurizr-ContainerContext-key.svg": "6424ee4d1ffebef9f37f54a8e5afc47358f9522f4a4908bbfe2cb44144b82dbc",
-    "structurizr-ContainerContext.svg": "9e8f00157cb0bdf4bfecf0c9c69a93572f11c55a18c54aa56eabacba9f73992d",
+    "structurizr-ContainerContext-key.svg": "8fb4a6237262cb4e01855f526741d1e752ae3063162ede47f527eab8cf705ebe",
+    "structurizr-ContainerContext.svg": "a784b2970edd70d85e513d1c50cfdede817d102c71130064874a306d64db0b0d",
     "structurizr-SystemContext-key.svg": "d2b29e2efb08aa803166c8be5366933359c1b136d97fa01b0eedfce8406b65d1",
     "structurizr-SystemContext.svg": "65c9e763d5e16df8eba007583c5a6a972750c3ddb0c69b29a280073ed9b75055",
     "takeover.svg": "b06f3553a7bc09f316c73bc83169f0b637ebfaa6ff86f9fcd576ec82162b3b55",
@@ -78,8 +78,8 @@ EXPECTED_HANDWRITTEN_PLANTUML = {
 }
 
 FROZEN_ACCEPTED_INPUT_SHA256 = {
-    "STANDALONE_TO_AX_TRACEABILITY.md": "50d3b9968a650a8ced1bf91fbdf78886325df24f8ac044e7c7a918944b0a08e7",
-    "diagrams/README.md": "d40ddedbeb2dfd3eeb3a51b1ced67f7586d105ebeabc2390142c728d53d5dfbe",
+    "STANDALONE_TO_AX_TRACEABILITY.md": "c6c376ae7d7767184e1ca30b27a30e33be1d6123c97775c35cb1a09d8eabefaf",
+    "diagrams/README.md": "b60a880e335dc41de562ec70e060dda1d192f0cb9bc4deb9701ffe5390447935",
     "diagrams/plantuml/cloning_components.puml": "50e728af2fddbc5f3b161d661068fc33c4fe341884c4c28a8ea541c24577118a",
     "diagrams/plantuml/cloning_transaction.puml": "aadeb780d4cbbe129059dd327bd67b42c1947e13660143f7b91a06c59c99887f",
 }
@@ -297,7 +297,7 @@ def normalized_release_document_sha256(path: pathlib.Path) -> str:
 
 
 def check_frozen_release_baseline(errors: list[str]) -> None:
-    """Protect the reviewed v0.4.0 claim prose without pretending to parse English."""
+    """Protect the reviewed v0.4.1 claim prose without pretending to parse English."""
     expected_names = {path.name for path in PUBLIC_CLAIM_DOCUMENTS}
     configured_names = set(FROZEN_RELEASE_DOCUMENT_SHA256)
     if configured_names != expected_names:
@@ -314,7 +314,7 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual = normalized_release_document_sha256(document)
         if actual != expected:
             errors.append(
-                f"{document.name}: frozen v0.4.0 release baseline mismatch "
+                f"{document.name}: frozen v0.4.1 release baseline mismatch "
                 f"(expected LF-normalized SHA-256 {expected}, got {actual}); "
                 "review the prose and update FROZEN_RELEASE_DOCUMENT_SHA256 only for an intentional release revision"
             )
@@ -363,8 +363,8 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
 def check_publication_metadata(errors: list[str]) -> None:
     if VERSION_FILE.exists():
         v = VERSION_FILE.read_text(encoding="utf-8").strip()
-        if v != "0.4.0":
-            errors.append(f"VERSION must be exactly '0.4.0', got {v!r}")
+        if v != "0.4.1":
+            errors.append(f"VERSION must be exactly '0.4.1', got {v!r}")
     if LICENSE_FILE.exists():
         lic = LICENSE_FILE.read_text(encoding="utf-8")
         canonical_mit = """MIT License
@@ -394,6 +394,7 @@ SOFTWARE.
     if CHANGELOG.exists():
         cl = CHANGELOG.read_text(encoding="utf-8")
         for required in (
+            "## [v0.4.1] - 2026-08-27",
             "## [v0.4.0] - 2026-08-27",
             "## [v0.3.0] - 2026-08-27",
             "## [v0.2.1] - 2026-08-23",
@@ -406,8 +407,8 @@ SOFTWARE.
         # CHANGELOG must at least mention qwen prohibition (already checked), but also we check RELEASE_NOTES for full set
     if RELEASE_NOTES.exists():
         rn = RELEASE_NOTES.read_text(encoding="utf-8")
-        if "v0.4.0" not in rn:
-            errors.append("RELEASE_NOTES.md missing v0.4.0")
+        if "v0.4.1" not in rn:
+            errors.append("RELEASE_NOTES.md missing v0.4.1")
         if "specification" not in rn.lower():
             errors.append("RELEASE_NOTES.md missing specification disclosure")
         if "specification artifacts only" not in rn.lower() and "specification only" not in rn.lower():
@@ -420,7 +421,7 @@ SOFTWARE.
 
 
 def check_public_diagram_ledgers(errors: list[str]) -> None:
-    """Keep public diagram inventories aligned with the v0.4.0 release sets."""
+    """Keep public diagram inventories aligned with the v0.4.1 release sets."""
     if len(EXPECTED_HANDWRITTEN_PLANTUML) != 8 or len(EXPECTED_SVG_SHA256) != 12:
         errors.append("public diagram ledger validator configuration must contain eight PlantUML sources and twelve SVG artifacts")
         return
@@ -557,8 +558,8 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         txt = doc.read_text(encoding="utf-8")
         if "relux-works/agent-session-manager-spec" not in txt:
             errors.append(f"{doc.name}: missing repository identity relux-works/agent-session-manager-spec")
-        if "v0.4.0" not in txt and "0.4.0" not in txt:
-            errors.append(f"{doc.name}: missing version v0.4.0/0.4.0")
+        if "v0.4.1" not in txt and "0.4.1" not in txt:
+            errors.append(f"{doc.name}: missing version v0.4.1/0.4.1")
     for doc in [SPEC, README, CONTRIBUTING]:
         if doc.exists():
             txt = doc.read_text(encoding="utf-8")
@@ -595,7 +596,7 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         for marker in stale_publication_markers:
             if marker in content:
                 errors.append(
-                    f"{document.relative_to(ROOT)}: stale/internal v0.4.0 publication marker {marker!r}"
+                    f"{document.relative_to(ROOT)}: stale/internal v0.4.1 publication marker {marker!r}"
                 )
 
 

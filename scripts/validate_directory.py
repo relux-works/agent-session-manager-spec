@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Callable
 
@@ -19,11 +20,11 @@ NORMATIVE_SCHEMA_SECTIONS = {
     ),
     "Directory Node protocol": (
         "### 7.9 Companion Directory Node protocol", "## 8.",
-        "09f5311e5f16c704dec68f689fd1ef83ec80657cfcc690f4c109a97a07d5583e",
+        "8701c84372234bca4e19b650de7ec5deeafe456782ae4635c220b1fed5848da1",
     ),
     "directory records and query": (
         "### 10.8 Directory records, lineage, enrichment, query, and continuation", "## 11.",
-        "f45ea18bc22488647b7f25559cfd5d8cbce7f93c8531ed8bbf82b2cc719f95ce",
+        "03e0077f6356e281560d8cf37643baee7d46c004cc453f5f5379ebfc076eacaf",
     ),
     "Mesh RPC 3 directory replication": (
         "### 11.8 Mesh RPC 3.0.0 directory replication", "## 12.",
@@ -31,11 +32,11 @@ NORMATIVE_SCHEMA_SECTIONS = {
     ),
     "directory continuation planning and execution": (
         "### 13.15 Directory continuation planning and execution", "## 14.",
-        "022ab6c5e28d2bf190aa623ad31446ba2c4e1f10aef5ef8cbb8164612487440e",
+        "ef152b32402559322bf866e0a59a852cb65f10094b8dc9029cab985b818d3650",
     ),
     "CLI Result 3 and Directory Query": (
         "### 14.5 Session Directory CLI Result 3, query, and TUI", "## 15.",
-        "b843b7fbbc0bb9674334f3375db6408aca3867087ddc6bde87fac96a32f7fe27",
+        "2e3bc8620ea4f9fc88c149cfa644b3c6d99f4a20e450825f535e0a6b68de26bf",
     ),
     "Structured Error 1.2": (
         "### 15.1 Structured Error", "### 15.2",
@@ -115,10 +116,25 @@ OPERATION_TRANSITIONS = {
     "succeeded": [], "compensated": [],
 }
 
+DIGEST_RE = re.compile(r"sha256:[0-9a-f]{64}\Z")
+TIMESTAMP_RE = re.compile(
+    r"[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])"
+    r"T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\."
+    r"[0-9]{3,9}Z\Z"
+)
+TIMESTAMP_FIELDS = {
+    "as_of", "claim_acquired_at", "claim_expires_at", "completed_at",
+    "created_at", "deadline", "ended_at", "expires_at",
+    "last_successful_contact_at", "observed_at", "receipt_at", "started_at",
+    "updated_at", "validated_at",
+}
+AX_PLATFORMS = ["macos", "linux", "wsl2", "windows"]
+
 CLOSED_OBJECTS = {
     "directory_node_manifest": ["schema", "schema_version", "node_id", "node_version", "host_id", "executable_sha256", "provider_manifest_digest", "session_adapter_manifest_digest", "supported_protocol_versions", "operations", "schemas", "environment_tuple_registry_id", "capabilities", "redaction_policy_ids", "enrichment_profile_ids", "limits", "extensions"],
     "directory_request": ["schema", "schema_version", "protocol", "protocol_version", "request_id", "operation", "deadline_ms", "body"],
-    "directory_response": ["schema", "schema_version", "protocol", "protocol_version", "request_id", "operation", "ok", "body", "error"],
+    "directory_response_success": ["schema", "schema_version", "protocol", "protocol_version", "request_id", "operation", "ok", "body"],
+    "directory_response_failure": ["schema", "schema_version", "protocol", "protocol_version", "request_id", "operation", "ok", "error"],
     "environment_observation": ["schema", "schema_version", "observation_id", "host_id", "installation_id", "environment_id", "environment_version", "provider_id", "platform", "architecture", "backend_realm_fingerprint", "capabilities", "authentication_status", "runtime_status", "observed_at", "extensions"],
     "native_session_observation": ["schema", "schema_version", "observation_id", "instance_id", "host_id", "installation_id", "observation_sequence", "previous_observation_id", "managed_session_id", "provider_identity_record_id", "lineage_anchor_hint", "source_generation", "head_digest", "identity_confidence", "presence", "native_state", "resumability", "workspace_identity", "provider_title", "created_at", "updated_at", "message_counts", "preview_status", "warnings", "observed_at", "extensions"],
     "inventory_batch": ["schema", "schema_version", "batch_id", "host_id", "batch_sequence", "previous_batch_id", "cursor_before", "cursor_after", "environment_observation_ids", "native_observation_ids", "scan_root_authority_ids", "adapter_builds", "started_at", "completed_at", "partial", "error_codes", "extensions"],
@@ -302,6 +318,25 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         len(vectors) == len(SELF_FIELDS) and set(vector_schemas) == set(SELF_FIELDS) and len(vector_schemas) == len(set(vector_schemas)),
         "identity vector coverage must contain exactly one vector for every immutable directory schema",
     )
+
+    def validate_common_values(value: object, location: str, field_name: str | None = None) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                validate_common_values(child, f"{location}.{key}", key)
+            return
+        if isinstance(value, list):
+            for index, child in enumerate(value):
+                validate_common_values(child, f"{location}[{index}]", field_name)
+            return
+        if not isinstance(value, str):
+            return
+        if value.startswith("sha256:"):
+            need("self_id_jcs", bool(DIGEST_RE.fullmatch(value)), f"invalid SHA-256 digest identifier at {location}")
+        if field_name in TIMESTAMP_FIELDS:
+            need("self_id_jcs", bool(TIMESTAMP_RE.fullmatch(value)), f"timestamp must be UTC RFC 3339 with at least millisecond precision at {location}")
+        if field_name == "platform":
+            need("self_id_jcs", value in AX_PLATFORMS, f"platform must use the AX enum macos|linux|wsl2|windows at {location}")
+
     for row in vectors:
         if not isinstance(row, dict):
             need("self_id_jcs", False, "each identity vector must be an object")
@@ -314,6 +349,8 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
             need("self_id_jcs", False, f"identity vector canonical_input must be an object for {schema}")
             continue
         need("self_id_jcs", canonical_input.get("schema") == schema and canonical_input.get("schema_version") == "1.0.0", f"identity vector canonical_input schema/version mismatch for {schema}")
+        validate_common_values(canonical_input, f"identity_vectors[{schema}].canonical_input")
+        validate_common_values(row.get("expected_id"), f"identity_vectors[{schema}].expected_id", "expected_id")
         need("self_id_jcs", self_field not in canonical_input, f"identity vector canonical_input must omit only self field {self_field} for {schema}")
         expected_members = set(CLOSED_OBJECTS[SELF_SCHEMA_SHAPES[schema]]) - {self_field}
         need("self_id_jcs", set(canonical_input) == expected_members, f"identity vector canonical_input must contain every closed member except self field {self_field} for {schema}")
@@ -321,6 +358,8 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         need("self_id_jcs", row.get("expected_id") == actual, f"wrong self-ID for {schema}: expected {actual}")
     ids = data.get("sorted_id_fixture", [])
     need("self_id_jcs", ids == sorted(set(ids)), "sorted_id_fixture must be bytewise sorted and unique")
+    for index, identity in enumerate(ids):
+        validate_common_values(identity, f"sorted_id_fixture[{index}]", "id")
 
     shapes = data.get("closed_shapes", {})
     need("closed_shapes", shapes == CLOSED_OBJECTS, "closed directory object member registry mismatch or unknown field admitted")
@@ -335,6 +374,8 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     node = data.get("directory_node", {})
     need("directory_node", node.get("operations") == NODE_OPERATIONS and node.get("mutations") == ["scan", "enrichment-run"], "Directory Node exact operation/mutation registry mismatch")
     need("directory_node", node.get("idempotency") == {"same_mutation_same_input": "same_receipt", "same_mutation_changed_input": "idempotency_mismatch"}, "mutation-ID reuse with changed input must return idempotency_mismatch")
+    need("directory_node", node.get("platforms") == AX_PLATFORMS, "Directory Node probe platform registry must be macos|linux|wsl2|windows")
+    need("directory_node", node.get("response_union") == {"success": "body_without_error", "failure": "error_without_body"}, "Directory Node response must be body XOR error")
 
     mesh = data.get("mesh", {})
     need("mesh_namespace", mesh.get("namespace_count") == 7 and mesh.get("namespaces") == NAMESPACES, "RPC 3 namespace cardinality must be seven with exact members")
@@ -358,6 +399,8 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     ann = data.get("annotation_cases", {})
     need("annotation_dag", ann.get("generated_requires") == ["subject_head_digest", "profile_id", "evidence_ids"], "generated annotation requires exact subject head, profile, and evidence")
     need("annotation_dag", ann.get("manual_precedence") is True, "enrichment must not overwrite manual title metadata")
+    profile_vectors = [row.get("canonical_input", {}) for row in vectors if row.get("schema") == "urn:ax:schema:session-enrichment-profile"]
+    need("annotation_dag", ann.get("generator_discriminators") == "must_match" and len(profile_vectors) == 1 and profile_vectors[0].get("generator_kind") == profile_vectors[0].get("generator", {}).get("kind"), "enrichment profile generator_kind must equal generator.kind")
     need("annotation_dag", ann.get("conflict_resolution") == "supersede_all_concurrent_heads" and ann.get("clock_is_authority") is False, "resolution must supersede every concurrent head without wall-clock authority")
 
     receipts = data.get("receipt_cases", {})
@@ -372,6 +415,8 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     edges = ["ax_fork", "session_clone", "cross_environment_move", "native_adoption", "managed_instance_binding", "operator_link"]
     need("lineage", lineage.get("authoritative_edges") == edges and lineage.get("suggested_relation_authoritative") is False, "lineage authority requires exact evidence-backed edges; suggestions are excluded")
     need("lineage", lineage.get("cycles_allowed") is False and lineage.get("ambiguity") == "visible_until_explicit_resolution", "cycles are forbidden and ambiguity remains visible")
+    representative = lineage.get("representative", {})
+    need("lineage", representative == {"required_for_lineage_row": True, "singular_fields_bind_to_representative": True, "selection_is_authority": False, "clock_is_tiebreaker": False, "stable_final_tiebreaker": "member_id_bytewise"}, "lineage DirectoryEntry must bind singular fields to one non-authoritative deterministic representative")
 
     disclosure = data.get("disclosure", {})
     excluded = {"raw_native_session_id", "absolute_native_store_path", "raw_transcript", "raw_preview", "credentials", "auth_store", "terminal_output", "pid", "pty", "socket", "model_payload", "embedding", "sqlite_index"}
@@ -390,7 +435,8 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     need("route_outcomes", all_outcomes == required_outcomes and route_map.get("cross_environment_move") == ["moved_cross_environment", "cloned_source_still_active", "planned_only"], "route/outcome matrix completeness mismatch")
 
     need("target_first_move", data.get("move_trace") == ["capture", "transfer", "project", "validate", "target_commit", "lineage_publish", "source_stop_release"], "move must commit target and lineage before source stop/release")
-    need("remote_unmanaged", data.get("remote_unmanaged") == {"open_allowed": False, "alternatives": ["source_local_adoption", "managed_clone"]}, "remote unmanaged open is forbidden")
+    unmanaged = data.get("remote_unmanaged")
+    need("remote_unmanaged", unmanaged == {"open_allowed": False, "move_allowed": False, "alternatives": ["source_local_adoption", "managed_clone", "adoption_then_managed_move"]}, "remote unmanaged open is forbidden; direct unmanaged move is forbidden")
 
     clone = data.get("cloning", {})
     clone_refs = ["urn:ax:schema:clone-capture-manifest", "urn:ax:schema:canonical-session", "urn:ax:schema:projection-plan", "urn:ax:schema:fidelity-report", "urn:ax:schema:clone-read-back-evidence-manifest", "urn:ax:schema:clone-validation-report", "urn:ax:schema:clone-lineage-receipt"]
@@ -401,6 +447,17 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     need("interfaces", interface.get("query_operations") == QUERY_OPERATIONS and interface.get("query_presets") == ["minimal", "overview", "activity", "routing", "full"], "query operation/preset registry mismatch")
     need("interfaces", interface.get("guarded_mutations") == ["set_title", "set_tags", "set_pin", "enrich", "plan_continue", "execute_plan"] and interface.get("delete_mutation") is False, "guarded mutation registry mismatch or delete admitted")
     need("interfaces", interface.get("default_contains_raw_transcript") is False and interface.get("tui_uses_typed_engine") is True, "default output must exclude raw transcript and TUI must use typed engine")
+    need("interfaces", interface.get("human_cli_leaves") == ["list", "inspect", "lineage", "scan", "enrich", "jobs", "plan", "continue", "operation", "attach", "doctor"] and interface.get("agent_cli_leaves") == ["q", "grep", "m"], "ax sessions human and agent CLI leaf registries mismatch")
+    correlation = interface.get("query_correlation", {})
+    request_operations = correlation.get("request", [])
+    response_results = correlation.get("response", [])
+    expected_indexes = list(range(len(request_operations)))
+    request_indexes = [row.get("operation_index") for row in request_operations if isinstance(row, dict)]
+    response_indexes = [row.get("operation_index") for row in response_results if isinstance(row, dict)]
+    request_names = [row.get("name") for row in request_operations if isinstance(row, dict)]
+    response_names = [row.get("operation_name") for row in response_results if isinstance(row, dict)]
+    need("interfaces", request_indexes == expected_indexes, "Directory Query operation_index must be unique, contiguous, and equal array position")
+    need("interfaces", response_indexes == expected_indexes and response_names == request_names and len(response_results) == len(request_operations), "QueryResult must preserve request order and exact operation index/name correlation")
 
     tuples = data.get("tuple_matrix", {})
     tuple_keys = {"claude-code/claude/macos/arm64", "claude-code/claude/linux/amd64", "codex/codex/macos/arm64", "codex/codex/linux/amd64"}
@@ -436,7 +493,20 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         mesh_kinds = {row.get("case") for row in cases.get("mesh_convergence", []) if isinstance(row, dict)}
         need("mesh_namespace", mesh_kinds == {"reorder", "duplicate", "gap", "conflict", "clock_skew"}, "mesh fixtures must cover reorder/duplicate/gap/conflict/clock-skew convergence")
         route_cases = cases.get("routes", [])
-        need("route_outcomes", len(route_cases) == len(ROUTES) and [row.get("route") for row in route_cases if isinstance(row, dict)] == ROUTES and all(row.get("expected_outcomes") == route_map.get(row.get("route")) for row in route_cases if isinstance(row, dict)), "route fixtures must cover every route with its exact outcome matrix")
+        route_source_kinds = {
+            "managed_local_attach": "managed",
+            "managed_remote_attach": "managed",
+            "managed_local_resume": "managed",
+            "managed_takeover": "managed",
+            "managed_fork": "managed",
+            "adopt_existing_native": "unmanaged",
+            "same_environment_clone": "managed_or_unmanaged",
+            "cross_environment_clone": "managed_or_unmanaged",
+            "cross_environment_move": "managed",
+            "open_unmanaged_local": "unmanaged",
+            "archive_or_context_fallback": "any",
+        }
+        need("route_outcomes", len(route_cases) == len(ROUTES) and [row.get("route") for row in route_cases if isinstance(row, dict)] == ROUTES and all(row.get("expected_outcomes") == route_map.get(row.get("route")) and row.get("source_kind") == route_source_kinds.get(row.get("route")) for row in route_cases if isinstance(row, dict)), "route fixtures must cover every route with its exact outcome matrix and source-kind")
         durable_steps = ["capture", "transfer", "project", "validate", "target_commit", "lineage_publish", "source_stop_release"]
         crash_cases = cases.get("crash_points", [])
         crash_matrix = {(row.get("step"), row.get("position")) for row in crash_cases if isinstance(row, dict)}
@@ -454,16 +524,16 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
 
     publication = data.get("publication", {})
     docs = ["SPEC.md", "README.md", "CONTRIBUTING.md", "CHANGELOG.md", "RELEASE_NOTES.md", "VERSION", "STANDALONE_TO_AX_TRACEABILITY.md"]
-    need("publication_consistency", publication.get("spec_version") == "0.4.0" and publication.get("frozen_digest_owner") == "publication-task" and publication.get("required_documents") == docs, "v0.4 candidate/release ownership or document registry mismatch")
-    claim = "AX v0.4.0 Session Directory is specification-only until conforming implementations publish tuple evidence."
+    need("publication_consistency", publication.get("spec_version") == "0.4.1" and publication.get("frozen_digest_owner") == "publication-task" and publication.get("required_documents") == docs, "v0.4.1 candidate/release ownership or document registry mismatch")
+    claim = "AX v0.4.1 Session Directory is specification-only until conforming implementations publish tuple evidence."
     need("publication_consistency", publication.get("claim") == claim, "README/release claim is not supported by SPEC and fixtures")
-    need("publication_consistency", "The following versions are active in v0.4.0." in spec and "implementation release acceptance rule" in spec, "SPEC does not support v0.4 specification-only claim")
+    need("publication_consistency", "The following versions are active in v0.4.1." in spec and "implementation release acceptance rule" in spec, "SPEC does not support v0.4.1 specification-only claim")
     public_prose = "\n".join(
         (root / name).read_text(encoding="utf-8")
         for name in ("README.md", "RELEASE_NOTES.md")
         if (root / name).is_file()
     )
-    need("publication_consistency", "AX v0.4.0 directory implementation is shipped and available." not in public_prose, "README/release claim is not supported by SPEC and fixtures")
+    need("publication_consistency", "AX v0.4.1 directory implementation is shipped and available." not in public_prose, "README/release claim is not supported by SPEC and fixtures")
     for doc in docs:
         need("publication_consistency", (root / doc).is_file(), f"required publication document missing: {doc}")
 
@@ -472,27 +542,27 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     # section markers, registry sentences, and security invariants rather than
     # broad token-presence checks.
     spec_requirements = {
-        "self_id_jcs": ["each a digest in its one registered schema", "with only that self field omitted"],
+        "self_id_jcs": ["each a digest in its one registered schema", "with only that self field omitted", "timestamps MUST be UTC RFC 3339 with at least millisecond precision", "SHA-256 digest identifiers MUST use"],
         "strict_examples": ["A negative mutation is applied alone to a fresh", "MUST NOT repair, round, ignore, or default the changed fact"],
         "closed_shapes": ["Every complete object is\nclosed and contains the exact registry", "Each displayed body is closed"],
-        "directory_node": ["The exact operation registry and bodies are:", "<code>enrichment-run</code>", "a changed body is\n<code>idempotency_mismatch</code> without new records"],
+        "directory_node": ["The exact operation registry and bodies are:", "<code>enrichment-run</code>", "A success response contains exactly the common envelope", "A failure response contains exactly the common envelope", "a changed body is\n<code>idempotency_mismatch</code> without new records"],
         "mesh_namespace": ["replace <code>contracts</code> with an exact 24-key map", "<code>Namespace[1..7]</code>", "<code>directory_record</code> namespace contains only schema-valid"],
         "environment_mapping": ["initial mapping is exactly <code>claude-code -> claude</code> and\n<code>codex -> codex</code>"],
         "observation_chains": ["Only a successful non-partial batch for the same root authority and realm may\npublish <code>presence=missing</code>", "Timestamps never order the chain"],
-        "annotation_dag": ["Enrichment cannot supersede manual\nmetadata", "supersedes every head"],
+        "annotation_dag": ["Enrichment cannot supersede manual\nmetadata", "supersedes every head", "<code>generator_kind</code> MUST equal <code>generator.kind</code>"],
         "receipt_chains": ["State derives only from a valid\ncontiguous receipt chain", "recovered by operation ID before\nretry"],
-        "lineage": ["Authoritative edges are exactly", "excluded from the\nauthoritative connected component"],
+        "lineage": ["Authoritative edges are exactly", "excluded from the\nauthoritative connected component", "the representative member from which the singular provider"],
         "disclosure_policy": ["Raw\nnative/transcript/preview/model payloads, credentials/auth state, terminal\noutput, PIDs/PTYs/sockets, absolute native-store paths, runtime observations,\nand SQLite rows are excluded"],
         "continuation_plan": ["Planning may perform read-only probes but MUST NOT quiesce", "no silent replan, target/intent/route\nsubstitution"],
         "route_outcomes": ["Continuation routes are the closed registry", "Outcomes are separately the closed\nregistry"],
         "target_first_move": ["lineage publication before source\nstop/release", "returns\n<code>cloned_source_still_active</code>"],
-        "remote_unmanaged": ["Remote unmanaged open is always\n<code>unmanaged_remote_forbidden</code>"],
+        "remote_unmanaged": ["Remote unmanaged open is always\n<code>unmanaged_remote_forbidden</code>", "A direct unmanaged move is unavailable"],
         "cloning_fidelity": ["Cross-environment routes reference the exact v0.3 Clone Capture/Raw Object", "Fidelity Report", "Read-Back Evidence"],
-        "interfaces": ["Read operations are exactly <code>schema</code>", "<code>execute_plan</code>; there is no delete", "drive one typed query engine"],
+        "interfaces": ["Read operations are exactly <code>schema</code>", "<code>execute_plan</code>; there is no delete", "operation_index</code> MUST equal that operation's zero-based array", "drive one typed query engine", "exact agent-oriented leaves"],
         "tuple_matrix": ["The initial mapping is exactly", "Adoption is source-local and unavailable unless the exact accepted tuple proves"],
         "security": ["ANSI, OSC, bidi overrides,\ncontrols, invalid width, and hostile grapheme sequences are removed or visibly\nescaped", "All native/process launches use structured argv, explicit workspace-derived cwd,\nminimal environment allowlists"],
         "traceability": ["Appendix D. Requirement traceability", "<code>AC-DIR-INV-001</code>"],
-        "publication_consistency": ["The following versions are active in v0.4.0.", "implementation release acceptance rule"],
+        "publication_consistency": ["The following versions are active in v0.4.1.", "implementation release acceptance rule"],
     }
     for group, literals in spec_requirements.items():
         for literal in literals:
@@ -505,5 +575,5 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         "directory_failed_groups": failed,
         "directory_contracts": len(data.get("contracts", {})),
         "directory_fixture_families": len(families),
-        "directory_expected_red_minimum": 22,
+        "directory_expected_red_minimum": 31,
     }

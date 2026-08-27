@@ -5,6 +5,35 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.1] - 2026-08-27
+
+### Fixed
+
+- Prohibited direct unmanaged cross-environment move: an unmanaged source must
+  be cloned while retained or adopted source-locally before a separately
+  planned managed move can use Session Event 3 and fenced lease release.
+- Repaired all positive Directory self-ID vectors to use full SHA-256
+  identifiers, millisecond-precision UTC timestamps, and the AX platform enum;
+  recomputed every affected JCS identity.
+- Made Directory Node responses an executable `body XOR error` tagged union,
+  required enrichment generator discriminators to agree, required positional
+  query/result correlation, and bound lineage rows to one deterministic
+  non-authoritative representative member.
+- Clarified that the Section 5 Session Record/Event definitions are the closed
+  v1 base variants and that v2/v3 are independently selected extensions.
+- Added focused expected-red coverage for invalid common values, discriminator
+  conflicts, response-union violations, query correlation, unmanaged move,
+  lineage selection, and CLI registry drift.
+- Improved the Directory component and C4 Container diagrams for readable
+  labels and bounded width.
+
+### Compatibility
+
+- This patch changes no Section 1.5 contract version or authority. It resolves
+  contradictory or unimplementable v0.4.0 text under already-settled AX
+  invariants and supersedes v0.4.0 as the first Directory implementation
+  baseline.
+
 ## [v0.4.0] - 2026-08-27
 
 ### Added

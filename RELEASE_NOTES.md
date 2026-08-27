@@ -1,8 +1,29 @@
-# Agent Session Manager (`ax`) Specification v0.4.0
+# Agent Session Manager (`ax`) Specification v0.4.1
 
-This minor specification release integrates Session Directory and continuation orchestration as first-class AX subsystems. It advances the accepted v0.3 cloning baseline without rewriting any existing release tag or changing the Provider 2 / Session Adapter 1 cloning authority.
+This patch specification release corrects the v0.4.0 Session Directory
+publication without changing Provider 2, Session Adapter 1, Mesh RPC 3, or any
+other Section 1.5 contract version. Existing tags remain immutable; v0.4.1
+supersedes v0.4.0 as the first safe Directory implementation baseline.
 
 **Status caveat:** this release publishes specification artifacts only. It contains no executable `ax` product binary, and publication does not imply that any provider/platform product-conformance lane has passed.
+
+## Errata resolved
+
+- Direct unmanaged cross-environment move is forbidden because an unmanaged
+  source has no AX Session, winning lease, epoch, Checkpoint, or fenced source
+  release. Operators may retain the source and clone it, or adopt it
+  source-locally before creating a new managed-move plan.
+- Positive Directory identity vectors now satisfy common digest, timestamp, and
+  platform grammars before their RFC 8785 identities are accepted.
+- Directory Node success/failure responses are a strict `body XOR error` union;
+  enrichment generator discriminators must match; batched query/result indexes
+  are positional and exact; lineage rows expose the deterministic member that
+  supplies singular projection fields.
+- Session Record/Event v1 base text now points explicitly to the independently
+  closed v2/v3 variants, and the complete `ax sessions` leaf registry includes
+  the typed `q`, `grep`, and `m` agent surfaces.
+- Focused diagrams were rerendered after eliminating overlapping labels and
+  reducing the C4 Container view to its intended internal-container scope.
 
 ## Session Directory
 
@@ -22,11 +43,11 @@ Default list/query output contains sanitized projections and no raw excerpt. Pre
 
 Planning is pure and content-addressed. Execution requires explicit confirmation and revalidates the exact source head, lease/runtime state, target Environment Tuple, authentication/workspace facts, route, and expiry. A mismatch refuses execution; AX does not silently replan or substitute another route.
 
-Managed attach/resume/takeover/fork routes delegate to existing AX ownership, transfer, materialization, and terminal authority. Cross-environment continuation delegates to the v0.3 cloning transaction and its fidelity/read-back/Checkpoint gates. A cross-environment move commits and validates the target before attempting source stop/release; if that last step fails, the valid target remains and the truthful partial-success outcome is `cloned_source_still_active`.
+Managed attach/resume/takeover/fork routes delegate to existing AX ownership, transfer, materialization, and terminal authority. Cross-environment continuation delegates to the v0.3 cloning transaction and its fidelity/read-back/Checkpoint gates. A managed cross-environment move commits and validates the target before attempting fenced source stop/release; if that last step fails, the valid target remains and the truthful partial-success outcome is `cloned_source_still_active`.
 
 ## Contract and compatibility boundary
 
-| Contract | v0.4.0 version / disposition |
+| Contract | v0.4.1 version / disposition |
 | --- | --- |
 | Directory Node protocol, manifest, request, and response | `1.0.0` |
 | Environment/Native observations, Inventory Batch, lineage, annotations, enrichment, continuation, operation receipt, and Directory Query | `1.0.0` |
@@ -57,4 +78,4 @@ The public repository validator remains specification-only. It validates contrac
 
 ## Traceability
 
-`STANDALONE_TO_AX_TRACEABILITY.md` maps every cloning and Session Directory standalone section to the resulting AX v0.4.0 section and records reuse, addition, or supersession without becoming normative. Appendix A of `SPEC.md` maps accepted decisions, task criteria, and Directory publication artifacts; Appendix D defines the exhaustive contract and fixture catalog. `SPEC.md` remains the only normative source.
+`STANDALONE_TO_AX_TRACEABILITY.md` maps every cloning and Session Directory standalone section to the resulting AX v0.4.1 section and records reuse, addition, or supersession without becoming normative. Appendix A of `SPEC.md` maps accepted decisions, task criteria, and Directory publication artifacts; Appendix D defines the exhaustive contract and fixture catalog. `SPEC.md` remains the only normative source.
