@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for AX v0.4.1.
+"""Public, repository-only validation for AX v0.4.2.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
-and adds publication/metadata, recovery, cloning, and Directory closure for v0.4.1.
+and adds publication/metadata, recovery, cloning, and Directory closure for v0.4.2.
 Repository-only: no ax binary, provider CLI, or task-board runtime required.
 """
 
@@ -31,16 +31,16 @@ RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
 TRACEABILITY = ROOT / "STANDALONE_TO_AX_TRACEABILITY.md"
 DIRECTORY_FIXTURE = ROOT / "fixtures" / "session_directory_conformance.json"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen v0.4.1 publication prose. Hashes use UTF-8 text with all line endings
+# Frozen v0.4.2 publication prose. Hashes use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. Future
 # specification releases must deliberately replace this bounded map after the
 # semantic checks and expected-red suite have been reviewed for the new prose.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "df678280b622220d1a8dcddef0cbc149ae136a4e22b03af0713af4cd97d179ee",
-    "README.md": "611fdf40cfdfba41b8fcc1cc2ab9c6ef3641a268bae189509bcbdac1ea9e01ac",
-    "CONTRIBUTING.md": "519b1f47d1bf45b7b738df85e1dadf917ef1ce990577ce17e9c125b8c928f37d",
-    "CHANGELOG.md": "a6d65ea8188d3878ee2e099f1ff15898f2a63d17d217c004272966c07fe9ad6c",
-    "RELEASE_NOTES.md": "cfe5dff8f5760293e5316e9ef27b2ddc33734c7066e7d98e8911d3a47bb2f30f",
+    "SPEC.md": "bdc4e5a95763cfa0df71a9a574968877102b32aac610b3b4344f836889cfec21",
+    "README.md": "6af02d75e9738523d4bb5e608e78d2d7679371414527ec12b4f89d581c452987",
+    "CONTRIBUTING.md": "18d36efc5ae2beadf0aac471455dd121e2e266efc072d90652d18e0e87ccd0d7",
+    "CHANGELOG.md": "02682df54479e034d14ebcad9f865bfe6ebbfa93c86c102b4ee488b45b015c69",
+    "RELEASE_NOTES.md": "93fc3ac85a8ee873df765f1176744cda3c71079e492f89d3eadb43c8779df41b",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -78,8 +78,8 @@ EXPECTED_HANDWRITTEN_PLANTUML = {
 }
 
 FROZEN_ACCEPTED_INPUT_SHA256 = {
-    "STANDALONE_TO_AX_TRACEABILITY.md": "c6c376ae7d7767184e1ca30b27a30e33be1d6123c97775c35cb1a09d8eabefaf",
-    "diagrams/README.md": "b60a880e335dc41de562ec70e060dda1d192f0cb9bc4deb9701ffe5390447935",
+    "STANDALONE_TO_AX_TRACEABILITY.md": "1bc9715a33d59862d3a3cd780a4ca68ed2cf7cf73196a3adf00bd7428fb45d28",
+    "diagrams/README.md": "c8ebc4715068a1a3aaf4e8c8fe86ff637b2267270b2ba7a6c0468e3adba711a5",
     "diagrams/plantuml/cloning_components.puml": "50e728af2fddbc5f3b161d661068fc33c4fe341884c4c28a8ea541c24577118a",
     "diagrams/plantuml/cloning_transaction.puml": "aadeb780d4cbbe129059dd327bd67b42c1947e13660143f7b91a06c59c99887f",
 }
@@ -297,7 +297,7 @@ def normalized_release_document_sha256(path: pathlib.Path) -> str:
 
 
 def check_frozen_release_baseline(errors: list[str]) -> None:
-    """Protect the reviewed v0.4.1 claim prose without pretending to parse English."""
+    """Protect the reviewed v0.4.2 claim prose without pretending to parse English."""
     expected_names = {path.name for path in PUBLIC_CLAIM_DOCUMENTS}
     configured_names = set(FROZEN_RELEASE_DOCUMENT_SHA256)
     if configured_names != expected_names:
@@ -314,7 +314,7 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual = normalized_release_document_sha256(document)
         if actual != expected:
             errors.append(
-                f"{document.name}: frozen v0.4.1 release baseline mismatch "
+                f"{document.name}: frozen v0.4.2 release baseline mismatch "
                 f"(expected LF-normalized SHA-256 {expected}, got {actual}); "
                 "review the prose and update FROZEN_RELEASE_DOCUMENT_SHA256 only for an intentional release revision"
             )
@@ -363,8 +363,8 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
 def check_publication_metadata(errors: list[str]) -> None:
     if VERSION_FILE.exists():
         v = VERSION_FILE.read_text(encoding="utf-8").strip()
-        if v != "0.4.1":
-            errors.append(f"VERSION must be exactly '0.4.1', got {v!r}")
+        if v != "0.4.2":
+            errors.append(f"VERSION must be exactly '0.4.2', got {v!r}")
     if LICENSE_FILE.exists():
         lic = LICENSE_FILE.read_text(encoding="utf-8")
         canonical_mit = """MIT License
@@ -394,6 +394,7 @@ SOFTWARE.
     if CHANGELOG.exists():
         cl = CHANGELOG.read_text(encoding="utf-8")
         for required in (
+            "## [v0.4.2] - 2026-08-28",
             "## [v0.4.1] - 2026-08-27",
             "## [v0.4.0] - 2026-08-27",
             "## [v0.3.0] - 2026-08-27",
@@ -407,8 +408,8 @@ SOFTWARE.
         # CHANGELOG must at least mention qwen prohibition (already checked), but also we check RELEASE_NOTES for full set
     if RELEASE_NOTES.exists():
         rn = RELEASE_NOTES.read_text(encoding="utf-8")
-        if "v0.4.1" not in rn:
-            errors.append("RELEASE_NOTES.md missing v0.4.1")
+        if "v0.4.2" not in rn:
+            errors.append("RELEASE_NOTES.md missing v0.4.2")
         if "specification" not in rn.lower():
             errors.append("RELEASE_NOTES.md missing specification disclosure")
         if "specification artifacts only" not in rn.lower() and "specification only" not in rn.lower():
@@ -421,7 +422,7 @@ SOFTWARE.
 
 
 def check_public_diagram_ledgers(errors: list[str]) -> None:
-    """Keep public diagram inventories aligned with the v0.4.1 release sets."""
+    """Keep public diagram inventories aligned with the v0.4.2 release sets."""
     if len(EXPECTED_HANDWRITTEN_PLANTUML) != 8 or len(EXPECTED_SVG_SHA256) != 12:
         errors.append("public diagram ledger validator configuration must contain eight PlantUML sources and twelve SVG artifacts")
         return
@@ -558,8 +559,8 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         txt = doc.read_text(encoding="utf-8")
         if "relux-works/agent-session-manager-spec" not in txt:
             errors.append(f"{doc.name}: missing repository identity relux-works/agent-session-manager-spec")
-        if "v0.4.1" not in txt and "0.4.1" not in txt:
-            errors.append(f"{doc.name}: missing version v0.4.1/0.4.1")
+        if "v0.4.2" not in txt and "0.4.2" not in txt:
+            errors.append(f"{doc.name}: missing version v0.4.2/0.4.2")
     for doc in [SPEC, README, CONTRIBUTING]:
         if doc.exists():
             txt = doc.read_text(encoding="utf-8")
@@ -596,7 +597,7 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         for marker in stale_publication_markers:
             if marker in content:
                 errors.append(
-                    f"{document.relative_to(ROOT)}: stale/internal v0.4.1 publication marker {marker!r}"
+                    f"{document.relative_to(ROOT)}: stale/internal v0.4.2 publication marker {marker!r}"
                 )
 
 

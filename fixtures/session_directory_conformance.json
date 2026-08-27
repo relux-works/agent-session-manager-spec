@@ -26,9 +26,9 @@
     "publication_consistency"
   ],
   "contracts": {
-    "urn:ax:protocol:session-directory-node": "1.0.0",
+    "urn:ax:protocol:session-directory-node": "2.0.0",
     "urn:ax:schema:session-directory-node-manifest": "1.0.0",
-    "urn:ax:schema:session-directory-node-request": "1.0.0",
+    "urn:ax:schema:session-directory-node-request": "2.0.0",
     "urn:ax:schema:session-directory-node-response": "1.0.0",
     "urn:ax:schema:environment-observation": "1.0.0",
     "urn:ax:schema:native-session-observation": "1.0.0",
@@ -59,6 +59,27 @@
     "urn:ax:schema:session-enrichment-job-receipt": "job_receipt_id",
     "urn:ax:schema:session-continuation-plan": "plan_id",
     "urn:ax:schema:session-directory-operation-receipt": "directory_receipt_id"
+  },
+  "common_type_cases": {
+    "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "uuidv4": "550e8400-e29b-41d4-a716-446655440000",
+    "uuidv7": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+    "uuidv7_or_digest": [
+      "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+      "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    ],
+    "nullable_digest": [
+      null,
+      "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    ],
+    "timestamps": [
+      "2024-02-29T23:59:59.000Z",
+      "2026-08-27T00:00:00.123456789Z"
+    ],
+    "sorted_unique": [
+      "alpha",
+      "omega"
+    ]
   },
   "identity_vectors": [
     {
@@ -1136,12 +1157,35 @@
       "same_mutation_same_input": "same_receipt",
       "same_mutation_changed_input": "idempotency_mismatch"
     },
-    "platforms": [
-      "macos",
-      "linux",
-      "wsl2",
-      "windows"
-    ],
+    "protocol_bindings": {
+      "1.0.0": {
+        "request_version": "1.0.0",
+        "response_version": "1.0.0",
+        "manifest_version": "1.0.0",
+        "probe_platforms": [
+          "darwin",
+          "linux",
+          "windows"
+        ]
+      },
+      "2.0.0": {
+        "request_version": "2.0.0",
+        "response_version": "1.0.0",
+        "manifest_version": "1.0.0",
+        "probe_platforms": [
+          "macos",
+          "linux",
+          "wsl2",
+          "windows"
+        ]
+      }
+    },
+    "negotiation": {
+      "preference": "highest_mutual_major",
+      "no_shared_major": "incompatible_protocol",
+      "cross_major_coercion": false,
+      "v1_wsl2": "unrepresentable"
+    },
     "response_union": {
       "success": "body_without_error",
       "failure": "error_without_body"
@@ -1649,7 +1693,7 @@
     "AC-DIR-SEC-001"
   ],
   "publication": {
-    "spec_version": "0.4.1",
+    "spec_version": "0.4.2",
     "frozen_digest_owner": "publication-task",
     "required_documents": [
       "SPEC.md",
@@ -1660,7 +1704,7 @@
       "VERSION",
       "STANDALONE_TO_AX_TRACEABILITY.md"
     ],
-    "claim": "AX v0.4.1 Session Directory is specification-only until conforming implementations publish tuple evidence."
+    "claim": "AX v0.4.2 Session Directory is specification-only until conforming implementations publish tuple evidence."
   },
   "closed_body_unions": {
     "directory_node_request": {

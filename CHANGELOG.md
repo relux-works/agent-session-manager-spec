@@ -5,6 +5,34 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.2] - 2026-08-28
+
+### Fixed
+
+- Restored immutable Directory Node Protocol/Request `1.0.0` semantics with the
+  published `darwin|linux|windows` probe vocabulary and introduced Protocol and
+  Request `2.0.0` for `macos|linux|wsl2|windows`, including WSL2.
+- Added exact protocol/request/response/manifest major bindings, highest-mutual
+  dual-stack negotiation, and fail-closed rejection of cross-major relabeling
+  or coercion.
+- Replaced value-inferred common-type checks with schema/path-directed digest,
+  UUIDv4, UUIDv7, UUIDv7-or-digest, nullable, timestamp, platform, and
+  sorted-unique validation. Timestamp checks now reject impossible calendar
+  instants after matching the RFC 3339 UTC grammar.
+- Added adversarial expected-red cases whose mutated directory self-IDs are
+  recomputed, proving malformed typed values cannot hide behind a self-ID
+  mismatch, plus focused protocol-major binding mutations.
+
+### Compatibility
+
+- Existing `v0.4.0` and `v0.4.1` tags remain immutable. Directory Node
+  Manifest and Response remain `1.0.0`; only Protocol and Request advance to
+  `2.0.0`. Implementations should serve v1 and v2 concurrently for at least one
+  stable specification release.
+- This errata is the first safe Session Directory implementation baseline. It
+  changes no AX ownership, lease, workspace, cloning, mesh namespace, record,
+  or terminal authority.
+
 ## [v0.4.1] - 2026-08-27
 
 ### Fixed

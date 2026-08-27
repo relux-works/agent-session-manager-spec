@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Expected-red mutation suite for v0.4.1 ==="
+echo "=== Expected-red mutation suite for v0.4.2 ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -564,25 +564,25 @@ echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.4.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.4.2 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.4.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.4.2 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
 printf '\nQwen sessions do not need task-board in v0.2.1.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.4.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.4.2 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.4.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.4.2 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
@@ -1312,13 +1312,13 @@ echo ""
 echo "Mutation 105: Internal v0.3.0 task ownership ID leaks into public docs"
 FIX=$(fixture_copy "clone-public-internal-task-id")
 printf '\nGate owner: TASK-260826-example.\n' >> "$FIX/README.md"
-expect_fail "public package must not expose active internal task ownership" "stale/internal v0.4.1 publication marker" "$FIX"
+expect_fail "public package must not expose active internal task ownership" "stale/internal v0.4.2 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 106: Stale v0.2.1 diagram-ledger wording returns"
 FIX=$(fixture_copy "clone-stale-diagram-ledger")
 printf '\nUses the unchanged v0.2.1 SHA-256 ledger.\n' >> "$FIX/diagrams/README.md"
-expect_fail "diagram docs must describe the v0.4.1 ledger" "stale/internal v0.4.1 publication marker" "$FIX"
+expect_fail "diagram docs must describe the v0.4.2 ledger" "stale/internal v0.4.2 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 107: Target derivation mutates the source provider identity after digest refresh"
@@ -1508,6 +1508,30 @@ path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding=
 PY
 }
 
+mutate_directory_vector_and_rehash() {
+  local fixture_dir="$1"
+  local schema="$2"
+  local mutation="$3"
+  python3 - "$fixture_dir" "$schema" "$mutation" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+schema = sys.argv[2]
+path = root / "fixtures" / "session_directory_conformance.json"
+sys.path.insert(0, str(root / "scripts"))
+from validate_spec import canonical
+
+data = json.loads(path.read_text(encoding="utf-8"))
+row = next(item for item in data["identity_vectors"] if item["schema"] == schema)
+exec(sys.argv[3], {"data": data, "row": row})
+row["expected_id"] = "sha256:" + hashlib.sha256(canonical(row["canonical_input"])).hexdigest()
+path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+}
+
 echo ""
 echo "Mutation 119: Directory object placed in wrong namespace"
 FIX=$(fixture_copy "directory-wrong-namespace")
@@ -1631,7 +1655,7 @@ expect_fail "raw transcript in default output" "default output must exclude raw 
 echo ""
 echo "Mutation 139: Unsupported v0.4 implementation claim in README"
 FIX=$(fixture_copy "directory-unsupported-readme-claim")
-printf '\nAX v0.4.1 directory implementation is shipped and available.\n' >> "$FIX/README.md"
+printf '\nAX v0.4.2 directory implementation is shipped and available.\n' >> "$FIX/README.md"
 refresh_frozen_document_digest "$FIX" "README.md"
 expect_fail "unsupported README implementation claim" "README/release claim is not supported by SPEC and fixtures" "$FIX"
 
@@ -1840,7 +1864,7 @@ echo ""
 echo "Mutation 168: Positive directory vector contains a shortened digest"
 FIX=$(fixture_copy "directory-vector-short-digest")
 mutate_directory_fixture "$FIX" 'data["identity_vectors"][0]["canonical_input"]["installation_id"]="sha256:10"'
-expect_fail "directory vector shortened digest" "invalid SHA-256 digest identifier" "$FIX"
+expect_fail "directory vector shortened digest" "schema-directed digest validation failed" "$FIX"
 
 echo ""
 echo "Mutation 169: Positive directory vector timestamp loses millisecond precision"
@@ -1901,6 +1925,67 @@ echo "Mutation 178: Cross-environment move admits an unmanaged source"
 FIX=$(fixture_copy "directory-route-unmanaged-move")
 mutate_directory_fixture "$FIX" 'next(row for row in data["synthetic_cases"]["routes"] if row["route"] == "cross_environment_move")["source_kind"]="managed_or_unmanaged"'
 expect_fail "cross-environment move source-kind widened" "exact outcome matrix and source-kind" "$FIX"
+
+echo ""
+echo "Mutation 179: Non-prefixed value bypasses a digest-typed schema path"
+FIX=$(fixture_copy "directory-schema-path-non-digest")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:environment-observation" 'row["canonical_input"]["installation_id"]="not-a-digest"'
+expect_fail "schema-path digest bypass" "schema-directed digest validation failed" "$FIX"
+
+echo ""
+echo "Mutation 180: Malformed UUID bypasses a UUIDv7-typed schema path"
+FIX=$(fixture_copy "directory-schema-path-bad-uuid")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:environment-observation" 'row["canonical_input"]["host_id"]="not-a-uuid"'
+expect_fail "schema-path UUIDv7 bypass" "schema-directed UUIDv7 validation failed" "$FIX"
+
+echo ""
+echo "Mutation 181: Reversed typed array bypasses sorted-unique validation"
+FIX=$(fixture_copy "directory-schema-path-unsorted-array")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-enrichment-profile" 'row["canonical_input"]["input_classes"].reverse()'
+expect_fail "schema-path sorted-unique bypass" "schema-directed sorted-unique validation failed" "$FIX"
+
+echo ""
+echo "Mutation 182: Regex-shaped impossible calendar timestamp is accepted"
+FIX=$(fixture_copy "directory-schema-path-impossible-date")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:environment-observation" 'row["canonical_input"]["observed_at"]="2026-02-31T00:00:00.000Z"'
+expect_fail "schema-path impossible calendar date" "timestamp is not a real UTC calendar instant" "$FIX"
+
+echo ""
+echo "Mutation 183: Directory Node 1 is rebound to Request 2 wire values"
+FIX=$(fixture_copy "directory-v1-rebound-to-request-v2")
+mutate_directory_fixture "$FIX" 'data["directory_node"]["protocol_bindings"]["1.0.0"]["request_version"]="2.0.0"'
+expect_fail "Directory Node 1 request-major rebinding" "Directory Node protocol/request major binding mismatch" "$FIX"
+
+echo ""
+echo "Mutation 184: Directory Node 2 loses the AX platform registry"
+FIX=$(fixture_copy "directory-v2-platform-regression")
+mutate_directory_fixture "$FIX" 'data["directory_node"]["protocol_bindings"]["2.0.0"]["probe_platforms"]=["darwin", "linux", "windows"]'
+expect_fail "Directory Node 2 platform regression" "Directory Node 2 probe platform registry must be macos|linux|wsl2|windows" "$FIX"
+
+echo ""
+echo "Mutation 185: Malformed UUIDv4 bypasses the common-type oracle"
+FIX=$(fixture_copy "directory-common-type-bad-uuid4")
+mutate_directory_fixture "$FIX" 'data["common_type_cases"]["uuidv4"]="550e8400-e29b-71d4-a716-446655440000"'
+expect_fail "common-type UUIDv4 bypass" "schema-directed UUIDv4 validation failed" "$FIX"
+
+echo ""
+echo "Mutation 186: Nested structured sorted-unique array is reversed"
+FIX=$(fixture_copy "directory-nested-jcs-array-unsorted")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["contract_assertions"]=[{"contract_id":"urn:z","exact_version":"1.0.0","extensions":{}},{"contract_id":"urn:a","exact_version":"1.0.0","extensions":{}}]'
+expect_fail "nested structured sorted-unique bypass" "schema-directed sorted-unique validation failed" "$FIX"
+
+echo ""
+echo "Mutation 187: Nested scalar sorted-unique array contains a duplicate"
+FIX=$(fixture_copy "directory-nested-array-duplicate")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-enrichment-profile" 'row["canonical_input"]["provider_ids"]=["codex", "codex"]'
+expect_fail "nested scalar sorted-unique duplicate" "schema-directed sorted-unique validation failed" "$FIX"
+
+echo ""
+echo "Mutation 188: Contract registry drops immutable Directory Node Request v1"
+FIX=$(fixture_copy "directory-contract-history-narrowed")
+mutate_directory_spec "$FIX" 'text=text.replace("| Directory Node request | <code>urn:ax:schema:session-directory-node-request</code> | <code>1.0.0</code>, <code>2.0.0</code> for the AX platform vocabulary |", "| Directory Node request | <code>urn:ax:schema:session-directory-node-request</code> | <code>2.0.0</code> for the AX platform vocabulary |", 1)'
+refresh_frozen_spec_digest "$FIX"
+expect_fail "Directory Node immutable contract history narrowed" "Directory Node contract history missing immutable v1/v2 versions" "$FIX"
 
 echo ""
 echo "=========================================="

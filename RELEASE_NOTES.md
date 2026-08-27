@@ -1,13 +1,25 @@
-# Agent Session Manager (`ax`) Specification v0.4.1
+# Agent Session Manager (`ax`) Specification v0.4.2
 
-This patch specification release corrects the v0.4.0 Session Directory
-publication without changing Provider 2, Session Adapter 1, Mesh RPC 3, or any
-other Section 1.5 contract version. Existing tags remain immutable; v0.4.1
-supersedes v0.4.0 as the first safe Directory implementation baseline.
+This patch specification release corrects two post-publication blockers in
+v0.4.1. Existing tags remain immutable. Directory Node Protocol and Request
+advance to `2.0.0`; all AX ownership, cloning, mesh namespace, Directory record,
+workspace, lease, and terminal contracts retain their prior versions. v0.4.2 is
+the first safe Session Directory implementation baseline.
 
 **Status caveat:** this release publishes specification artifacts only. It contains no executable `ax` product binary, and publication does not imply that any provider/platform product-conformance lane has passed.
 
 ## Errata resolved
+
+- Directory Node Protocol/Request `1.0.0` retain their published
+  `darwin|linux|windows` probe vocabulary. Protocol/Request `2.0.0` use the AX
+  `macos|linux|wsl2|windows` vocabulary. Manifest and Response remain `1.0.0`;
+  both protocol majors bind them explicitly and negotiate without cross-major
+  coercion.
+- Directory identity fixtures are now checked using declared schema paths, not
+  value prefixes or suggestive field names. Digest, UUIDv4, UUIDv7,
+  UUIDv7-or-digest, nullable, platform, real-calendar timestamp, and
+  sorted-unique constraints are executable. Adversarial fixtures recompute
+  self-IDs so these checks are independently proven.
 
 - Direct unmanaged cross-environment move is forbidden because an unmanaged
   source has no AX Session, winning lease, epoch, Checkpoint, or fenced source
@@ -47,15 +59,16 @@ Managed attach/resume/takeover/fork routes delegate to existing AX ownership, tr
 
 ## Contract and compatibility boundary
 
-| Contract | v0.4.1 version / disposition |
+| Contract | v0.4.2 version / disposition |
 | --- | --- |
-| Directory Node protocol, manifest, request, and response | `1.0.0` |
+| Directory Node protocol / request | `2.0.0`; immutable `1.0.0` remains dual-stack |
+| Directory Node manifest / response | `1.0.0`, explicitly bound by both protocol majors |
 | Environment/Native observations, Inventory Batch, lineage, annotations, enrichment, continuation, operation receipt, and Directory Query | `1.0.0` |
 | Mesh RPC | `3.0.0` for Directory; `2.0.0` remains dual-stack for core sync |
 | Configuration | `2.0.0` with explicit migration/read-only downgrade behavior |
 | CLI Result | `3.0.0` for `sessions.*`; Result 1/2 remain unchanged |
 | Session Record and Session Event | `3.0.0` for native adoption and move lifecycle; historical v1/v2 remain valid |
-| Structured Error | `1.2.0` for Directory Node 1, Mesh RPC 3, Directory Query 1, and CLI Result 3 |
+| Structured Error | `1.2.0` for Directory Node 1/2, Mesh RPC 3, Directory Query 1, and CLI Result 3 |
 | Provider Protocol / Session Adapter | `2.0.0` / `1.0.0`, unchanged |
 | Existing cloning, transfer, materialization, Checkpoint, lease, workspace, terminal, and task-board contracts | Reused unchanged |
 
@@ -78,4 +91,4 @@ The public repository validator remains specification-only. It validates contrac
 
 ## Traceability
 
-`STANDALONE_TO_AX_TRACEABILITY.md` maps every cloning and Session Directory standalone section to the resulting AX v0.4.1 section and records reuse, addition, or supersession without becoming normative. Appendix A of `SPEC.md` maps accepted decisions, task criteria, and Directory publication artifacts; Appendix D defines the exhaustive contract and fixture catalog. `SPEC.md` remains the only normative source.
+`STANDALONE_TO_AX_TRACEABILITY.md` maps every cloning and Session Directory standalone section to the resulting AX v0.4.2 section and records reuse, addition, or supersession without becoming normative. Appendix A of `SPEC.md` maps accepted decisions, task criteria, and Directory publication artifacts; Appendix D defines the exhaustive contract and fixture catalog. `SPEC.md` remains the only normative source.

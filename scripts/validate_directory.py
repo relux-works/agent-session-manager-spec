@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
@@ -20,7 +22,7 @@ NORMATIVE_SCHEMA_SECTIONS = {
     ),
     "Directory Node protocol": (
         "### 7.9 Companion Directory Node protocol", "## 8.",
-        "8701c84372234bca4e19b650de7ec5deeafe456782ae4635c220b1fed5848da1",
+        "d5c69eaf49d00ef48fcf4f3086b1cdd7e887ce8bdf8f33abd2e5f1ebac0c1c3f",
     ),
     "directory records and query": (
         "### 10.8 Directory records, lineage, enrichment, query, and continuation", "## 11.",
@@ -55,9 +57,9 @@ GATE_CLASSES = [
 ]
 
 CONTRACTS = {
-    "urn:ax:protocol:session-directory-node": "1.0.0",
+    "urn:ax:protocol:session-directory-node": "2.0.0",
     "urn:ax:schema:session-directory-node-manifest": "1.0.0",
-    "urn:ax:schema:session-directory-node-request": "1.0.0",
+    "urn:ax:schema:session-directory-node-request": "2.0.0",
     "urn:ax:schema:session-directory-node-response": "1.0.0",
     "urn:ax:schema:environment-observation": "1.0.0",
     "urn:ax:schema:native-session-observation": "1.0.0",
@@ -122,13 +124,203 @@ TIMESTAMP_RE = re.compile(
     r"T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\."
     r"[0-9]{3,9}Z\Z"
 )
-TIMESTAMP_FIELDS = {
-    "as_of", "claim_acquired_at", "claim_expires_at", "completed_at",
-    "created_at", "deadline", "ended_at", "expires_at",
-    "last_successful_contact_at", "observed_at", "receipt_at", "started_at",
-    "updated_at", "validated_at",
-}
 AX_PLATFORMS = ["macos", "linux", "wsl2", "windows"]
+DIRECTORY_NODE_PROTOCOL_BINDINGS = {
+    "1.0.0": {
+        "request_version": "1.0.0",
+        "response_version": "1.0.0",
+        "manifest_version": "1.0.0",
+        "probe_platforms": ["darwin", "linux", "windows"],
+    },
+    "2.0.0": {
+        "request_version": "2.0.0",
+        "response_version": "1.0.0",
+        "manifest_version": "1.0.0",
+        "probe_platforms": AX_PLATFORMS,
+    },
+}
+DIRECTORY_NODE_NEGOTIATION = {
+    "preference": "highest_mutual_major",
+    "no_shared_major": "incompatible_protocol",
+    "cross_major_coercion": False,
+    "v1_wsl2": "unrepresentable",
+}
+
+# These rules are keyed by the immutable schema and an exact JSON path. They
+# deliberately do not infer a type from a value prefix or a field-name suffix:
+# a malformed value must still be checked against its declared contract type.
+# ``*`` descends through every member of an array. Nullable rules validate null
+# in their tagged/nullable context rather than treating it as a missing type.
+COMMON_TYPE_RULES = {
+    "urn:ax:schema:environment-observation": [
+        ("host_id", "uuidv7", False),
+        ("installation_id", "digest", False),
+        ("backend_realm_fingerprint", "digest", False),
+        ("platform", "ax_platform", False),
+        ("observed_at", "timestamp", False),
+    ],
+    "urn:ax:schema:native-session-observation": [
+        ("instance_id", "digest", False),
+        ("host_id", "uuidv7", False),
+        ("installation_id", "digest", False),
+        ("previous_observation_id", "digest", True),
+        ("managed_session_id", "uuidv7", True),
+        ("provider_identity_record_id", "digest", True),
+        ("lineage_anchor_hint", "uuidv7_or_digest", True),
+        ("head_digest", "digest", False),
+        ("created_at", "timestamp", True),
+        ("updated_at", "timestamp", False),
+        ("observed_at", "timestamp", False),
+        ("warnings", "sorted_unique:string", False),
+    ],
+    "urn:ax:schema:session-inventory-batch": [
+        ("host_id", "uuidv7", False),
+        ("previous_batch_id", "digest", True),
+        ("environment_observation_ids", "sorted_unique:digest", False),
+        ("native_observation_ids", "sorted_unique:digest", False),
+        ("scan_root_authority_ids", "sorted_unique:digest", False),
+        ("adapter_builds", "sorted_unique:jcs", False),
+        ("adapter_builds.*.executable_sha256", "digest", False),
+        ("started_at", "timestamp", False),
+        ("completed_at", "timestamp", False),
+        ("error_codes", "sorted_unique:string", False),
+    ],
+    "urn:ax:schema:conversation-lineage-link": [
+        ("from_id", "uuidv7_or_digest", False),
+        ("to_id", "uuidv7_or_digest", False),
+        ("canonical_anchor_id", "uuidv7_or_digest", False),
+        ("member_root_id", "uuidv7_or_digest", False),
+        ("evidence_ids", "sorted_unique:digest", False),
+        ("supersedes_link_ids", "sorted_unique:digest", False),
+        ("authorized_by_host_id", "uuidv7", False),
+        ("created_at", "timestamp", False),
+    ],
+    "urn:ax:schema:session-annotation": [
+        ("subject_id", "uuidv7_or_digest", False),
+        ("subject_head_digest", "digest", True),
+        ("author_host_id", "uuidv7", False),
+        ("profile_id", "digest", True),
+        ("generator.prompt_digest", "digest", True),
+        ("evidence_ids", "sorted_unique:digest", False),
+        ("redaction_summary.policy_digest", "digest", False),
+        ("redaction_summary.classes", "sorted_unique:string", False),
+        ("supersedes_annotation_ids", "sorted_unique:digest", False),
+        ("created_at", "timestamp", False),
+    ],
+    "urn:ax:schema:session-enrichment-profile": [
+        ("subject_kinds", "sorted_unique:string", False),
+        ("provider_ids", "sorted_unique:string", False),
+        ("input_classes", "sorted_unique:string", False),
+        ("redaction_policy_id", "digest", False),
+        ("generator.prompt_digest", "digest", True),
+    ],
+    "urn:ax:schema:session-enrichment-job-request": [
+        ("job_id", "uuidv7", False),
+        ("subject_id", "uuidv7_or_digest", False),
+        ("expected_head_digest", "digest", False),
+        ("source_host_id", "uuidv7", False),
+        ("source_instance_id", "digest", False),
+        ("profile_id", "digest", False),
+        ("requested_kinds", "sorted_unique:string", False),
+        ("prior_annotation_ids", "sorted_unique:digest", False),
+        ("delta_start_evidence_id", "digest", True),
+        ("idempotency_key", "digest", False),
+        ("deadline", "timestamp", False),
+        ("created_at", "timestamp", False),
+    ],
+    "urn:ax:schema:session-enrichment-job-receipt": [
+        ("previous_job_receipt_id", "digest", True),
+        ("job_request_id", "digest", False),
+        ("job_id", "uuidv7", False),
+        ("profile_id", "digest", False),
+        ("subject_head_digest", "digest", False),
+        ("claim_host_id", "uuidv7", True),
+        ("claim_lease_id", "uuidv7", True),
+        ("claim_acquired_at", "timestamp", True),
+        ("claim_expires_at", "timestamp", True),
+        ("receipt_at", "timestamp", False),
+        ("redaction_summary.policy_digest", "digest", False),
+        ("redaction_summary.classes", "sorted_unique:string", False),
+        ("generator.prompt_digest", "digest", True),
+        ("produced_annotation_ids", "sorted_unique:digest", False),
+        ("started_at", "timestamp", True),
+        ("ended_at", "timestamp", True),
+        ("superseded_by_head_digest", "digest", True),
+    ],
+    "urn:ax:schema:session-continuation-plan": [
+        ("operation_id", "uuidv7", False),
+        ("created_at", "timestamp", False),
+        ("expires_at", "timestamp", False),
+        ("entry_id", "uuidv7_or_digest", False),
+        ("lineage_anchor_id", "uuidv7_or_digest", False),
+        ("source_session_id", "uuidv7", True),
+        ("source_instance_id", "digest", False),
+        ("source_host_id", "uuidv7", False),
+        ("source_observation_id", "digest", False),
+        ("source_head_digest", "digest", False),
+        ("source_checkpoint_id", "digest", True),
+        ("source_runtime.evidence_id", "digest", True),
+        ("source_runtime.observed_at", "timestamp", False),
+        ("target.host_id", "uuidv7", False),
+        ("target.installation_id", "digest", False),
+        ("target.backend_realm_fingerprint", "digest", False),
+        ("workspace.workspace_group_id", "uuidv7", True),
+        ("workspace.workspace_record_id", "digest", True),
+        ("workspace.checkpoint_id", "digest", True),
+        ("workspace.cohort_session_ids", "sorted_unique:uuidv7", False),
+        ("workspace.transfer_manifest_id", "digest", True),
+        ("workspace.materialization_plan_id", "digest", True),
+        ("policy_digest", "digest", False),
+        ("steps.*.input_digest", "digest", False),
+        ("steps.*.prerequisite_step_ids", "sorted_unique:string", False),
+        ("adoption_plan_id", "digest", True),
+        ("projection_plan_id", "digest", True),
+        ("fidelity_report_id", "digest", True),
+        ("required_capabilities", "sorted_unique:string", False),
+        ("contract_assertions", "sorted_unique:jcs", False),
+        ("confirmations", "sorted_unique:string", False),
+        ("allowed_fallback_outcomes", "sorted_unique:string", False),
+        ("request_digest", "digest", False),
+        ("adapter_digest", "digest", False),
+        ("controller_digest", "digest", False),
+    ],
+    "urn:ax:schema:session-directory-operation-receipt": [
+        ("previous_directory_receipt_id", "digest", True),
+        ("operation_id", "uuidv7", False),
+        ("plan_id", "digest", False),
+        ("request_digest", "digest", False),
+        ("initiating_host_id", "uuidv7", False),
+        ("responsible_host_id", "uuidv7", False),
+        ("idempotency_key", "digest", False),
+        ("validated_source.session_id", "uuidv7", True),
+        ("validated_source.instance_id", "digest", False),
+        ("validated_source.host_id", "uuidv7", False),
+        ("validated_source.observation_id", "digest", False),
+        ("validated_source.head_digest", "digest", False),
+        ("validated_source.lease_id", "uuidv7", True),
+        ("validated_source.checkpoint_id", "digest", True),
+        ("validated_source.runtime.evidence_id", "digest", True),
+        ("validated_source.runtime.observed_at", "timestamp", False),
+        ("validated_target.target.host_id", "uuidv7", False),
+        ("validated_target.target.installation_id", "digest", False),
+        ("validated_target.target.backend_realm_fingerprint", "digest", False),
+        ("validated_target.environment_observation_id", "digest", False),
+        ("validated_target.capability_evidence_ids", "sorted_unique:digest", False),
+        ("validated_target.workspace.workspace_group_id", "uuidv7", True),
+        ("validated_target.workspace.workspace_record_id", "digest", True),
+        ("validated_target.workspace.checkpoint_id", "digest", True),
+        ("validated_target.workspace.cohort_session_ids", "sorted_unique:uuidv7", False),
+        ("validated_target.workspace.transfer_manifest_id", "digest", True),
+        ("validated_target.workspace.materialization_plan_id", "digest", True),
+        ("validated_target.policy_digest", "digest", False),
+        ("validated_target.contract_assertions", "sorted_unique:jcs", False),
+        ("validated_target.validated_at", "timestamp", False),
+        ("effect_receipt_ids", "sorted_unique:digest", False),
+        ("durable_effects", "sorted_unique:string", False),
+        ("compensations", "sorted_unique:string", False),
+        ("created_at", "timestamp", False),
+    ],
+}
 
 CLOSED_OBJECTS = {
     "directory_node_manifest": ["schema", "schema_version", "node_id", "node_version", "host_id", "executable_sha256", "provider_manifest_digest", "session_adapter_manifest_digest", "supported_protocol_versions", "operations", "schemas", "environment_tuple_registry_id", "capabilities", "redaction_policy_ids", "enrichment_profile_ids", "limits", "extensions"],
@@ -304,8 +496,18 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
 
     need("contract_registry", data.get("contracts") == CONTRACTS, "exact contract registry/version mismatch")
     for contract, version in CONTRACTS.items():
-        rows = [line for line in spec.splitlines() if f"<code>{contract}</code>" in line]
+        rows = [line for line in spec.splitlines() if line.startswith("|") and f"<code>{contract}</code>" in line]
         need("contract_registry", bool(rows) and any(f"<code>{version}</code>" in row for row in rows), f"SPEC registry missing {contract} version {version}")
+    for contract in (
+        "urn:ax:protocol:session-directory-node",
+        "urn:ax:schema:session-directory-node-request",
+    ):
+        rows = [line for line in spec.splitlines() if line.startswith("|") and f"<code>{contract}</code>" in line]
+        need(
+            "contract_registry",
+            len(rows) == 1 and "<code>1.0.0</code>" in rows[0] and "<code>2.0.0</code>" in rows[0],
+            f"Directory Node contract history missing immutable v1/v2 versions for {contract}",
+        )
 
     need("self_id_jcs", data.get("self_id_fields") == SELF_FIELDS, "exact directory self-ID field registry mismatch")
     vectors = data.get("identity_vectors")
@@ -319,23 +521,91 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         "identity vector coverage must contain exactly one vector for every immutable directory schema",
     )
 
-    def validate_common_values(value: object, location: str, field_name: str | None = None) -> None:
-        if isinstance(value, dict):
-            for key, child in value.items():
-                validate_common_values(child, f"{location}.{key}", key)
-            return
-        if isinstance(value, list):
+    def path_values(value: object, path: tuple[str, ...], location: str) -> list[tuple[object, str]]:
+        if not path:
+            return [(value, location)]
+        head, *tail = path
+        if head == "*":
+            if not isinstance(value, list):
+                return []
+            found: list[tuple[object, str]] = []
             for index, child in enumerate(value):
-                validate_common_values(child, f"{location}[{index}]", field_name)
-            return
+                found.extend(path_values(child, tuple(tail), f"{location}[{index}]"))
+            return found
+        if not isinstance(value, dict) or head not in value:
+            return []
+        return path_values(value[head], tuple(tail), f"{location}.{head}")
+
+    def valid_uuid(value: object, version: int) -> bool:
         if not isinstance(value, str):
-            return
-        if value.startswith("sha256:"):
-            need("self_id_jcs", bool(DIGEST_RE.fullmatch(value)), f"invalid SHA-256 digest identifier at {location}")
-        if field_name in TIMESTAMP_FIELDS:
-            need("self_id_jcs", bool(TIMESTAMP_RE.fullmatch(value)), f"timestamp must be UTC RFC 3339 with at least millisecond precision at {location}")
-        if field_name == "platform":
+            return False
+        try:
+            parsed = uuid.UUID(value)
+        except (ValueError, AttributeError):
+            return False
+        return str(parsed) == value and parsed.version == version and parsed.variant == uuid.RFC_4122
+
+    def valid_timestamp(value: object) -> tuple[bool, bool]:
+        if not isinstance(value, str) or not TIMESTAMP_RE.fullmatch(value):
+            return False, False
+        try:
+            parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+        except ValueError:
+            return True, False
+        return True, parsed.utcoffset() is not None and parsed.utcoffset().total_seconds() == 0
+
+    def validate_scalar(kind: str, value: object, location: str) -> None:
+        if kind == "digest":
+            need("self_id_jcs", isinstance(value, str) and bool(DIGEST_RE.fullmatch(value)), f"schema-directed digest validation failed at {location}")
+        elif kind == "uuidv7":
+            need("self_id_jcs", valid_uuid(value, 7), f"schema-directed UUIDv7 validation failed at {location}")
+        elif kind == "uuidv4":
+            need("self_id_jcs", valid_uuid(value, 4), f"schema-directed UUIDv4 validation failed at {location}")
+        elif kind == "uuidv7_or_digest":
+            need("self_id_jcs", valid_uuid(value, 7) or (isinstance(value, str) and bool(DIGEST_RE.fullmatch(value))), f"schema-directed UUIDv7-or-digest validation failed at {location}")
+        elif kind == "timestamp":
+            shape_valid, calendar_valid = valid_timestamp(value)
+            need("self_id_jcs", shape_valid, f"timestamp must be UTC RFC 3339 with at least millisecond precision at {location}")
+            if shape_valid:
+                need("self_id_jcs", calendar_valid, f"timestamp is not a real UTC calendar instant at {location}")
+        elif kind == "ax_platform":
             need("self_id_jcs", value in AX_PLATFORMS, f"platform must use the AX enum macos|linux|wsl2|windows at {location}")
+        elif kind == "string":
+            need("self_id_jcs", isinstance(value, str), f"schema-directed string validation failed at {location}")
+        else:
+            need("self_id_jcs", False, f"unknown schema-directed common type {kind} at {location}")
+
+    def validate_typed_value(kind: str, value: object, nullable: bool, location: str) -> None:
+        if value is None:
+            need("self_id_jcs", nullable, f"null is forbidden by schema-directed common type at {location}")
+            return
+        if kind.startswith("sorted_unique:"):
+            element_kind = kind.split(":", 1)[1]
+            if not isinstance(value, list):
+                need("self_id_jcs", False, f"schema-directed sorted-unique validation failed at {location}")
+                return
+            if element_kind == "jcs":
+                byte_keys = [canonical(child) for child in value]
+            else:
+                for index, child in enumerate(value):
+                    validate_scalar(element_kind, child, f"{location}[{index}]")
+                byte_keys = [canonical(child) for child in value if isinstance(child, str)]
+            need(
+                "self_id_jcs",
+                len(byte_keys) == len(value) and byte_keys == sorted(set(byte_keys)),
+                f"schema-directed sorted-unique validation failed at {location}",
+            )
+            return
+        validate_scalar(kind, value, location)
+
+    def validate_common_values(schema: str, canonical_input: dict[str, object], location: str) -> None:
+        rules = COMMON_TYPE_RULES.get(schema)
+        need("self_id_jcs", rules is not None, f"schema-directed common-type rule registry missing for {schema}")
+        if rules is None:
+            return
+        for path, kind, nullable in rules:
+            for value, value_location in path_values(canonical_input, tuple(path.split(".")), location):
+                validate_typed_value(kind, value, nullable, value_location)
 
     for row in vectors:
         if not isinstance(row, dict):
@@ -349,8 +619,8 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
             need("self_id_jcs", False, f"identity vector canonical_input must be an object for {schema}")
             continue
         need("self_id_jcs", canonical_input.get("schema") == schema and canonical_input.get("schema_version") == "1.0.0", f"identity vector canonical_input schema/version mismatch for {schema}")
-        validate_common_values(canonical_input, f"identity_vectors[{schema}].canonical_input")
-        validate_common_values(row.get("expected_id"), f"identity_vectors[{schema}].expected_id", "expected_id")
+        validate_common_values(schema, canonical_input, f"identity_vectors[{schema}].canonical_input")
+        validate_typed_value("digest", row.get("expected_id"), False, f"identity_vectors[{schema}].expected_id")
         need("self_id_jcs", self_field not in canonical_input, f"identity vector canonical_input must omit only self field {self_field} for {schema}")
         expected_members = set(CLOSED_OBJECTS[SELF_SCHEMA_SHAPES[schema]]) - {self_field}
         need("self_id_jcs", set(canonical_input) == expected_members, f"identity vector canonical_input must contain every closed member except self field {self_field} for {schema}")
@@ -359,7 +629,30 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     ids = data.get("sorted_id_fixture", [])
     need("self_id_jcs", ids == sorted(set(ids)), "sorted_id_fixture must be bytewise sorted and unique")
     for index, identity in enumerate(ids):
-        validate_common_values(identity, f"sorted_id_fixture[{index}]", "id")
+        validate_typed_value("digest", identity, False, f"sorted_id_fixture[{index}]")
+
+    common_cases = data.get("common_type_cases", {})
+    if not isinstance(common_cases, dict):
+        need("self_id_jcs", False, "common_type_cases must be a closed object")
+        common_cases = {}
+    need(
+        "self_id_jcs",
+        set(common_cases) == {"digest", "uuidv4", "uuidv7", "uuidv7_or_digest", "nullable_digest", "timestamps", "sorted_unique"}
+        and len(common_cases.get("uuidv7_or_digest", [])) == 2
+        and len(common_cases.get("nullable_digest", [])) == 2
+        and len(common_cases.get("timestamps", [])) == 2,
+        "common-type positive oracle must contain every exact typed case",
+    )
+    validate_typed_value("digest", common_cases.get("digest"), False, "common_type_cases.digest")
+    validate_typed_value("uuidv4", common_cases.get("uuidv4"), False, "common_type_cases.uuidv4")
+    validate_typed_value("uuidv7", common_cases.get("uuidv7"), False, "common_type_cases.uuidv7")
+    for index, identity in enumerate(common_cases.get("uuidv7_or_digest", [])):
+        validate_typed_value("uuidv7_or_digest", identity, False, f"common_type_cases.uuidv7_or_digest[{index}]")
+    for index, digest in enumerate(common_cases.get("nullable_digest", [])):
+        validate_typed_value("digest", digest, True, f"common_type_cases.nullable_digest[{index}]")
+    for index, timestamp in enumerate(common_cases.get("timestamps", [])):
+        validate_typed_value("timestamp", timestamp, False, f"common_type_cases.timestamps[{index}]")
+    validate_typed_value("sorted_unique:string", common_cases.get("sorted_unique"), False, "common_type_cases.sorted_unique")
 
     shapes = data.get("closed_shapes", {})
     need("closed_shapes", shapes == CLOSED_OBJECTS, "closed directory object member registry mismatch or unknown field admitted")
@@ -374,7 +667,11 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     node = data.get("directory_node", {})
     need("directory_node", node.get("operations") == NODE_OPERATIONS and node.get("mutations") == ["scan", "enrichment-run"], "Directory Node exact operation/mutation registry mismatch")
     need("directory_node", node.get("idempotency") == {"same_mutation_same_input": "same_receipt", "same_mutation_changed_input": "idempotency_mismatch"}, "mutation-ID reuse with changed input must return idempotency_mismatch")
-    need("directory_node", node.get("platforms") == AX_PLATFORMS, "Directory Node probe platform registry must be macos|linux|wsl2|windows")
+    protocol_bindings = node.get("protocol_bindings", {})
+    need("directory_node", protocol_bindings.get("1.0.0", {}).get("request_version") == "1.0.0" and protocol_bindings.get("2.0.0", {}).get("request_version") == "2.0.0", "Directory Node protocol/request major binding mismatch")
+    need("directory_node", protocol_bindings.get("2.0.0", {}).get("probe_platforms") == AX_PLATFORMS, "Directory Node 2 probe platform registry must be macos|linux|wsl2|windows")
+    need("directory_node", protocol_bindings == DIRECTORY_NODE_PROTOCOL_BINDINGS, "Directory Node protocol/request major binding mismatch")
+    need("directory_node", node.get("negotiation") == DIRECTORY_NODE_NEGOTIATION, "Directory Node dual-stack negotiation registry mismatch")
     need("directory_node", node.get("response_union") == {"success": "body_without_error", "failure": "error_without_body"}, "Directory Node response must be body XOR error")
 
     mesh = data.get("mesh", {})
@@ -524,16 +821,16 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
 
     publication = data.get("publication", {})
     docs = ["SPEC.md", "README.md", "CONTRIBUTING.md", "CHANGELOG.md", "RELEASE_NOTES.md", "VERSION", "STANDALONE_TO_AX_TRACEABILITY.md"]
-    need("publication_consistency", publication.get("spec_version") == "0.4.1" and publication.get("frozen_digest_owner") == "publication-task" and publication.get("required_documents") == docs, "v0.4.1 candidate/release ownership or document registry mismatch")
-    claim = "AX v0.4.1 Session Directory is specification-only until conforming implementations publish tuple evidence."
+    need("publication_consistency", publication.get("spec_version") == "0.4.2" and publication.get("frozen_digest_owner") == "publication-task" and publication.get("required_documents") == docs, "v0.4.2 candidate/release ownership or document registry mismatch")
+    claim = "AX v0.4.2 Session Directory is specification-only until conforming implementations publish tuple evidence."
     need("publication_consistency", publication.get("claim") == claim, "README/release claim is not supported by SPEC and fixtures")
-    need("publication_consistency", "The following versions are active in v0.4.1." in spec and "implementation release acceptance rule" in spec, "SPEC does not support v0.4.1 specification-only claim")
+    need("publication_consistency", "The following versions are active in v0.4.2." in spec and "implementation release acceptance rule" in spec, "SPEC does not support v0.4.2 specification-only claim")
     public_prose = "\n".join(
         (root / name).read_text(encoding="utf-8")
         for name in ("README.md", "RELEASE_NOTES.md")
         if (root / name).is_file()
     )
-    need("publication_consistency", "AX v0.4.1 directory implementation is shipped and available." not in public_prose, "README/release claim is not supported by SPEC and fixtures")
+    need("publication_consistency", "AX v0.4.2 directory implementation is shipped and available." not in public_prose, "README/release claim is not supported by SPEC and fixtures")
     for doc in docs:
         need("publication_consistency", (root / doc).is_file(), f"required publication document missing: {doc}")
 
@@ -542,7 +839,7 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     # section markers, registry sentences, and security invariants rather than
     # broad token-presence checks.
     spec_requirements = {
-        "self_id_jcs": ["each a digest in its one registered schema", "with only that self field omitted", "timestamps MUST be UTC RFC 3339 with at least millisecond precision", "SHA-256 digest identifiers MUST use"],
+        "self_id_jcs": ["each a digest in its one registered schema", "with only that self field omitted", "timestamps MUST be real UTC RFC 3339 calendar instants", "schema/version and exact JSON path", "SHA-256 digest identifiers MUST use"],
         "strict_examples": ["A negative mutation is applied alone to a fresh", "MUST NOT repair, round, ignore, or default the changed fact"],
         "closed_shapes": ["Every complete object is\nclosed and contains the exact registry", "Each displayed body is closed"],
         "directory_node": ["The exact operation registry and bodies are:", "<code>enrichment-run</code>", "A success response contains exactly the common envelope", "A failure response contains exactly the common envelope", "a changed body is\n<code>idempotency_mismatch</code> without new records"],
@@ -562,7 +859,7 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         "tuple_matrix": ["The initial mapping is exactly", "Adoption is source-local and unavailable unless the exact accepted tuple proves"],
         "security": ["ANSI, OSC, bidi overrides,\ncontrols, invalid width, and hostile grapheme sequences are removed or visibly\nescaped", "All native/process launches use structured argv, explicit workspace-derived cwd,\nminimal environment allowlists"],
         "traceability": ["Appendix D. Requirement traceability", "<code>AC-DIR-INV-001</code>"],
-        "publication_consistency": ["The following versions are active in v0.4.1.", "implementation release acceptance rule"],
+        "publication_consistency": ["The following versions are active in v0.4.2.", "implementation release acceptance rule"],
     }
     for group, literals in spec_requirements.items():
         for literal in literals:

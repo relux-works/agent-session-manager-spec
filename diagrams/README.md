@@ -1,6 +1,6 @@
 # Architecture Diagrams
 
-This directory contains the architecture diagrams rendered for Agent Session Manager (`ax`) v0.4.1. The C4 views integrate Directory as a first-class AX control plane; focused PlantUML views keep ownership/deployment, cloning, Directory component authority, source-local inventory/enrichment, and continuation execution separate and reviewable.
+This directory contains the architecture diagrams rendered for Agent Session Manager (`ax`) v0.4.2. The C4 views integrate Directory as a first-class AX control plane; focused PlantUML views keep ownership/deployment, cloning, Directory component authority, source-local inventory/enrichment, and continuation execution separate and reviewable.
 
 ## Matching SPEC.md References
 
@@ -47,7 +47,7 @@ This single command:
 1. Validates the C4 Structurizr workspace.
 2. Exports C4 to PlantUML in a temporary directory.
 3. Renders all SVGs (C4 and handwritten PlantUML) into the temporary directory.
-4. Compares generated C4 `.puml` bytes exactly, checks every committed SVG against the v0.4.1 SHA-256 ledger, and compares embedded PlantUML source/version metadata with the fresh render. Font and Graphviz geometry may vary by platform without weakening committed-byte integrity or source freshness.
+4. Compares generated C4 `.puml` bytes exactly, checks every committed SVG against the v0.4.2 SHA-256 ledger, and compares embedded PlantUML source/version metadata with the fresh render. Font and Graphviz geometry may vary by platform without weakening committed-byte integrity or source freshness.
 
 ## Artifact Map
 

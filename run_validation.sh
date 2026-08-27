@@ -5,8 +5,8 @@ set -euo pipefail
 # Works in a clean public checkout where .temp/ and .task-board/ do not exist.
 # Never overwrites committed artifacts before freshness comparison.
 
-echo "=== ax v0.4.1 specification validation ==="
-echo "Repository: relux-works/agent-session-manager-spec, branch: main, release: v0.4.1"
+echo "=== ax v0.4.2 specification validation ==="
+echo "Repository: relux-works/agent-session-manager-spec, branch: main, release: v0.4.2"
 echo ""
 
 echo "[1/3] Validating specification contracts, metadata, links, and examples..."
