@@ -1,8 +1,8 @@
-# Agent Session Manager (<code>ax</code>) v0.2.1 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.3.0 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.2.1</code> |
+| Specification release | <code>v0.3.0</code> |
 | Document status | Review candidate and implementation contract |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.2.1. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.3.0. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -44,9 +44,11 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
 6. transfer ownership gracefully or, as an explicit recovery action, forcibly;
 7. fork from a checkpoint into a new logical session and workspace identity;
 8. stop a session without deleting its durable state; and
-9. resume a stopped session on its owner host.
+9. resume a stopped session on its owner host; and
+10. clone durable session evidence across supported native environments into a
+    new logical Session and independently validated native target identity.
 
-The v0.2.1 product is a Go CLI, optional per-user background service, provider
+The v0.3.0 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -74,6 +76,7 @@ An implementation MUST declare one or more of these targets:
 | Mesh peer | SSH stdio RPC, anti-entropy union sync, resumable blob transfer, staging, validation |
 | Workspace materializer | Conflict-safe Git and non-Git capture/materialization |
 | Provider adapter | Plugin protocol and only the capabilities advertised by probe |
+| Session adapter | Native discovery/capture, canonical normalization, projection, and independent read-back through the companion protocol in the trusted provider executable |
 | Task-board bridge | Official opaque export/import/open/adopt bundle contract |
 | User service | Periodic health and sync work while preserving daemonless core CLI use |
 
@@ -88,7 +91,7 @@ The settled product and architecture decisions attached to
 accepted provider research from <code>TASK-260819-1ecd6x</code>, preserved in
 [the Muse and Antigravity evidence report](.research/260819_muse-antigravity-native-store-contracts.md),
 is the authority for those two adapters. Its retained unknowns MUST remain
-unknown or unsupported in v0.2.1.
+unknown or unsupported in v0.3.0.
 
 The Codex command and unrestricted profile facts in this specification are
 cross-checked against the
@@ -100,7 +103,9 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following versions are active in v0.2.1:
+The following versions are active in v0.3.0. Historical Session Record/Event
+1.0.0, Materialization Plan 1.0.0, Materialization Journal 2.0.0, CLI Result
+1.0.0, and Structured Error 1.0.0 objects remain readable and immutable.
 
 | Contract | Schema identifier | Version |
 | --- | --- | --- |
@@ -108,9 +113,12 @@ The following versions are active in v0.2.1:
 | Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code> |
 | Provider manifest | <code>urn:ax:schema:provider-manifest</code> | <code>1.0.0</code> |
 | Provider probe | <code>urn:ax:schema:provider-probe</code> | <code>1.0.0</code> |
+| Session Adapter protocol | <code>urn:ax:protocol:session-adapter</code> | <code>1.0.0</code> |
+| Session Adapter manifest | <code>urn:ax:schema:session-adapter-manifest</code> | <code>1.0.0</code> |
+| Session Adapter probe | <code>urn:ax:schema:session-adapter-probe</code> | <code>1.0.0</code> |
 | Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code> |
-| Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code> |
-| Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code> |
+| Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code>, <code>2.0.0</code> for cross-environment clone targets |
+| Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code>, <code>2.0.0</code> for cross-environment clone targets |
 | Lease record | <code>urn:ax:schema:lease</code> | <code>1.0.0</code> |
 | Checkpoint record | <code>urn:ax:schema:checkpoint</code> | <code>1.0.0</code> |
 | Workspace group | <code>urn:ax:schema:workspace-group</code> | <code>1.0.0</code> |
@@ -120,13 +128,27 @@ The following versions are active in v0.2.1:
 | Transfer chunk descriptor | <code>urn:ax:schema:chunk</code> | <code>1.0.0</code> |
 | Tombstone | <code>urn:ax:schema:tombstone</code> | <code>1.0.0</code> |
 | Tombstone acknowledgement | <code>urn:ax:schema:tombstone-ack</code> | <code>1.0.0</code> |
-| Materialization plan | <code>urn:ax:schema:materialization-plan</code> | <code>1.0.0</code> |
+| Materialization plan | <code>urn:ax:schema:materialization-plan</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone transactions |
 | Materialization recovery state (journal and managed-replica marker variants) | <code>urn:ax:schema:materialization-journal</code> | <code>2.0.0</code> |
+| Clone materialization recovery state (journal variant) | <code>urn:ax:schema:materialization-journal</code> | <code>3.0.0</code> |
 | Task-board bridge | <code>urn:ax:protocol:task-board-bridge</code> | <code>1.0.0</code> |
 | Task-board bundle | <code>urn:ax:schema:task-board-bundle</code> | <code>1.0.0</code> |
-| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code> |
+| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for Session Adapter and cloning surfaces |
 | Observation event | <code>urn:ax:schema:observation</code> | <code>1.0.0</code> |
-| CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code> |
+| CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code>, <code>2.0.0</code> for <code>session.clone.*</code> commands |
+| Clone Raw Object Manifest | <code>urn:ax:schema:clone-raw-object-manifest</code> | <code>1.0.0</code> |
+| Clone Capture Manifest | <code>urn:ax:schema:clone-capture-manifest</code> | <code>1.0.0</code> |
+| Clone Bundle Manifest | <code>urn:ax:schema:session-clone-bundle</code> | <code>1.0.0</code> |
+| Canonical Session | <code>urn:ax:schema:canonical-session</code> | <code>1.0.0</code> |
+| Canonical Event | <code>urn:ax:schema:canonical-event</code> | <code>1.0.0</code> |
+| Migration Checkpoint | <code>urn:ax:schema:migration-checkpoint</code> | <code>1.0.0</code> |
+| Fidelity Report | <code>urn:ax:schema:fidelity-report</code> | <code>1.0.0</code> |
+| Projection Plan | <code>urn:ax:schema:projection-plan</code> | <code>1.0.0</code> |
+| Clone Projected Object Manifest | <code>urn:ax:schema:clone-projected-object-manifest</code> | <code>1.0.0</code> |
+| Clone Read-Back Evidence Manifest | <code>urn:ax:schema:clone-read-back-evidence-manifest</code> | <code>1.0.0</code> |
+| Clone Validation Report | <code>urn:ax:schema:clone-validation-report</code> | <code>1.0.0</code> |
+| Clone Lineage Receipt | <code>urn:ax:schema:clone-lineage-receipt</code> | <code>1.0.0</code> |
+| Supported Environment Tuple Registry | <code>urn:ax:schema:supported-environment-tuples</code> | <code>1.0.0</code> |
 
 No contract version is implied by the <code>ax</code> executable version.
 Section 17 defines compatibility and migration. Independent versioning means
@@ -447,7 +469,7 @@ Go-native and MUST NOT depend on <code>rsync</code> or
 <code>robocopy</code>.
 
 The diagram deliverable rendered for v0.2.0 remains the unchanged architecture
-baseline for v0.2.1 and MUST render this model as C4 System Context and
+baseline for v0.3.0 and MUST render this model as C4 System Context and
 Container views. Runtime takeover, state, and mesh flows MUST be rendered from
 Sections 12 and 13 as focused PlantUML sources. Section 13.13 adds a
 conformance gate over those flows, not a new component or sequence topology.
@@ -823,6 +845,69 @@ The example <code>record_id</code>, like every self-identity digest in this
 document, is the computed canonical digest. Validators MUST recompute it and
 MUST reject a mismatch.
 
+Session Record 2.0.0 is emitted in v0.3.0 only for a cross-environment clone
+target. It retains every major-1 field except <code>fork_provenance</code>,
+which is replaced by required closed <code>derivation_provenance</code>.
+Provider Protocol 2 launch/fork continues to emit and consume Session Record
+1.0.0 with its exact nullable fork provenance; no in-place migration or silent
+major retry is permitted.
+
+The derivation union has tags <code>origin</code>,
+<code>same_provider_fork</code>, and <code>cross_environment_clone</code>.
+The first two are reserved/read-only in v0.3 until a containing Provider
+protocol adopts them. Cross-environment clone contains exactly:
+
+- <code>kind=cross_environment_clone</code>, operation UUIDv7, and bundle UUIDv7;
+- <code>source_kind=ax_session|external_native</code>;
+- nullable source Session Record, Checkpoint, and Provider Identity IDs, all
+  non-null exactly for <code>ax_session</code>;
+- a sanitized non-authoritative source native session ID;
+- exact source and target Environment Tuples;
+- source snapshot, Capture Manifest, Canonical Session, Projection Plan, and
+  Migration Checkpoint digests;
+- nullable previous Lineage Receipt and source profile Event IDs; and
+- reverse-DNS extensions.
+
+The reserved <code>origin</code> variant contains exactly
+<code>kind=origin</code>, <code>creation_operation_id:UUIDv7</code>, and
+<code>extensions</code>. The reserved <code>same_provider_fork</code> variant
+contains exactly <code>kind=same_provider_fork</code>,
+<code>source_session_id:UUIDv7</code>,
+<code>source_checkpoint_id:digest</code>,
+<code>source_workspace_group_id:UUIDv7</code>,
+<code>operation_id:UUIDv7</code>,
+<code>provider_fork_mode:native|supported_import|task_board_clone</code>,
+<code>source_profile_event_id:digest|null</code>, and <code>extensions</code>.
+
+The <code>cross_environment_clone</code> variant's exact typed members are
+<code>kind</code>, <code>operation_id:UUIDv7</code>,
+<code>bundle_id:UUIDv7</code>,
+<code>source_kind:ax_session|external_native</code>,
+<code>source_session_id:UUIDv7|null</code>,
+<code>source_session_record_id:digest|null</code>,
+<code>source_checkpoint_id:digest|null</code>,
+<code>source_provider_identity_record_id:digest|null</code>,
+<code>source_native_session_id:string[1..512]</code>,
+<code>source_environment:EnvironmentTuple</code>,
+<code>target_environment:EnvironmentTuple</code>,
+<code>source_snapshot_digest:digest</code>,
+<code>capture_manifest_id:digest</code>,
+<code>canonical_session_id:digest</code>,
+<code>projection_plan_id:digest</code>,
+<code>migration_checkpoint_id:digest</code>,
+<code>previous_lineage_receipt_id:digest|null</code>,
+<code>source_profile_event_id:digest|null</code>, and <code>extensions</code>.
+All four AX-source IDs are non-null exactly for <code>ax_session</code>.
+
+The new target Session ID and target <code>provider_id</code> are allocated at
+creation and never reuse or mutate the source Session or source provider ID.
+Target native identity, final reports, target Checkpoint, and Lineage Receipt
+are absent because they do not exist yet; Provider Identity and immutable clone
+events bind those later facts without mutating the record or forming a digest
+cycle. Task-board references remain orthogonal authority in the existing
+<code>task_board</code> field; source goals, manager references, leases,
+approvals, tokens, and pending operations do not transfer.
+
 ### 5.2 Session Event
 
 Every change after creation is an immutable Session Event with schema
@@ -1038,7 +1123,7 @@ An owner process MUST revalidate its fencing token before:
 - resuming after any transport or sleep interruption longer than the configured
   lease refresh interval.
 
-There is no time-expiring ownership lease in v0.2.1. Liveness is not authority.
+There is no time-expiring ownership lease in v0.3.0. Liveness is not authority.
 A host being offline does not make a replica owner; only a takeover or fork
 does.
 
@@ -1504,7 +1589,7 @@ endpoint resolves to the authenticated host expected by SSH host-key policy.
 Tailscale discovery MAY suggest a candidate configuration but MUST NOT write or
 authorize it automatically.
 
-<code>mesh.payload_encryption</code> MUST be <code>none</code> in v0.2.1.
+<code>mesh.payload_encryption</code> MUST be <code>none</code> in v0.3.0.
 Other values MUST fail as unsupported. SSH supplies transport protection; this
 setting prevents a misleading at-rest encryption claim.
 
@@ -1526,12 +1611,12 @@ The complete v1 field/default contract is:
 | <code>host_id</code> | Required | Stable UUIDv7; changing it creates a new mesh host |
 | <code>host_name</code> | Required | 1–64 printable non-control UTF-8 characters |
 | <code>platform</code> | Required | One of the four values above; MUST match runtime probe |
-| <code>mesh.transport</code> | Default <code>ssh</code> | Only <code>ssh</code> in v0.2.1 |
+| <code>mesh.transport</code> | Default <code>ssh</code> | Only <code>ssh</code> in v0.3.0 |
 | <code>mesh.sync_interval_seconds</code> | Default 60 | Integer 5–86,400 |
 | <code>mesh.connect_timeout_seconds</code> | Default 10 | Integer 1–300 |
 | <code>mesh.rpc_timeout_seconds</code> | Default 300 | Integer 10–3,600 |
 | <code>mesh.workspace_replication</code> | Default true | Boolean |
-| <code>mesh.payload_encryption</code> | Default <code>none</code> | Only <code>none</code> in v0.2.1 |
+| <code>mesh.payload_encryption</code> | Default <code>none</code> | Only <code>none</code> in v0.3.0 |
 | <code>mesh.peers</code> | Default empty | Unique host ID and name; endpoint required |
 | <code>mesh.peers[].ssh_args</code> | Default empty | Arg array; MUST NOT disable host-key checks |
 | <code>mesh.peers[].workspace_roots</code> | Default empty | Unique logical roots within peer |
@@ -1799,7 +1884,7 @@ identify the exact provider version and emit every known capability using
       "status": "unknown",
       "enabled": false,
       "evidence": "none",
-      "detail": "not claimed for v0.2.1"
+      "detail": "not claimed for v0.3.0"
     },
     "native_goal_binding": {
       "status": "unsupported",
@@ -2379,7 +2464,7 @@ provider-defined mapping is permitted.
 
 ### 7.7 Profile mapping
 
-The v0.2.1 <code>yolo</code> mappings are:
+The v0.3.0 <code>yolo</code> mappings are:
 
 | Provider | Required adapter mapping |
 | --- | --- |
@@ -2404,6 +2489,193 @@ confirmation controls still apply.
 The adapter MUST probe the exact provider version before applying a mapping.
 An absent or changed flag fails closed.
 
+### 7.8 Companion Session Adapter protocol
+
+Cross-environment cloning uses <code>urn:ax:protocol:session-adapter</code>
+1.0.0 in the same trusted <code>ax-provider-&lt;id&gt;</code> executable and with
+the same host-observed executable digest as Provider Protocol 2.0.0. It is not
+a separately discovered plugin. The Session Adapter owns native
+discovery/capture, canonical normalization, isolated projection, and
+independent read-back. Provider 2 and the AX materializer exclusively own
+live-store mutation, rollback custody, publication, and finalization.
+
+The request envelope contains exactly <code>protocol</code>,
+<code>protocol_version</code>, <code>request_id</code>, <code>operation</code>,
+<code>deadline</code>, and <code>body</code>. Success contains the first four
+echoed identity fields, <code>ok=true</code>, and <code>body</code>; failure
+contains them, <code>ok=false</code>, and Structured Error 1.1. Body and error
+are disjoint, never nullable sentinels. The protocol inherits Section 7.2's
+JSONL, 8 MiB, deadline, stderr-redaction, and process rules. Invalid envelopes
+are <code>session_adapter_protocol_error</code>.
+
+The closed operation registry is:
+
+| Operation | Permitted authority/effect |
+| --- | --- |
+| <code>manifest</code>, <code>probe</code> | None |
+| <code>discover</code>, <code>inspect</code> | Read-only declared native roots |
+| <code>snapshot-proof</code> | Read-only proof; runtime control only for an AX-owned source through Provider <code>quiesce</code> |
+| <code>capture-plan</code> | Fresh isolated plan sink |
+| <code>capture</code>, <code>normalize</code> | Fresh isolated raw/canonical Object Sink |
+| <code>projection-plan</code>, <code>project</code> | Fresh isolated plan/target-object sink; never a live store |
+| <code>read-back</code> | Read-only staged or live authority supplied by core |
+| <code>validate</code>, <code>resume-plan</code> | None; resume-plan returns existing-identity argv/cwd/non-secret environment names |
+| <code>doctor</code> | None |
+
+Every adapter implements every name; an unavailable operation returns
+<code>capability_unavailable</code>, and an unknown name returns
+<code>operation_unknown</code>. Bodies are closed and bounded. Every
+state-bearing call includes a host-created context binding operation, provider,
+Environment Tuple, manifest/executable digests, and request digest. Read
+authorities name host-opened handles, purpose, and expiry, never paths. Object
+authorities name purpose, <code>read|fresh_sink</code>, and hard object/byte
+limits. Partial, malformed, over-limit, or escaped results are errors, never
+absence or fallback permission. Core independently validates, hashes, and seals
+every candidate object.
+
+Every operation body is a closed object. In the definitions below,
+<code>T[n..m]</code> is an array with the inclusive item bound and
+<code>sorted unique</code> means bytewise order of each item's JCS encoding.
+Large data is referenced by manifest or Blob Descriptor ID and MUST NOT be
+embedded in the 8 MiB frame. The reusable closed body types are:
+
+- <code>AdapterCallContext</code> contains exactly
+  <code>operation_id:UUIDv7</code>, <code>provider_id:provider-id</code>,
+  <code>environment:EnvironmentTuple</code>,
+  <code>session_adapter_manifest_digest:digest</code>,
+  <code>executable_sha256:digest</code>, <code>request_digest:digest</code>,
+  and <code>extensions</code>. The host constructs it from the verified
+  candidate. <code>request_digest</code> is the digest of the JCS request body
+  with only that member omitted. Every success echoes the context byte-for-byte.
+- <code>ReadAuthority</code> contains exactly <code>authority_id:UUIDv7</code>,
+  <code>purpose:source_native|target_staged|target_live</code>,
+  <code>root_handle_names:sorted unique string[1..128][1..128]</code>,
+  <code>expires_at:timestamp</code>, and <code>extensions</code>. Handle names
+  identify host-opened descriptors or handles delivered out of band; they are
+  never paths.
+- <code>ObjectAuthority</code> contains exactly
+  <code>authority_id:UUIDv7</code>,
+  <code>purpose:capture_plan|raw_source|canonical_source|projection_plan|projected_target|read_back_evidence</code>,
+  <code>mode:read|fresh_sink</code>, <code>max_objects:uint53</code>,
+  <code>max_total_bytes:uint53</code>, and <code>extensions</code>.
+  <code>fresh_sink</code> requires an empty host-created sink and both limits
+  greater than zero. <code>read</code> exposes only request-named objects.
+- <code>SourceSelector</code> contains exactly
+  <code>native_session_id:string[1..512]|null</code>,
+  <code>logical_workspace_id:UUIDv7|null</code>, and
+  <code>opaque_source_ref:string[1..512]|null</code>; exactly one is non-null.
+- <code>AdapterFinding</code> contains exactly
+  <code>severity:info|warning|error</code>, <code>code:string[1..128]</code>,
+  <code>message:string[1..4096]</code>,
+  <code>remediation:string[1..4096]|null</code>, and <code>extensions</code>.
+- <code>ResourceLimits</code> contains exactly
+  <code>max_objects:uint53&gt;0</code>,
+  <code>max_total_bytes:uint53&gt;0</code>,
+  <code>max_single_object_bytes:uint53&gt;0</code>,
+  <code>max_events:uint53[0..65536]</code>, and
+  <code>max_target_resources:uint53[0..65536]</code>. Each per-item maximum is
+  no greater than <code>max_total_bytes</code>.
+- <code>CapturePlanItem</code> contains exactly
+  <code>native_item_key:string[1..512]</code>,
+  <code>class:capture-class</code>, <code>byte_count:uint53|null</code>,
+  <code>required:boolean</code>, and <code>extensions</code>.
+
+The exact request and success <code>body</code> registry is:
+
+| Operation | Exact request body | Exact success body |
+| --- | --- | --- |
+| <code>manifest</code> | <code>{}</code> | Exact Session Adapter Manifest 1.0.0 |
+| <code>probe</code> | <code>{expected_provider_id:provider-id,expected_candidate_kind:builtin\|external,extensions}</code> | Exact Session Adapter Probe 1.0.0; all provider, manifest, version, and tuple equalities below hold |
+| <code>discover</code> | <code>{context:AdapterCallContext,authority:ReadAuthority,workspace_filter:UUIDv7\|null,limit:uint53[1..65536],cursor:string[1..1024]\|null,extensions}</code> | <code>{context:AdapterCallContext,sources:CloneSourceSummary[0..65536],next_cursor:string[1..1024]\|null,partial:boolean,extensions}</code>; sorted by logical workspace/native Session ID; <code>partial=false</code> iff <code>next_cursor</code> is null |
+| <code>inspect</code> | <code>{context:AdapterCallContext,authority:ReadAuthority,source:SourceSelector,extensions}</code> | <code>{context:AdapterCallContext,source:CloneSourceSummary,source_identity:NativeIdentity,source_store_generation:string[1..512],environment:EnvironmentTuple,ambiguities:AdapterFinding[0..1024],extensions}</code>; zero ambiguities are required before capture |
+| <code>snapshot-proof</code> | <code>{context:AdapterCallContext,authority:ReadAuthority,source:SourceSelector,expected_source_store_generation:string[1..512],allow_provider_quiescence:boolean,extensions}</code> | <code>{context:AdapterCallContext,proof:StableSnapshotProof,provider_quiescence_requested:boolean,provider_quiescence_observed:boolean,extensions}</code>; provider quiescence requires both booleans true and separately verified Provider <code>quiesce</code> evidence |
+| <code>capture-plan</code> | <code>{context:AdapterCallContext,authority:ReadAuthority,source:SourceSelector,capture_boundary:CaptureBoundary,plan_sink:ObjectAuthority,max_items:uint53[1..65536],max_total_bytes:uint53&gt;0,extensions}</code> | <code>{context:AdapterCallContext,source_identity:NativeIdentity,source_store_generation:string[1..512],capture_plan_candidate_id:digest,candidate_count:uint53[0..65536],excluded_classes:sorted unique capture-class[0..9],capture_plan_digest:digest,extensions}</code>; fresh <code>capture_plan</code> sink containing exactly sorted unique <code>CapturePlanItem[0..65536]</code>, and the two candidate digests are equal after core rehash |
+| <code>capture</code> | <code>{context:AdapterCallContext,source_authority:ReadAuthority,sink:ObjectAuthority,source:SourceSelector,capture_boundary:CaptureBoundary,capture_plan_digest:digest,extensions}</code> | <code>{context:AdapterCallContext,capture_plan_digest:digest,source_store_generation:string[1..512],capture_result_candidate_id:digest,source_raw_object_manifest_candidate_id:digest,item_count:uint53[0..65536],pre_capture_digest:digest,post_capture_digest:digest,extensions}</code>; fresh raw sink, exact plan-key reconciliation, and an exact included-object closure |
+| <code>normalize</code> | <code>{context:AdapterCallContext,capture_manifest_id:digest,raw_objects:ObjectAuthority,canonical_sink:ObjectAuthority,extensions}</code> | <code>{context:AdapterCallContext,capture_manifest_id:digest,canonical_session_candidate_id:digest,canonical_event_candidate_ids:digest[0..65536],raw_reference_ids:sorted unique digest[0..65536],extensions}</code>; all candidates resolve inside the fresh canonical sink and all raw references are in Capture Manifest closure |
+| <code>projection-plan</code> | <code>{context:AdapterCallContext,capture_manifest_id:digest,canonical_session_id:digest,canonical_event_ids:digest[0..65536],source_objects:ObjectAuthority,plan_sink:ObjectAuthority,target_environment:EnvironmentTuple,expected_target_native_session_id:string[1..512],fidelity_profile:strict_exact\|maximal_safe\|compact\|messages_only,required_dispositions:closed-map(event-or-artifact-class,sorted-unique-fidelity-disposition[1..7]),forbid_reasons:sorted-unique-string[1..128][0..128],resource_limits:ResourceLimits,extensions}</code> | <code>{context:AdapterCallContext,projection_plan_candidate_id:digest,required_source_object_ids:sorted unique digest[0..65536],predicted_counts:FidelityCounts,findings:AdapterFinding[0..4096],extensions}</code>; <code>archive_only</code> is forbidden and every canonical item has one disposition |
+| <code>project</code> | <code>{context:AdapterCallContext,projection_plan_id:digest,capture_manifest_id:digest,canonical_session_id:digest,source_objects:ObjectAuthority,target_sink:ObjectAuthority,extensions}</code> | <code>{context:AdapterCallContext,projection_plan_id:digest,projected_object_manifest_candidate_id:digest,created_resource_keys:sorted unique string[1..512][0..65536],actual_counts:FidelityCounts,extensions}</code>; fresh target sink and exact plan/manifest/resource-key reconciliation |
+| <code>read-back</code> | <code>{context:AdapterCallContext,authority:ReadAuthority,expected_target_native_session_id:string[1..512],projection_plan_id:digest,projected_object_manifest_id:digest,evidence_sink:ObjectAuthority,extensions}</code> | <code>{context:AdapterCallContext,observed_target_native_session_id:string[1..512],projection_plan_id:digest,observed_environment:EnvironmentTuple,parsed_event_count:uint53,parsed_head_ids:sorted unique string[1..512][0..1024],workspace_binding:WorkspaceBinding,structural_digest:digest,read_back_evidence_manifest_candidate_id:digest,extensions}</code>; staged/live mode is fixed by authority and cannot be relabeled |
+| <code>validate</code> | <code>{context:AdapterCallContext,mode:staged\|live\|archive,capture_manifest_id:digest,canonical_session_id:digest,projection_plan_id:digest\|null,projected_object_manifest_id:digest\|null,read_back_evidence_manifest_id:digest\|null,expected_target_native_session_id:string[1..512]\|null,extensions}</code> | <code>{context:AdapterCallContext,mode:staged\|live\|archive,valid:boolean,structural_valid:boolean,semantic_marker_valid:boolean,identity_valid:boolean\|null,workspace_binding_valid:boolean\|null,resume_surface_valid:boolean\|null,findings:AdapterFinding[0..4096],evidence_digest:digest,extensions}</code>; archive requires all four target members null, staged/live require them non-null, and <code>valid=true</code> requires every applicable check true and no error finding |
+| <code>resume-plan</code> | <code>{context:AdapterCallContext,authority:ReadAuthority,expected_target_native_session_id:string[1..512],projection_plan_id:digest,target_checkpoint_id:digest\|null,extensions}</code> | <code>{context:AdapterCallContext,target_native_session_id:string[1..512],projection_plan_id:digest,argv:string[1..4096][1..128],cwd_relative:string[1..4096],environment_names:sorted unique string[1..256][0..128],opens_existing_identity:true,extensions}</code>; argv contains no secret, names the trusted CLI family, and contains the explicit identity exactly once |
+| <code>doctor</code> | <code>{context:AdapterCallContext,direction:source_read\|target_write,tuple_registry_digest:digest,refresh_requested:boolean,extensions}</code> | <code>{context:AdapterCallContext,direction:source_read\|target_write,registry_sequence:uint53,registry_entry_status:accepted\|revoked\|absent,findings:AdapterFinding[0..4096],healthy:boolean,extensions}</code>; healthy requires an accepted exact binding and every required capability |
+
+Candidate objects are addressed only by their exact
+<code>*_candidate_id</code> in the request's fresh sink. The core retrieves,
+validates, rehashes, and seals them. A partial, malformed, over-limit, escaped,
+or authority-unresolvable result is an error, never an empty or absent result
+and never fallback permission.
+
+Session Adapter Manifest 1.0.0 is closed and contains exactly:
+
+| Member | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact <code>urn:ax:schema:session-adapter-manifest</code> / <code>1.0.0</code> |
+| <code>provider_id</code> | <code>[a-z][a-z0-9-]{0,31}</code>; equal to Provider Manifest and discovered candidate ID |
+| <code>environment_id</code> | <code>[a-z][a-z0-9.-]{0,63}</code>; one semantic native environment |
+| <code>display_name</code> / <code>adapter_version</code> | UTF-8 string[1..128] / SemVer |
+| <code>environment_version_range</code> | Non-empty constraint string[1..256] |
+| <code>platforms</code> | Sorted unique non-empty subset of <code>linux&#124;macos&#124;windows&#124;wsl2</code> |
+| <code>operations</code> / <code>capability_names</code> | Complete ordered registries in this section, no omissions or duplicates |
+| <code>extensions</code> | Reverse-DNS keys; cannot add operations, capabilities, or trust facts |
+
+Its host-computed JCS SHA-256 is
+<code>session_adapter_manifest_digest</code> and is not embedded.
+
+Session Adapter Probe 1.0.0 is closed and contains exactly
+<code>schema=urn:ax:schema:session-adapter-probe</code>,
+<code>schema_version=1.0.0</code>, <code>provider_id</code>,
+<code>adapter_manifest_digest</code>, <code>adapter_version</code>,
+<code>environment:EnvironmentTuple</code>, <code>capabilities</code>,
+<code>warnings:sorted unique string[0..2048][0..1024]</code>, and
+<code>extensions</code>. Provider ID, manifest digest, and adapter version equal
+the verified Manifest and host values. Environment Tuple contains exactly
+<code>environment_id</code>, <code>environment_version</code>,
+<code>platform=linux|macos|windows|wsl2</code>,
+<code>architecture=amd64|arm64</code>,
+<code>store_schema_fingerprint</code>, and <code>adapter_version</code>; it
+never contains executable provenance.
+
+The exact capability names are <code>native_discovery</code>,
+<code>stable_snapshot</code>, <code>raw_capture</code>,
+<code>canonical_read</code>, <code>canonical_write</code>,
+<code>native_read_back</code>, <code>native_resume_plan</code>,
+<code>official_import</code>, <code>same_environment_lossless_clone</code>,
+<code>tool_history</code>, <code>usage_history</code>,
+<code>compaction_history</code>, <code>subagent_graph</code>,
+<code>opaque_reasoning_roundtrip</code>, and <code>workspace_binding</code>.
+Each value contains exactly status, enabled, evidence, and detail; only
+<code>status=available</code> permits <code>enabled=true</code>.
+
+Each capability value contains exactly
+<code>status:available|conditional|unsupported|unknown</code>,
+<code>enabled:boolean</code>,
+<code>evidence:documented|probed|accepted_test|provider_contract|inferred|acceptance_required|none</code>,
+and <code>detail:string[0..2048]</code>. Missing, extra, duplicated, malformed,
+or contradictory facts invalidate the whole Probe and never mean unsupported.
+
+For source and target, the host seals a closed
+<code>SessionAdapterExecutionBinding</code> containing exactly
+<code>role:source|target</code>, <code>provider_id:provider-id</code>,
+<code>candidate_kind:builtin|external</code>,
+<code>canonical_executable_path:string[1..4096]</code>,
+<code>owner_identity:string[1..512]</code>,
+<code>executable_sha256:digest</code>,
+<code>provider_manifest_digest:digest</code>,
+<code>session_adapter_manifest_digest:digest</code>, and
+<code>verified_at:timestamp</code>. Before every call and
+target mutation, these facts MUST equal freshly read trusted-candidate facts
+and the Journal binding. A failed/partial read is an integrity failure; no
+self-claim or publisher claim establishes trust.
+
+A target write requires available canonical-write or official-import,
+native-read-back, native-resume-plan, workspace-binding, Provider
+portable-store and native-resume capabilities; exact execution bindings;
+accepted non-revoked signed source/target tuple entries; and current fixture
+plus bounded native-resume smoke evidence. <code>--force</code>, experimental
+profiles, and environment-name-only matches cannot bypass these gates. Unknown
+sources may be archived only after safe byte enumeration; unknown targets never
+write.
+
 ## 8. Provider and platform contracts
 
 ### 8.1 Matrix notation
@@ -2414,7 +2686,7 @@ Provider and platform matrices use:
   probe still MUST succeed;
 - <strong>C</strong>: conditional and disabled until the named acceptance gate
   succeeds for the exact version/platform tuple;
-- <strong>U</strong>: unsupported in v0.2.1 and disabled; and
+- <strong>U</strong>: unsupported in v0.3.0 and disabled; and
 - <strong>?</strong>: unknown and disabled because there is no sufficient
   contract or evidence.
 
@@ -2423,7 +2695,7 @@ unsupported, and conditional MUST NOT be advertised as available.
 
 ### 8.2 Native-store contract matrix
 
-| Provider | Durable identity and native location | Resume/import surface | v0.2.1 materialization rule | Required exclusions and limits |
+| Provider | Durable identity and native location | Resume/import surface | v0.3.0 materialization rule | Required exclusions and limits |
 | --- | --- | --- | --- | --- |
 | Codex | Session UUID/name; known root <code>~/.codex/sessions</code>. Source absolute cwd is metadata. | <code>codex resume SESSION_ID</code>; current CLI also has <code>codex fork SESSION_ID</code>. | Adapter MUST stage only the closed session objects it has identified, compute the destination cwd mapping, validate discovery by explicit ID, and merge without replacing unrelated sessions. <code>portable_store</code> remains C until cross-host fixtures pass. | Authentication files, config secrets, MCP tokens, logs not required by the session, live processes, locks, SQLite/WAL/SHM, and runtime sockets. |
 | Claude | Session UUID; known root <code>~/.claude/projects</code> with a provider-computed project key. | <code>claude --resume SESSION_ID</code>, <code>--continue</code>, and <code>--fork-session</code> when resuming. | Adapter MUST derive the destination project key from the logical workspace mapping, stage the closed session plus documented companion data, and validate explicit UUID resume. It MUST NOT copy the source project-directory key verbatim as identity. <code>portable_store</code> remains C. | OAuth/API credentials, settings secrets, MCP auth, live PTY state, PID/lock/socket files, caches, and unproven companion databases. |
@@ -2431,7 +2703,7 @@ unsupported, and conditional MUST NOT be advertised as available.
 | Muse | Session UUID; <code>$XDG_DATA_HOME/muse/sessions/YYYY/MM/DD/UUID</code>, defaulting below <code>~/.local/share</code>. | <code>muse resume UUID</code>, <code>--last</code>, picker, and <code>muse exec --session-id UUID</code>. Export exists; native import does not. | On probed macOS 0.1.0, a guarded adapter MAY stage the complete closed durable directory, omit transient files, validate with offline export, and resume explicitly. It MUST advertise <code>portable_store = false</code> because cron-aware, current-version, cross-host fidelity is not proven. | <code>~/.config/muse/auth.json</code>, keys, login state, <code>.session.lock</code>, sockets/tokens, live WAL/SHM/locks, updater/plugin caches. <code>cron.db</code> is durable but not safely portable; a session with active or non-empty scheduled work MUST fail materialization. |
 | Antigravity CLI | Conversation UUID plus a destination-authenticated backend/account realm. <code>last_conversations.json</code> maps absolute workspace paths only as local selectors. | <code>agy --conversation UUID</code>, <code>agy -c</code>, and TUI <code>/resume</code>. Desktop-to-CLI picker import is not arbitrary file import. | Materialize the workspace, invoke explicit UUID resume, and allow the provider to rebuild derived cache. A version-aware cache merge MAY map the destination path to UUID. It MUST NOT claim that cache, brain transcript, or SQLite copying recreates a backend-missing conversation. <code>portable_store = false</code>. | OS keyring/account profiles, OAuth/API/MCP secrets, updater locks, live DB/WAL/SHM, sockets, PIDs. Backend resolution is required and a missing UUID MUST fail rather than create a blank replacement. |
 | Pi | Session UUID/file; <code>~/.pi/agent/sessions</code> or the configured <code>PI_CODING_AGENT_SESSION_DIR</code>/<code>--session-dir</code>. | <code>--session PATH_OR_ID</code>, <code>--continue</code>, <code>--resume</code>, <code>--fork</code>. | Adapter MUST snapshot a closed JSONL session and required non-secret companion data, map the destination cwd/session directory, validate the session ID, and resume explicitly. <code>portable_store</code> remains C until versioned cross-host fixtures pass. | <code>auth.json</code>, provider keys/tokens, extension secrets, live process state, locks, sockets, and caches. Pi 0.73.1 has no YOLO flag. |
-| Qwen through task-board | The task-board bundle and manager-owned provider identity; there is no v0.2.1 direct <code>ax-provider-qwen</code> claim. | Official task-board open/adopt only. | U for direct native materialization. A task-board prompt-mode bundle follows Section 9 and remains opaque. | All private manager/provider state except bytes included by the official bundle exporter. |
+| Qwen through task-board | The task-board bundle and manager-owned provider identity; there is no v0.2.1 direct claim and no v0.3.0 direct <code>ax-provider-qwen</code> claim. | Official task-board open/adopt only. | U for direct native materialization. A task-board prompt-mode bundle follows Section 9 and remains opaque. | All private manager/provider state except bytes included by the official bundle exporter. |
 | Future plugin | Declared by plugin and exact probe. | Declared by plugin. | Every cell starts ?/disabled. Promotion requires Section 19 acceptance evidence. | Common exclusions plus plugin-specific exclusions. |
 
 Muse and Antigravity rows above are normative uses of the accepted
@@ -3126,7 +3398,7 @@ verify access to the same board before adopt.
 
 ### 9.5 Task-board capability reality
 
-In v0.2.1:
+In v0.3.0:
 
 - Codex and Claude MAY advertise goal-bound primary-owner support only through
   an accepted task-board bridge;
@@ -3760,7 +4032,7 @@ files are unsupported and MUST fail unless an explicit exclusion applies.
 
 Mode preserves Unix executable and ordinary read/write bits. ACLs, ownership,
 code-signing metadata, quarantine flags, arbitrary xattrs, NTFS alternate
-streams, and resource forks are not portable in v0.2.1. If one is required for
+streams, and resource forks are not portable in v0.3.0. If one is required for
 a provider or workspace, that provider/platform cell MUST be conditional or
 unsupported rather than silently dropping it.
 
@@ -6498,7 +6770,7 @@ process or open store handle returns failure and leaves the command retryable;
 it is never represented as a successful closure.
 
 Stop is not delete. Deletion requires a separate future/administrative surface
-that emits a Session Tombstone; v0.2.1 MUST NOT make stop delete state.
+that emits a Session Tombstone; v0.3.0 MUST NOT make stop delete state.
 
 ### 13.10 Resume
 
@@ -6671,11 +6943,968 @@ in place of the exact persisted Provider Identity Record or task-board Ax
 Binding. Such substitution is never a successful retry, rollback, or parked
 recovery.
 
+Clone fault injection additionally uses <code>CR-CLONE-01..16</code> for,
+in order: resolve; probe; inspect; snapshot; capture plan; raw capture;
+normalize; canonical validation; projection/checkpoint plan; policy gate;
+prepare; staged read-back; source/collision recheck; publish/live read-back;
+finalize/lineage; and resume-plan/optional open. Each phase is injected after
+its durable write and after any external effect but before its result is
+durable. Finalization injection further covers Provider commit, durable commit
+facts, fixed checkpoint inputs, target Checkpoint,
+<code>checkpoint.created</code>, <code>clone.committed</code>, Lineage Receipt,
+and G4. Every prefix selects exactly one Section 13.13 outcome and preserves
+one operation, bundle, materialization, transaction, target Session, native
+identity, lease, and Checkpoint. Rollback is forbidden after Provider commit.
+
+### 13.14 Cross-environment clone
+
+A clone is a derivation, never a move or fork alias. It MUST leave source
+bytes, Session Record, provider ID, lease, workspace authority, task-board
+binding, and native identity unchanged. It creates one new direct Session
+Record 2.0.0, target workspace identity, native identity, and epoch-1 lease.
+The target accepts no input until transaction, target Checkpoint, lineage, and
+optional ordinary resume validation succeed.
+
+#### 13.14.1 Capture and canonical contracts
+
+Clone Raw Object Manifest 1.0.0 is closed and contains its
+schema/version/omission-rule ID, operation ID, source Environment Tuple, and
+sorted unique entries. Each entry has sanitized native
+key, capture class, byte count, blob ID, Blob Descriptor ID, and extensions.
+It contains no credential, runtime, lock, target, AX lease, or fabricated AX
+Session/Provider identity.
+
+Clone Capture Manifest 1.0.0 contains exactly its schema/version/ID,
+operation/bundle, source basis, source Environment Tuple, sanitized Native
+Identity, capture-plan digest, Capture Boundary, Raw Object Manifest ID,
+sorted Capture Items, exact excluded classes, core-derived
+<code>raw_complete</code>, creator/time, and extensions. Source basis is
+<code>ax_session</code> with source Session/Record/Checkpoint/Provider Identity
+IDs or <code>external_native</code> with a sanitized source reference.
+
+Each Capture Item has one native key and class
+<code>durable_payload|durable_index_required|durable_sidecar|derived_cache_optional|credential|machine_auth|runtime_state|transient_lock|unknown</code>.
+It is <code>included</code> with descriptor/count and no reason, or
+<code>excluded</code> with null content fields and a stable reason. Credential,
+auth, runtime, and lock classes are excluded. Unknown makes raw completeness
+false and blocks maximal-safe.
+
+Capture Boundary is <code>stable</code> with Stable Snapshot Proof, or
+<code>unstable_archive</code> with generation, pre/post digests,
+<code>source_not_quiescent</code>, explicit acknowledgement, and
+<code>target_projection_forbidden=true</code>. Stable proof records
+<code>closed_store|immutable_snapshot|verified_log_prefix|provider_quiescence</code>,
+generation, optional immutable identity, equal pre/post digests, and
+input/foreground/background idle facts. Size equality is never proof. The
+unstable form is core-created only for archive-only output and cannot enter a
+target branch.
+
+Canonical Session 1.0.0 contains exactly schema/version/omission-rule ID,
+logical Session UUIDv7, source Environment Tuple/native ID, nullable title,
+closed Workspace Binding, 1..1024 Actors, 1..1,000,000 ordered unique Event
+IDs, 1..1024 head IDs, nullable source created/updated times, and extensions.
+Actor contains exactly actor UUIDv7, <code>main|subagent|external</code>,
+nullable parent (null only for main), nullable name/source-native ID/model, and
+extensions.
+
+Canonical Event 1.0.0 contains exactly schema/version/omission-rule ID,
+logical Session UUIDv7, zero-based contiguous ordinal, 0..64 sorted unique
+causal parents, Actor UUIDv7, nullable turn UUIDv7, kind, nullable source time,
+<code>public|projection|internal|opaque</code> visibility, kind-selected closed
+payload, Source Evidence, and extensions. Source Evidence contains environment
+and native Session IDs, nullable native Event ID/type, sorted unique raw
+blob/manifest byte-range references,
+<code>exact|partial|synthesized|unavailable</code> capture status, and stable
+reason codes. Synthesized events have no native Event ID and identify the core
+operation.
+
+The exact event kinds are
+<code>session_started|instruction_snapshot|user_message|assistant_message|reasoning_summary|opaque_reasoning|tool_definition_snapshot|tool_call|tool_result|approval_request|approval_response|plan_update|progress|usage|rate_limit|file_change|compaction|turn_started|turn_completed|turn_aborted|subagent_started|subagent_completed|error|migration_checkpoint|session_finished|opaque_event</code>.
+Payloads contain only their registered typed facts. Message-like payloads use
+exactly <code>text|json|image|audio|document|resource_link|redacted|opaque</code>
+content blocks with typed inline content or Blob Descriptor references; inline
+content is at most 64 KiB. Unknown native records become raw-addressable opaque
+events. Historical tools
+are inert; incomplete calls become aborted history and block pending action.
+Foreign instructions are low-authority history, foreign encrypted/signed
+reasoning is opaque-preserved, and source usage is not target accounting.
+
+The following closed shapes govern this subsection; the preceding prose is a
+summary and does not permit omitted or additional members.
+
+<code>NativeIdentity</code> contains exactly
+<code>native_session_id:string[1..512]</code>,
+<code>identity_kind:provider_native|official_import|continuation_context</code>,
+<code>logical_workspace_id:UUIDv7</code>,
+<code>backend_realm_fingerprint:digest|null</code>,
+<code>opaque_identity:string[1..512]|null</code>, and
+<code>extensions</code>. It contains no credential, absolute source path as
+cross-host identity, PID, socket, token, or secret environment value.
+
+<code>WorkspaceBinding</code> contains exactly
+<code>logical_workspace_id:UUIDv7</code>,
+<code>cwd_relative:string[1..4096]</code>,
+<code>repository_remote_fingerprints:sorted unique digest[0..128]</code>,
+<code>branch:string[1..1024]|null</code>,
+<code>head_digest:digest|null</code>, <code>index_digest:digest|null</code>,
+<code>working_tree_digest:digest|null</code>, and <code>extensions</code>.
+The relative cwd is normalized beneath the Workspace Group root; no member
+grants filesystem authority.
+
+Clone Raw Object Manifest 1.0.0 contains exactly:
+
+| Field | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact <code>urn:ax:schema:clone-raw-object-manifest</code> / <code>1.0.0</code> |
+| <code>raw_object_manifest_id</code> | JCS digest with only this member omitted |
+| <code>operation_id</code> | UUIDv7 clone operation |
+| <code>source_environment</code> | Exact probed <code>EnvironmentTuple</code> |
+| <code>source_native_session_id</code> | Sanitized string[1..512], never an AX Session ID |
+| <code>source_identity_digest</code> | Terminal digest of canonical sanitized <code>NativeIdentity</code> bytes |
+| <code>capture_plan_digest</code> | Exact core-validated capture-plan digest |
+| <code>entries</code> | <code>RawObjectEntry[0..65536]</code>, sorted unique by native item key |
+| <code>total_bytes</code> | uint53 equal to the sum of entry byte counts |
+| <code>extensions</code> | Reverse-DNS keys with no normative reference |
+
+<code>RawObjectEntry</code> contains exactly
+<code>native_item_key:string[1..512]</code>,
+<code>class:durable_payload|durable_index_required|durable_sidecar|derived_cache_optional|unknown</code>,
+<code>byte_count:uint53</code>, <code>blob_id:digest</code>, and
+<code>blob_descriptor_id:digest</code>. The descriptor agrees with blob ID and
+byte count. Credential, machine-auth, runtime-state, transient-lock, and
+excluded candidates are forbidden.
+
+Clone Capture Manifest 1.0.0 contains exactly:
+
+| Field | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact <code>urn:ax:schema:clone-capture-manifest</code> / <code>1.0.0</code> |
+| <code>capture_manifest_id</code> | JCS digest with only this member omitted |
+| <code>operation_id</code> / <code>bundle_id</code> | UUIDv7 clone operation / logical bundle chain |
+| <code>source_basis</code> | Closed Capture Source Basis below |
+| <code>source_environment</code> / <code>source_identity</code> | Exact tuple / sanitized <code>NativeIdentity</code> |
+| <code>capture_plan_digest</code> | Terminal digest of the complete canonical capture-plan success body |
+| <code>capture_boundary</code> | Closed Capture Boundary below |
+| <code>source_raw_object_manifest_id</code> | Exact raw manifest containing all and only included objects |
+| <code>items</code> | <code>CaptureItem[0..65536]</code>, sorted bytewise by native item key; one per plan candidate |
+| <code>excluded_classes</code> | Sorted unique capture-class[0..9], exactly the excluded-row classes |
+| <code>raw_complete</code> | Core-derived boolean; true only after complete plan/object reconciliation |
+| <code>created_by_host_id</code> / <code>created_at</code> | UUIDv7 / diagnostic timestamp |
+| <code>extensions</code> | Reverse-DNS keys only |
+
+Capture Source Basis is a closed union. <code>kind=ax_session</code> contains
+exactly <code>kind</code>, <code>source_session_id:UUIDv7</code>,
+<code>source_session_record_id:digest</code>,
+<code>source_checkpoint_id:digest</code>,
+<code>source_provider_identity_record_id:digest</code>, and
+<code>extensions</code>. <code>kind=external_native</code> contains exactly
+<code>kind</code>, <code>external_source_ref:string[1..512]</code>, and
+<code>extensions</code>.
+
+<code>CaptureItem</code> contains exactly
+<code>native_item_key:string[1..512]</code>,
+<code>class:durable_payload|durable_index_required|durable_sidecar|derived_cache_optional|credential|machine_auth|runtime_state|transient_lock|unknown</code>,
+<code>disposition:included|excluded</code>,
+<code>blob_descriptor_id:digest|null</code>, <code>byte_count:uint53|null</code>,
+<code>exclusion_reason:string[1..128]|null</code>, and
+<code>extensions</code>. Included requires both content members non-null and a
+null reason. Excluded requires null content members and a non-null reason.
+Credential, auth, runtime, and lock classes are always excluded. Unknown makes
+<code>raw_complete=false</code> and blocks <code>maximal_safe</code>.
+
+Capture Boundary is a closed union. <code>kind=stable</code> contains exactly
+<code>kind</code>, <code>proof:StableSnapshotProof</code>, and
+<code>extensions</code>. <code>kind=unstable_archive</code> contains exactly
+<code>kind</code>, <code>source_generation:string[1..512]</code>,
+<code>pre_capture_digest:digest</code>, <code>post_capture_digest:digest</code>,
+<code>reason_code=source_not_quiescent</code>,
+<code>operator_explicit=true</code>,
+<code>target_projection_forbidden=true</code>, and <code>extensions</code>.
+Only core may construct the unstable archive form; G2 always rejects it.
+
+<code>StableSnapshotProof</code> contains exactly
+<code>proof_kind:closed_store|immutable_snapshot|verified_log_prefix|provider_quiescence</code>,
+<code>source_generation:string[1..512]</code>,
+<code>snapshot_identity_digest:digest|null</code>,
+<code>pre_capture_digest:digest</code>, <code>post_capture_digest:digest</code>,
+<code>input_blocked:boolean</code>, <code>foreground_idle:boolean</code>,
+<code>background_idle:boolean</code>, and <code>extensions</code>. Capture
+digests are equal. Closed-store/provider-quiescence requires all booleans true
+and null snapshot identity; immutable-snapshot/log-prefix requires non-null
+identity. File-size equality is never proof.
+
+Canonical Session 1.0.0 contains exactly:
+
+| Field | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact <code>urn:ax:schema:canonical-session</code> / <code>1.0.0</code> |
+| <code>canonical_session_id</code> | JCS digest with only this member omitted |
+| <code>logical_session_id</code> | UUIDv7 stable within bundle lineage |
+| <code>source_environment</code> / <code>source_native_session_id</code> | Exact tuple / string[1..512] |
+| <code>title</code> | string[1..4096] or null |
+| <code>workspace</code> | Closed <code>WorkspaceBinding</code> |
+| <code>actors</code> | <code>Actor[1..1024]</code>, unique by actor ID |
+| <code>event_ids</code> | Ordered unique digest[1..1000000] |
+| <code>head_event_ids</code> | Sorted unique digest[1..1024], all in event IDs |
+| <code>created_at</code> / <code>updated_at</code> | timestamp or null |
+| <code>extensions</code> | Reverse-DNS keys only |
+
+<code>Actor</code> contains exactly <code>actor_id:UUIDv7</code>,
+<code>kind:main|subagent|external</code>,
+<code>parent_actor_id:UUIDv7|null</code>, <code>name:string[1..512]|null</code>,
+<code>source_native_id:string[1..512]|null</code>,
+<code>model:string[1..512]|null</code>, and <code>extensions</code>. Exactly one
+actor is <code>main</code>; only it has null parent.
+
+Canonical Event 1.0.0 contains exactly <code>schema</code>,
+<code>schema_version</code>, <code>event_id</code>,
+<code>logical_session_id</code>, <code>ordinal:uint53</code>,
+<code>parents:sorted unique digest[0..64]</code>, <code>actor_id:UUIDv7</code>,
+<code>turn_id:UUIDv7|null</code>, <code>kind</code>,
+<code>timestamp:timestamp|null</code>,
+<code>visibility:public|projection|internal|opaque</code>,
+<code>payload</code>, <code>source_evidence</code>, and
+<code>extensions</code>. Schema/version are exact canonical-event 1.0.0 and
+event ID is the JCS digest with only itself omitted. Ordinals are contiguous
+from zero.
+
+<code>SourceEvidence</code> contains exactly
+<code>environment:EnvironmentTuple</code>,
+<code>native_session_id:string[1..512]</code>,
+<code>native_event_id:string[1..512]|null</code>,
+<code>native_type:string[1..512]|null</code>,
+<code>raw_refs:sorted unique RawReference[0..65536]</code>,
+<code>capture_status:exact|partial|synthesized|unavailable</code>,
+<code>reason_codes:sorted unique string[1..128][0..128]</code>,
+<code>core_operation_id:UUIDv7|null</code>, and <code>extensions</code>.
+<code>RawReference</code> contains exactly <code>manifest_id:digest</code>,
+<code>blob_descriptor_id:digest</code>, <code>offset:uint53</code>, and
+<code>length:uint53</code>. Synthesized requires null native Event ID and a
+non-null core operation; all other statuses require null core operation.
+
+#### 13.14.2 Fidelity, projection, and lineage
+
+The dispositions are <code>exact|semantic|summarized|opaque_preserved|synthesized|omitted|unrecoverable</code>.
+Every non-exact row names one or more of the closed core reasons
+<code>target_no_equivalent|source_not_persisted|source_truncated|source_corrupt|foreign_encrypted_payload|foreign_signature_unverifiable|target_schema_constraint|target_context_limit|target_size_limit|target_version_gate|official_importer_loss|graph_flattened|unsafe_pending_action|credential_excluded|secret_policy|operator_policy|unsupported_media_type|unknown_native_event|derived_index_rebuilt</code>,
+or a reverse-DNS extension reason that cannot redefine a core code.
+Every captured candidate reconciles once to raw evidence or exclusion; every
+raw item to a canonical item or normalization disposition; every canonical
+item to staged/live target evidence or a target disposition. Fidelity Report
+1.0.0 records archive/target scope, profile, tuples, per-item mappings, counts
+by kind/block/bytes/disposition/reason, completeness, semantic continuity,
+native resumability, evidence IDs, and extensions. An aggregate score cannot
+replace item gates.
+
+Profiles are <code>strict_exact|maximal_safe|compact|messages_only|archive_only</code>;
+maximal-safe is default. Strategies are
+<code>same_environment_native_rewrite|target_native_writer|target_official_import|continuation_context|archive_only</code>.
+Continuation context is explicitly non-native historical fidelity.
+
+Projection Plan 1.0.0 binds operation/bundle, Capture/Canonical inputs,
+source/target tuples, expected new native ID, strategy/profile, ordered
+item mappings and reasons, target operations/resources, exclusions, limits,
+<code>fidelity_basis_digest</code>, and extensions. It never predicts a final
+Fidelity Report ID. Clone Projected Object Manifest 1.0.0 binds plan and target
+ID to sorted disjoint blob/directory entries partitioned by operation sequence.
+It grants no live authority and cannot populate a Checkpoint.
+
+Clone Read-Back Evidence Manifest 1.0.0 binds operation,
+<code>staged|live</code>, plan/projected manifest, equal expected/observed
+native IDs, target tuple, parsed count/heads, Workspace Binding, structural
+digest, and sorted evidence blobs. Modes cannot be relabeled. Clone Validation
+Report 1.0.0 aggregates both reads, identity/workspace/marker/resume checks,
+Fidelity Report, findings, and valid result; every applicable check must pass.
+
+Migration Checkpoint 1.0.0 binds operation/bundle, source snapshot and optional
+AX Checkpoint, Canonical Session, Projection Plan, tuples, previous checkpoint/
+receipt, policy and fidelity-basis hashes, visible low-authority projection,
+and extensions. It does not name the final report. Visible text comes from
+typed escaped fields and is user context, never an assistant reply or control
+instruction.
+
+Clone Lineage Receipt 1.0.0 binds source/target identities and tuples,
+Migration Checkpoint, Projection Plan, G3, final reports, Provider commit fact,
+target Checkpoint, committed event, and optional prior receipt. It names G3,
+never G4; G4 names it. Lineage is descriptive, never authorization.
+
+The following are the complete closed schemas for those contracts.
+
+<code>FidelityCounts</code> contains exactly the seven uint53 members
+<code>exact</code>, <code>semantic</code>, <code>summarized</code>,
+<code>opaque_preserved</code>, <code>synthesized</code>, <code>omitted</code>,
+and <code>unrecoverable</code>.
+
+<code>FidelityDispositionRecord</code> contains exactly
+<code>source_item_key:string[1..512]</code>,
+<code>source_class:string[1..128]</code>,
+<code>source_evidence_ids:sorted unique digest[1..65536]</code>,
+<code>canonical_object_id:digest|null</code>,
+<code>target_locator:string[1..1024]|null</code>,
+<code>disposition:exact|semantic|summarized|opaque_preserved|synthesized|omitted|unrecoverable</code>,
+<code>reason_codes:sorted unique string[1..128][0..128]</code>,
+<code>explanation:string[1..4096]</code>,
+<code>staged_evidence_object_ids:sorted unique digest[0..65536]</code>,
+<code>live_evidence_object_ids:sorted unique digest[0..65536]</code>, and
+<code>extensions</code>. Exact requires an empty reason set; every other
+disposition requires at least one reason. Synthesized requires no source
+canonical object; every non-synthesized row traces to captured source evidence.
+
+Fidelity Report 1.0.0 contains exactly:
+
+| Field | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact <code>urn:ax:schema:fidelity-report</code> / <code>1.0.0</code> |
+| <code>fidelity_report_id</code> | JCS digest with only this member omitted |
+| <code>scope</code> | <code>archive&#124;target</code> |
+| <code>operation_id</code> / <code>bundle_id</code> | UUIDv7 operation / bundle chain |
+| <code>source_snapshot_digest</code> | Terminal captured snapshot digest |
+| <code>capture_manifest_id</code> / <code>canonical_session_id</code> | Exact lower immutable inputs |
+| <code>projection_plan_id</code> | digest or null; null exactly for archive |
+| <code>source_environment</code> | Exact source tuple |
+| <code>target_environment</code> | Exact target tuple or null; null exactly for archive |
+| <code>profile</code> | Closed fidelity profile; <code>archive_only</code> exactly for archive |
+| <code>required_dispositions</code> | Closed map from class to sorted unique non-empty disposition sets |
+| <code>forbid_reasons</code> | Sorted unique string[1..128][0..128] |
+| <code>dispositions</code> | <code>FidelityDispositionRecord[1..1000000]</code>, sorted unique by source item key with synthesized rows ordered after source rows |
+| <code>counts</code> | Exact <code>FidelityCounts</code>, derived from disposition rows |
+| <code>event_kind_counts</code> | Closed map of every Canonical Event kind to <code>FidelityCounts</code> |
+| <code>content_block_counts</code> | Closed map of every content-block type to <code>FidelityCounts</code> |
+| <code>byte_counts</code> | Closed map of every disposition to uint53 |
+| <code>reason_counts</code> | Sorted map string[1..128] to uint53&gt;0 |
+| <code>raw_bundle_complete</code> / <code>canonical_complete</code> | Core-derived booleans |
+| <code>target_semantically_continuable</code> / <code>target_natively_resumable</code> | Core-derived booleans; both false for archive |
+| <code>staged_read_back_evidence_manifest_id</code> / <code>live_read_back_evidence_manifest_id</code> | digest or null; both null for archive and both non-null for target |
+| <code>adapter_attestations</code> | Sorted unique digest[0..64], evidence only |
+| <code>extensions</code> | Reverse-DNS keys only |
+
+Every Capture Manifest item and Canonical Event occurs in exactly one
+non-synthesized disposition row. Aggregate maps reconcile exactly to the rows
+and cannot replace them. A target report does not name Clone Validation Report,
+Lineage Receipt, G4, or a future event. An archive report references only the
+G0/G1 closure and is therefore targetless.
+
+Projection Plan 1.0.0 contains exactly:
+
+| Field | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact <code>urn:ax:schema:projection-plan</code> / <code>1.0.0</code> |
+| <code>projection_plan_id</code> | JCS digest with only this member omitted |
+| <code>operation_id</code> / <code>bundle_id</code> | UUIDv7 operation / bundle chain |
+| <code>request_digest</code> / <code>source_snapshot_digest</code> | Terminal canonical request/snapshot digests |
+| <code>capture_manifest_id</code> / <code>canonical_session_id</code> | Exact lower inputs |
+| <code>canonical_event_ids</code> | Ordered unique digest[0..65536], equal to Canonical Session order |
+| <code>source_environment</code> / <code>target_environment</code> | Exact tuples |
+| <code>expected_target_native_session_id</code> | Newly allocated string[1..512] |
+| <code>target_workspace</code> | Exact <code>WorkspaceBinding</code> |
+| <code>strategy</code> | <code>same_environment_native_rewrite&#124;target_native_writer&#124;target_official_import&#124;continuation_context</code> |
+| <code>strategy_rationale</code> | string[1..4096] |
+| <code>fidelity_profile</code> | <code>strict_exact&#124;maximal_safe&#124;compact&#124;messages_only</code> |
+| <code>required_dispositions</code> / <code>forbid_reasons</code> | Exact policy from request |
+| <code>item_mappings</code> | <code>ProjectionItemMapping[1..1000000]</code>, one for every captured/canonical item |
+| <code>target_operations</code> | <code>ProjectionTargetOperation[1..65536]</code>, ordered by sequence |
+| <code>expected_resources</code> | <code>ExpectedTargetResource[0..65536]</code>, sorted by operation sequence/key |
+| <code>synthesized_events</code> | <code>SynthesizedProjectionEvent[0..65536]</code>, ordered by insertion sequence |
+| <code>security_exclusions</code> | Sorted unique capture-class[0..9] |
+| <code>resource_limits</code> | Exact <code>ResourceLimits</code> |
+| <code>transaction_plan</code> / <code>read_back_plan</code> / <code>resume_plan</code> / <code>rollback_plan</code> | Closed plan components below |
+| <code>required_contracts</code> | Sorted unique <code>ContractRequirement[1..64]</code> |
+| <code>required_capabilities</code> | Sorted unique string[1..128][1..64] |
+| <code>fidelity_basis_digest</code> | Terminal digest of item mappings, policy, and predicted counts; never a report locator |
+| <code>source_adapter_build_digest</code> / <code>target_adapter_build_digest</code> / <code>controller_build_digest</code> | Host-observed digests |
+| <code>extensions</code> | Reverse-DNS keys only |
+
+<code>ProjectionItemMapping</code> contains exactly
+<code>source_item_key:string[1..512]</code>,
+<code>canonical_object_id:digest|null</code>,
+<code>target_resource_keys:sorted unique string[1..512][0..65536]</code>,
+<code>expected_disposition:fidelity-disposition</code>,
+<code>reason_codes:sorted unique string[1..128][0..128]</code>, and
+<code>extensions</code>. <code>ProjectionTargetOperation</code> contains
+exactly <code>sequence:uint53&gt;0</code>,
+<code>action:create_directory|write_blob|write_native_record|rebuild_index</code>,
+<code>resource_keys:sorted unique string[1..512][1..65536]</code>,
+<code>depends_on_sequences:sorted unique uint53[0..65536]</code>, and
+<code>extensions</code>. Dependencies are lower sequences and form a DAG.
+<code>ExpectedTargetResource</code> contains exactly
+<code>operation_sequence:uint53&gt;0</code>, <code>resource_key:string[1..512]</code>,
+<code>kind:blob|directory</code>, <code>mode:uint32[0..4095]|null</code>,
+<code>expected_blob_id:digest|null</code>, and <code>extensions</code>; blob and
+directory nullability is branch-exact.
+<code>SynthesizedProjectionEvent</code> contains exactly
+<code>canonical_event_id:digest</code>,
+<code>insertion_after_event_id:digest|null</code>,
+<code>purpose:migration_checkpoint|summary|delimiter</code>, and
+<code>extensions</code>.
+
+<code>TransactionPlan</code> contains exactly
+<code>materialization_intent=clone</code>,
+<code>target_collision_policy=must_be_absent</code>,
+<code>activation=dormant_validated</code>, and <code>extensions</code>.
+<code>ReadBackPlan</code> contains exactly
+<code>modes:[staged,live]</code>,
+<code>require_identity_match=true</code>,
+<code>require_workspace_match=true</code>,
+<code>require_semantic_marker=true</code>, and <code>extensions</code>.
+<code>ResumeProjectionPlan</code> contains exactly
+<code>opens_existing_identity=true</code>,
+<code>allow_blank_fallback=false</code>,
+<code>bounded_continuation_turn_required:boolean</code>, and
+<code>extensions</code>. <code>RollbackPlan</code> contains exactly
+<code>required=true</code>, <code>retain_through=live_validated</code>,
+<code>forbidden_after_provider_commit=true</code>, and <code>extensions</code>.
+<code>ContractRequirement</code> contains exactly
+<code>contract_id:string[1..256]</code> and <code>version:SemVer</code>.
+
+Clone Projected Object Manifest 1.0.0 contains exactly its schema/version,
+<code>projected_object_manifest_id</code> under the omission rule,
+<code>operation_id:UUIDv7</code>, <code>projection_plan_id:digest</code>,
+<code>target_environment:EnvironmentTuple</code>,
+<code>expected_target_native_session_id:string[1..512]</code>,
+<code>entries:ProjectedObjectEntry[0..65536]</code>,
+<code>total_bytes:uint53</code>, and <code>extensions</code>. Entries are sorted
+unique by operation sequence/resource key. <code>kind=blob</code> contains
+exactly <code>operation_sequence</code>, <code>resource_key</code>,
+<code>kind</code>, <code>mode:uint32[0..4095]|null</code>,
+<code>byte_count:uint53</code>, <code>blob_id:digest</code>, and
+<code>blob_descriptor_id:digest</code>. <code>kind=directory</code> contains
+exactly sequence, key, kind, and mode. Entries partition Plan resources and
+grant no live authority.
+
+Clone Read-Back Evidence Manifest 1.0.0 contains exactly its schema/version,
+<code>read_back_evidence_manifest_id</code> under the omission rule,
+<code>operation_id:UUIDv7</code>, <code>mode:staged|live</code>,
+<code>projection_plan_id:digest</code>,
+<code>projected_object_manifest_id:digest</code>, equal expected and observed
+native Session IDs, <code>observed_environment:EnvironmentTuple</code>,
+<code>parsed_event_count:uint53</code>,
+<code>parsed_head_ids:sorted unique string[1..512][0..1024]</code>,
+<code>workspace_binding:WorkspaceBinding</code>,
+<code>structural_digest:digest</code>,
+<code>evidence_objects:EvidenceObject[0..65536]</code>, and
+<code>extensions</code>. <code>EvidenceObject</code> contains exactly
+<code>evidence_kind:native_sample|parser_trace|marker_observation</code>,
+<code>media_type:string[1..128]</code>, <code>byte_count:uint53</code>,
+<code>blob_id:digest</code>, and <code>blob_descriptor_id:digest</code>.
+Evidence rows are sorted unique by evidence kind/blob ID. Staged and live
+manifests are distinct and cannot be relabeled.
+
+Clone Validation Report 1.0.0 contains exactly
+<code>schema=urn:ax:schema:clone-validation-report</code>,
+<code>schema_version=1.0.0</code>,
+<code>validation_report_id:digest</code> under the omission rule,
+<code>operation_id:UUIDv7</code>, <code>projection_plan_id:digest</code>,
+<code>projected_object_manifest_id:digest</code>,
+<code>staged_read_back_evidence_manifest_id:digest</code>,
+<code>live_read_back_evidence_manifest_id:digest</code>,
+<code>target_provider_manifest_id:digest</code>,
+<code>fidelity_report_id:digest</code>,
+<code>expected_target_native_session_id:string[1..512]</code>,
+<code>observed_target_native_session_id:string[1..512]</code>,
+<code>target_environment:EnvironmentTuple</code>,
+<code>staged_structural_valid:boolean</code>,
+<code>live_structural_valid:boolean</code>,
+<code>semantic_marker_valid:boolean</code>,
+<code>identity_valid:boolean</code>,
+<code>workspace_binding_valid:boolean</code>,
+<code>resume_surface_valid:boolean</code>,
+<code>source_generation_revalidated:boolean</code>,
+<code>findings:AdapterFinding[0..4096]</code>,
+<code>valid:boolean</code>, and <code>extensions</code>. <code>valid=true</code>
+requires every boolean true, matching native IDs/tuple, and no error finding.
+
+Migration Checkpoint 1.0.0 contains exactly
+<code>schema=urn:ax:schema:migration-checkpoint</code>,
+<code>schema_version=1.0.0</code>,
+<code>migration_checkpoint_id:digest</code> under the omission rule,
+<code>checkpoint_id:UUIDv7</code>, <code>hop_id:UUIDv7</code>,
+<code>operation_id:UUIDv7</code>, <code>bundle_id:UUIDv7</code>,
+<code>created_at:timestamp</code>, <code>source_snapshot_digest:digest</code>,
+<code>source_checkpoint_id:digest|null</code>,
+<code>canonical_session_id:digest</code>,
+<code>projection_plan_id:digest</code>,
+<code>source_environment:EnvironmentTuple</code>,
+<code>source_native_session_id:string[1..512]</code>,
+<code>source_logical_session_id:UUIDv7</code>,
+<code>target_environment:EnvironmentTuple</code>,
+<code>target_native_session_id:string[1..512]</code>,
+<code>target_logical_session_id:UUIDv7</code>,
+<code>previous_checkpoint_id:digest|null</code>,
+<code>previous_lineage_receipt_id:digest|null</code>,
+<code>projection_policy_digest:digest</code>,
+<code>fidelity_basis_digest:digest</code>,
+<code>report_locator:ReportLocator</code>,
+<code>preserved_classes:sorted unique string[1..128][0..128]</code>,
+<code>transformed_classes:sorted unique string[1..128][0..128]</code>,
+<code>archived_classes:sorted unique string[1..128][0..128]</code>,
+<code>unrecoverable_classes:sorted unique string[1..128][0..128]</code>,
+<code>visible_projection:VisibleMigrationProjection</code>, and
+<code>extensions</code>. <code>ReportLocator</code> contains exactly
+<code>bundle_id:UUIDv7</code> and
+<code>logical_path=reports/fidelity.json</code>; it is not a report digest.
+<code>VisibleMigrationProjection</code> contains exactly
+<code>authority=user_context</code>,
+<code>target_event_ids:sorted unique digest[1..64]</code>,
+<code>escaped_text:string[1..65536]</code>, and <code>extensions</code>. It is
+never an assistant reply, system instruction, or authorization.
+
+Clone Lineage Receipt 1.0.0 contains exactly
+<code>schema=urn:ax:schema:clone-lineage-receipt</code>,
+<code>schema_version=1.0.0</code>,
+<code>lineage_receipt_id:digest</code> under the omission rule,
+<code>operation_id:UUIDv7</code>, <code>bundle_id:UUIDv7</code>,
+<code>source_kind:ax_session|external_native</code>,
+<code>source_session_record_id:digest|null</code>,
+<code>source_checkpoint_id:digest|null</code>,
+<code>source_native_session_id:string[1..512]</code>,
+<code>source_environment:EnvironmentTuple</code>,
+<code>target_session_record_id:digest</code>,
+<code>target_provider_identity_record_id:digest</code>,
+<code>target_environment:EnvironmentTuple</code>,
+<code>migration_checkpoint_id:digest</code>,
+<code>projection_plan_id:digest</code>,
+<code>validation_bundle_manifest_id:digest</code> naming G3,
+<code>fidelity_report_id:digest</code>,
+<code>validation_report_id:digest</code>,
+<code>provider_committed_result_digest:digest</code>,
+<code>target_checkpoint_id:digest</code>,
+<code>clone_committed_event_id:digest</code>,
+<code>previous_lineage_receipt_id:digest|null</code>,
+<code>committed_at:timestamp</code>,
+<code>operator_signature_blob_descriptor_id:digest|null</code>, and
+<code>extensions</code>. AX-session source IDs are non-null exactly for that
+source kind. The receipt never names G4, lease, approval, credential, task-board
+goal, rollback token, or live authority.
+
+#### 13.14.3 Immutable bundle chain
+
+Clone Bundle Manifest 1.0.0 contains schema/version/omission-rule ID,
+bundle/operation, generation, stage, immediate predecessor, tagged content,
+operation-stable time, and extensions. Only these chains are legal:
+
+~~~text
+G0 capture -> G1 canonical -> A2 archive (terminal)
+G0 capture -> G1 canonical -> G2 projection -> G3 validation -> G4 committed
+~~~
+
+G0 names Capture Manifest. G1 adds Canonical Session/Events. A2 adds archive
+Fidelity Report and validation digest and forbids every target fact. G2 adds
+Projection Plan, Migration Checkpoint, Projected Object Manifest, target
+workspace Transfer Manifest, Materialization Plan 2, and staged evidence. G3
+adds Provider prepared fact, target Provider Identity, ordinary live provider
+Transfer Manifest, live evidence, and final reports. G4 adds Provider committed
+fact, optional sole checkpoint-failure event, target Checkpoint,
+<code>checkpoint.created</code>, <code>clone.committed</code>, and receipt.
+
+Stages cannot skip; operation/bundle remain constant; one predecessor cannot
+have byte-different successors, including A2/G2. Identical replay returns the
+existing ID. Rollback retains highest verified G0-G3, reports, and Journal.
+Secure deletion is separate. Digest edges point only to lower layers or prior
+hops. Migration uses a fidelity basis; Fidelity Report does not name Validation
+Report; receipt names G3 and G4 names receipt; Checkpoint names only prior event
+heads and announcing events point back. Digest cycles are forbidden.
+
+The complete Clone Bundle Manifest 1.0.0 common object contains exactly:
+
+| Member | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact <code>urn:ax:schema:session-clone-bundle</code> / <code>1.0.0</code> |
+| <code>manifest_id</code> | JCS digest with only this member omitted |
+| <code>bundle_id</code> / <code>operation_id</code> | UUIDv7 values constant across the selected branch |
+| <code>generation</code> | uint53 in 0..4 |
+| <code>stage</code> | <code>capture&#124;canonical&#124;archive&#124;projection&#124;validation&#124;committed</code> |
+| <code>previous_manifest_id</code> | digest or null under the exact predecessor rule |
+| <code>content</code> | Exactly one closed stage variant below; kind equals stage |
+| <code>created_at</code> | Operation-stable diagnostic timestamp included in identity |
+| <code>extensions</code> | Reverse-DNS keys; no normative references |
+
+The closed <code>content</code> union has exactly <code>kind</code> plus the
+members in its row; members from every other row are forbidden:
+
+| Generation / kind | Exact additional members |
+| --- | --- |
+| G0 / <code>capture</code> | <code>capture_manifest_id:digest</code> |
+| G1 / <code>canonical</code> | <code>canonical_session_id:digest</code>, <code>canonical_event_ids:digest[0..65536]</code> in Canonical Session order and unique |
+| A2 / <code>archive</code> | <code>fidelity_report_id:digest</code>, <code>archive_validation_evidence_digest:digest</code>, <code>raw_complete:boolean</code>, <code>canonical_complete:boolean</code> |
+| G2 / <code>projection</code> | <code>projection_plan_id:digest</code>, <code>migration_checkpoint_id:digest</code>, <code>projected_object_manifest_id:digest</code>, <code>target_workspace_manifest_id:digest</code>, <code>materialization_plan_id:digest</code>, <code>staged_read_back_evidence_manifest_id:digest</code> |
+| G3 / <code>validation</code> | <code>provider_prepared_fact_digest:digest</code>, <code>target_provider_identity_record_id:digest</code>, <code>target_provider_manifest_id:digest</code>, <code>live_read_back_evidence_manifest_id:digest</code>, <code>fidelity_report_id:digest</code>, <code>validation_report_id:digest</code> |
+| G4 / <code>committed</code> | <code>provider_committed_fact_digest:digest</code>, <code>checkpoint_failure_event_id:digest&#124;null</code>, <code>target_checkpoint_id:digest</code>, <code>checkpoint_created_event_id:digest</code>, <code>clone_committed_event_id:digest</code>, <code>lineage_receipt_id:digest</code> |
+
+G0 has null predecessor, G1 names G0, and generation 2 is exactly A2 naming G1
+or G2 naming G1. A2 is terminal. The target branch continues G2 to G3 to G4,
+each naming its immediate predecessor. A second byte-different successor of
+any predecessor, including an A2/G2 fork, is an integrity failure; byte-identical
+replay returns the existing identity. Provider prepared/committed fact digests
+are sanitized terminal hashes, not object locators, and rollback tokens occur
+only in Journal 3.
+
+#### 13.14.4 Transaction and target Checkpoint
+
+Materialization Plan 2.0.0 retains major-1 non-clone semantics but replaces
+mandatory source checkpoint/lease fields with
+<code>source_basis=ax_checkpoint|external_native</code> and adds
+<code>intent=clone</code> plus Clone Projection. External basis contains
+Capture Manifest, snapshot, generation, and tuple, never fabricated AX
+ownership. Clone Projection binds all clone/projection/target identities.
+Clone requires rollback, null prior checkpoint, collision absence, and
+manifest/native-discovery/projection/read-back/resume-plan validations. Only a
+clone Plan 2 may use Projected Object Manifest as provider merge input;
+Transfer Manifest 1.0.0 remains unchanged.
+
+Materialization Plan 2.0.0 is a complete independently readable schema, not a
+delta over Plan 1. Its closed top-level object contains exactly:
+
+| Field | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact Materialization Plan identifier / <code>2.0.0</code> |
+| <code>plan_id</code> | JCS digest with only this member omitted |
+| <code>kind</code> | <code>workspace&#124;provider&#124;task_board&#124;composite</code> |
+| <code>intent</code> | Major-1 intents plus <code>clone</code> |
+| <code>subject_id</code> | UUIDv7 target Session for clone |
+| <code>source_basis</code> | Closed Materialization Source Basis below |
+| <code>source_manifest_ids</code> | Sorted unique digest[0..1024] pre-existing inputs |
+| <code>derived_manifest_ids</code> | Sorted unique digest[0..1024] fork outputs or clone projection outputs |
+| <code>fork_projection</code> | Existing closed Fork Workspace Projection or null; non-null exactly for fork |
+| <code>clone_projection</code> | Closed Clone Projection or null; non-null exactly for clone |
+| <code>prepared_for_host_id</code> | UUIDv7 executing allowlisted host |
+| <code>authorities</code> | Existing closed <code>RootAuthority[0..512]</code> |
+| <code>expected_prior_checkpoint_id</code> | digest or null; null for fresh clone target |
+| <code>operations</code> | Existing closed <code>PlanOperation[0..65536]</code> with major-1 ordering/path rules |
+| <code>exclusions</code> | Sorted unique exclusion-class[0..128] |
+| <code>validations</code> | Sorted unique validation-name[1..9] |
+| <code>commit_strategy</code> | Existing major-1 enum |
+| <code>rollback_required</code> | boolean; true for clone |
+| <code>created_by_host_id</code> / <code>created_at</code> | UUIDv7 / diagnostic timestamp |
+| <code>extensions</code> | Reverse-DNS keys only |
+
+Materialization Source Basis is a closed union. <code>kind=ax_checkpoint</code>
+contains exactly <code>kind</code>, <code>source_checkpoint_id:digest</code>,
+<code>source_lease_epoch:uint53&gt;0</code>, and
+<code>source_lease_id:UUIDv4</code>. <code>kind=external_native</code> contains
+exactly <code>kind</code>, <code>capture_manifest_id:digest</code>,
+<code>source_snapshot_digest:digest</code>,
+<code>source_store_generation:string[1..512]</code>, and
+<code>source_environment:EnvironmentTuple</code>. Every non-clone intent
+requires AX checkpoint basis. External-native basis never fabricates an AX
+checkpoint or lease.
+
+Clone Projection contains exactly
+<code>projection_version=session_clone_v1</code>,
+<code>clone_operation_id:UUIDv7</code>, <code>bundle_id:UUIDv7</code>,
+<code>capture_manifest_id:digest</code>,
+<code>canonical_session_id:digest</code>,
+<code>projection_plan_id:digest</code>,
+<code>migration_checkpoint_id:digest</code>,
+<code>projected_object_manifest_id:digest</code>,
+<code>target_workspace_manifest_id:digest</code>,
+<code>target_session_id:UUIDv7</code>,
+<code>target_provider_id:provider-id</code>,
+<code>expected_target_native_session_id:string[1..512]</code>,
+<code>target_environment:EnvironmentTuple</code>, and
+<code>extensions</code>. Clone requires null fork projection,
+<code>kind=provider|composite</code>, a direct target Session Record whose
+identities equal these fields, null prior checkpoint, and collision absence.
+
+For clone, <code>derived_manifest_ids</code> contains exactly the Clone
+Projected Object Manifest plus target-specific workspace Transfer Manifests;
+source manifests are pre-existing validated workspace inputs. Only clone
+permits <code>merge_provider_store.input_id</code> to name the projected-object
+manifest. Its entries form a disjoint complete partition by Plan operation
+sequence beneath prevalidated authorities. Non-clone Plan 2 retains the Plan 1
+rule that install/merge inputs are Transfer Manifests or Task-board Bundles.
+
+The complete validation-name registry is the six major-1 names
+<code>backend_identity</code>, <code>manifest_closure</code>,
+<code>provider_native_discovery</code>, <code>task_board_bundle</code>,
+<code>task_board_validate</code>, and <code>workspace_state</code>, plus
+<code>clone_projection</code>, <code>target_native_read_back</code>, and
+<code>target_resume_plan</code>. Every clone requires manifest closure,
+provider discovery, and all three clone validations; composite clone also
+requires workspace state. No non-clone plan carries a clone validation.
+
+~~~text
+resolving -> snapshotting -> captured -> normalized -> planned
+-> preparing -> prepared -> publishing -> published
+-> live_validating -> finalizing -> provider_committed
+-> sealing_checkpoint -> committed -> lineage_published
+archive: normalized -> archive_validating -> archived
+rollback before provider commit: publishing|published|live_validating|finalizing
+-> rolling_back -> rolled_back
+~~~
+
+Journal 3.0.0 is clone-only and closed. It cumulatively fixes
+materialization/phase/source basis, Plan and transfer state, authorities/chunks,
+existing Provider Journal Transaction, both execution bindings, G0-G4 IDs,
+source checks, target identity/tuple, evidence/reports/manifests, caller-stable
+Provider request/result facts, deterministic Checkpoint time/head/event suffix,
+receipt, errors, and times. Fields become non-null only at their phase and then
+remain immutable. Rollback token stays only in Provider Journal Transaction.
+A failed journal read is integrity failure, never absence.
+
+Materialization Journal 3.0.0 is a complete clone-only schema and does not
+inherit Journal 2. The closed top-level object contains exactly:
+
+| Field | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> / <code>document_kind</code> | Exact Journal identifier / <code>3.0.0</code> / <code>journal</code> |
+| <code>materialization_id</code> | UUIDv7 allocated with the operation before first journal write |
+| <code>phase</code> | <code>snapshotting&#124;captured&#124;normalized&#124;planned&#124;preparing&#124;prepared&#124;publishing&#124;published&#124;live_validating&#124;finalizing&#124;provider_committed&#124;sealing_checkpoint&#124;committed&#124;lineage_published&#124;rolling_back&#124;rolled_back&#124;failed</code> |
+| <code>source_basis</code> | Closed Journal Source Basis below, immutable |
+| <code>plan_id</code> | digest or null; null before G2 then immutable Plan 2 ID |
+| <code>transfer_id</code> | UUIDv7 or null; non-null only when projected inputs use AX object transfer |
+| <code>managed_replica_id</code> | UUIDv7 or null; non-null exactly when target workspace bytes participate |
+| <code>authority_states</code> | map(root-id, existing Authority Journal State)[0..512] |
+| <code>expected_prior_checkpoint_id</code> | Always null for clone |
+| <code>completed_blob_chunks</code> / <code>verified_blob_ids</code> | Existing Journal-2 keyed chunk map / verified whole-blob set |
+| <code>provider_transaction</code> | Existing closed Provider Journal Transaction or null |
+| <code>task_board_transaction</code> | Always null in v0.3 clone |
+| <code>destination_marker_id</code> | digest or null; only composite clone with workspace materialization |
+| <code>clone</code> | Required closed Clone Journal State below |
+| <code>last_error</code> | Redacted Structured Error 1.1 or null |
+| <code>started_at</code> / <code>updated_at</code> | Diagnostic timestamps |
+| <code>extensions</code> | Reverse-DNS machine-local keys only |
+
+Journal Source Basis is a closed union. <code>kind=ax_session</code> contains
+exactly <code>kind</code>, <code>source_session_id:UUIDv7</code>,
+<code>source_session_record_id:digest</code>,
+<code>source_checkpoint_id:digest</code>,
+<code>source_lease_epoch:uint53&gt;0</code>,
+<code>source_lease_id:UUIDv4</code>, and
+<code>source_environment:EnvironmentTuple</code>.
+<code>kind=external_native</code> contains exactly <code>kind</code>,
+<code>source_native_session_id:string[1..512]</code>,
+<code>source_environment:EnvironmentTuple</code>, and
+<code>inspected_store_generation:string[1..512]</code>.
+
+Clone Journal State contains exactly the following members. Every nullable
+member is present with null until admitted by the phase matrix:
+
+| Member | Type |
+| --- | --- |
+| <code>clone_operation_id</code> / <code>bundle_id</code> | UUIDv7, immutable |
+| <code>session_adapter_bindings</code> | Exactly two <code>SessionAdapterExecutionBinding</code> values ordered source then target, immutable |
+| <code>current_bundle_manifest_id</code>, <code>capture_manifest_id</code>, <code>canonical_session_id</code>, <code>projection_plan_id</code>, <code>migration_checkpoint_id</code>, <code>target_projected_object_manifest_id</code> | digest or null |
+| <code>source_snapshot_digest</code> | digest or null |
+| <code>source_store_generation</code> | string[1..512] or null |
+| <code>prepublication_source_check_id</code> / <code>postpublication_source_check_id</code> | digest or null |
+| <code>expected_target_native_session_id</code> | string[1..512] or null |
+| <code>target_environment</code> | EnvironmentTuple or null |
+| <code>staged_read_back_evidence_manifest_id</code>, <code>live_read_back_evidence_manifest_id</code>, <code>fidelity_report_id</code>, <code>validation_report_id</code> | digest or null |
+| <code>target_workspace_manifest_id</code>, <code>target_provider_identity_record_id</code>, <code>target_provider_manifest_id</code> | digest or null |
+| <code>provider_operation_id</code> | UUIDv7 or null; caller-stable Provider materialize operation |
+| <code>provider_materialize_request_digest</code> | digest or null; exact canonical Provider request body |
+| <code>provider_prepared_result_digest</code>, <code>provider_committed_result_digest</code>, <code>provider_rolled_back_result_digest</code> | digest or null; sanitized result facts |
+| <code>target_checkpoint_created_at</code> | timestamp or null; caller-stable suffix input |
+| <code>checkpoint_failure_event_id</code> | digest or null; at most one |
+| <code>target_checkpoint_event_heads</code> | sorted unique digest[1..64] or null; fixed once |
+| <code>target_checkpoint_id</code>, <code>checkpoint_created_event_id</code>, <code>clone_committed_event_id</code>, <code>lineage_receipt_id</code> | digest or null |
+| <code>extensions</code> | Reverse-DNS machine-local keys only |
+
+The journal is first written at <code>snapshotting</code> after read-only
+resolve/manifest/probe/inspect fix both bindings and source basis, but before
+snapshot proof or capture. <code>resolving</code> has no Journal 3 and no
+mutation. The required/non-null matrix is cumulative; facts introduced in a
+row remain immutable thereafter, unadmitted nullable fields remain null, and
+maps/sets remain empty:
+
+| First phase | Newly required durable facts |
+| --- | --- |
+| <code>snapshotting</code> | Operation/bundle/materialization IDs, two bindings, source basis; every object/result/plan field null |
+| <code>captured</code> | Source snapshot digest/generation, Capture Manifest, current G0 |
+| <code>normalized</code> | Canonical Session, current G1 |
+| <code>planned</code> | Projection Plan, Migration Checkpoint, planned target identity/environment, accepted policy; current manifest remains G1 |
+| <code>preparing</code> | Isolated target sink may exist; Plan, authorities, Provider transaction remain null/empty |
+| <code>prepared</code> | Projected Object Manifest, any target workspace Transfer Manifest, staged evidence, Plan 2, exact authorities, current G2; target Provider Identity/Transfer Manifest absent; target Session Record/lease/event creation follows this durable phase |
+| <code>publishing</code> | Provider operation ID, byte-identical request digest, Provider transaction <code>unknown</code> with exact authority, prepublication source-check ID |
+| <code>published</code> | Provider <code>prepared</code>, non-null rollback token and prepared-result digest, exact discovered target Provider Identity, postpublication source-check ID |
+| <code>live_validating</code> | Same retained Provider state/token; live evidence and unchanged Provider capture may accumulate |
+| <code>finalizing</code> | Live evidence, ordinary target provider Transfer Manifest, Fidelity/Validation Reports, current G3, fixed target manifests/checkpoint creation time; Provider remains rollback-capable |
+| <code>provider_committed</code> | Provider <code>committed</code>, null rollback token, committed-result digest; prepared digest retained |
+| <code>sealing_checkpoint</code> | Same committed facts; optional sole failure event, then fixed heads and deterministic checkpoint/event suffix IDs in durable prefix order |
+| <code>committed</code> | Target Checkpoint, <code>checkpoint.created</code>, and <code>clone.committed</code> IDs non-null; receipt null |
+| <code>lineage_published</code> | Lineage Receipt and current G4 non-null |
+| <code>rolling_back</code> | Provider <code>unknown&#124;prepared</code>; rollback intent durable; committed-result digest null |
+| <code>rolled_back</code> | Provider <code>rolled_back</code>, null token, rolled-back-result digest non-null, committed digest null; highest G0-G3 retained |
+| <code>failed</code> | <code>last_error</code> non-null; every previously durable identity/effect unchanged |
+
+The existing Provider Journal Transaction is the sole custody location for
+Provider transaction ID, transaction authority, state, rollback token, and
+last status time. Its operation/materialization/provider/transaction/plan IDs
+equal Journal 3 and Plan 2. The token is forbidden from Clone Journal State,
+bundle, report, receipt, event, log, or replicated object. Prepared-result
+evidence may coexist with exactly one of committed-result or rolled-back-result
+evidence; committed and rolled-back digests are mutually exclusive. Every
+phase and Provider-state change is persisted before the next external effect.
+
+Prepare writes isolated bytes and validates staged read-back. Core rechecks
+source generation and target collision before unchanged Provider
+<code>materialize</code>. Provider <code>prepared</code> maps to outer
+published while rollback remains. Core rechecks source, independently reads
+the inert live target, and captures an ordinary provider Transfer Manifest.
+Finalize persists intent before unchanged Provider commit with dormant validated
+activation. Provider committed discards rollback state. Ambiguous responses
+first reconcile status against the same authority. Unknown is parked, never
+absence. Pre-commit failures discard sinks or explicitly roll back while
+retaining evidence. Post-commit rollback is forbidden; recovery completes the
+same deterministic suffix or remains input-blocked, never allocating another
+target, lease, transaction, or process.
+
+After Provider commit, core seals one ordinary validated Checkpoint 1.0.0 for
+the new Session/epoch-1 lease. It names exact workspace and ordinary live
+provider Transfer Manifests and proves the exact native identity, input blocked,
+full idle, zero processes and handles. It names pre-checkpoint event heads,
+then core emits <code>checkpoint.created</code> and
+<code>clone.committed</code>. A definitive semantic failure before head
+fixation emits at most one <code>clone.failed(phase=checkpoint)</code>; storage
+crashes retry without a failure event. Recovery uses the existing failure head
+and never a replacement Checkpoint.
+
+After any ambiguous Provider call, core first invokes unchanged
+<code>materialize-status</code> with the caller-known transaction authority.
+The lost-response mapping is closed:
+
+| Ambiguous outer boundary | Provider status | Required action |
+| --- | --- | --- |
+| <code>publishing</code>, lost materialize response | <code>prepared</code> | Persist recovered token/prepared facts once; continue at <code>published</code> |
+| Same | <code>unknown</code> | <code>recoverable_parked_state</code>; no new target or transaction |
+| Same | <code>rolled_back</code> | Record <code>rolled_back</code>; retain G0-G2 |
+| Same | <code>committed</code> | Integrity-park because commit intent was not durable; do not invent success or byte rollback |
+| <code>published&#124;live_validating</code> | <code>prepared</code> | Resume the same postpublication validation or roll back with the same authority |
+| Same | <code>unknown</code> | Park input-blocked |
+| Same | <code>committed&#124;rolled_back</code> | Reconcile only with matching already-durable terminal intent/result; otherwise integrity-park |
+| <code>finalizing</code>, lost commit response | <code>prepared</code> | Safe-retry byte-identical <code>materialize-commit</code> |
+| Same | <code>committed</code> | Persist facts and the deterministic Checkpoint/event/lineage suffix |
+| Same | <code>unknown</code> | Park; never reopen with a fresh identity |
+| Same | <code>rolled_back</code> | Integrity-park unless matching earlier rollback intent is durable |
+| <code>rolling_back</code>, lost rollback response | <code>prepared</code> | Safe-retry byte-identical rollback |
+| Same | <code>rolled_back</code> | Persist outer rolled-back facts |
+| Same | <code>committed</code> | Byte rollback forbidden; park the exact input-blocked target |
+| Same | <code>unknown</code> | <code>recoverable_parked_state</code> |
+| <code>provider_committed&#124;sealing_checkpoint</code>, restart | <code>committed</code> | Revalidate exact closed target and persist only the missing deterministic suffix |
+
+No status result authorizes a fresh Provider materialization, target native
+identity, Session Record, lease, process, or transaction authority. A failed,
+partial, or malformed Journal, Provider, adapter, registry, or native-store
+read is <code>integrity_failure</code>, never absence and never a trigger for an
+absence fallback.
+
+#### 13.14.5 Events, state, and tuple admission
+
+Session Event 2.0.0 adds closed variants <code>clone.planned</code>,
+<code>clone.target_prepared</code>, <code>clone.target_published</code>,
+<code>clone.target_validation_failed</code>, <code>clone.rolled_back</code>,
+<code>clone.committed</code>, <code>clone.lineage_published</code>, and
+<code>clone.failed</code>. Payloads bind operation/materialization and applicable
+plan/transaction/native/report/checkpoint/receipt IDs, rollback-retained facts,
+stable phases/errors, and ambiguity. Pre-target failures are Error/Observation/
+Journal only. Lineage/open failure cannot regress a committed target.
+
+| Event type | Exact payload members beyond the tag |
+| --- | --- |
+| <code>clone.planned</code> | <code>operation_id:UUIDv7</code>, <code>bundle_manifest_id:digest</code> (G2), <code>projection_plan_id:digest</code>, <code>migration_checkpoint_id:digest</code>, <code>materialization_id:UUIDv7</code>, <code>target_environment:EnvironmentTuple</code>, <code>expected_target_native_session_id:string[1..512]</code> |
+| <code>clone.target_prepared</code> | <code>operation_id:UUIDv7</code>, <code>materialization_id:UUIDv7</code>, <code>plan_id:digest</code>, <code>provider_transaction_id:UUIDv7</code>, <code>provider_prepared_result_digest:digest</code>, <code>staged_read_back_evidence_manifest_id:digest</code>, <code>rollback_retained=true</code> |
+| <code>clone.target_published</code> | <code>operation_id:UUIDv7</code>, <code>materialization_id:UUIDv7</code>, <code>provider_identity_record_id:digest</code>, <code>target_provider_manifest_id:digest</code>, <code>live_read_back_evidence_manifest_id:digest</code>, <code>fidelity_report_id:digest</code>, <code>validation_report_id:digest</code>, <code>source_generation_revalidated=true</code>, <code>rollback_retained=true</code> |
+| <code>clone.target_validation_failed</code> | <code>operation_id:UUIDv7</code>, <code>materialization_id:UUIDv7</code>, <code>phase:prepublication_source_recheck&#124;provider_prepare&#124;postpublication_source_recheck&#124;live_discovery&#124;live_read_back&#124;resume_plan</code>, <code>error_code:string[1..128]</code>, <code>validation_report_id:digest&#124;null</code>, <code>rollback_required:boolean</code>, <code>transaction_unknown:boolean</code> |
+| <code>clone.rolled_back</code> | <code>operation_id:UUIDv7</code>, <code>materialization_id:UUIDv7</code>, <code>provider_rolled_back_result_digest:digest</code>, <code>retained_bundle_manifest_id:digest</code>, <code>reason_code:string[1..128]</code> |
+| <code>clone.committed</code> | <code>operation_id:UUIDv7</code>, <code>materialization_id:UUIDv7</code>, <code>provider_identity_record_id:digest</code>, <code>provider_committed_result_digest:digest</code>, <code>target_checkpoint_id:digest</code>, <code>fidelity_report_id:digest</code>, <code>validation_report_id:digest</code>, <code>native_resumable=true</code> |
+| <code>clone.lineage_published</code> | <code>operation_id:UUIDv7</code>, <code>target_checkpoint_id:digest</code>, <code>lineage_receipt_id:digest</code>, <code>bundle_manifest_id:digest</code> (G4) |
+| <code>clone.failed</code> | <code>operation_id:UUIDv7</code>, <code>phase=checkpoint</code>, <code>error_code=target_checkpoint_failed</code>, <code>retryable=true</code>, <code>retained_bundle_manifest_id:digest</code> (G3), <code>materialization_id:UUIDv7</code>, <code>transaction_unknown=false</code> |
+
+Clone adds one derived-state edge, <code>creating -> stopped</code>, legal only
+for clone.committed matching Session Record 2 provenance, committed Provider
+with null rollback token, and newest validated epoch-1 target Checkpoint proving
+the exact unopened identity. Missing/stale evidence is
+<code>invalid_state_transition</code>. Origin/fork cannot use this edge.
+Optional open follows ordinary resume from that exact Checkpoint and Identity.
+
+Supported Environment Tuple Registry 1.0.0 contains schema/version/digest,
+strictly increasing sequence, AX release, validity interval, sorted entries,
+and extensions. Each key combines direction, exact six-member tuple, provider,
+candidate kind, executable SHA-256, and both manifest digests. Each entry has
+key/sequence, exact contract versions, strategies, fixture evidence, nullable
+resume smoke, fidelity limits, validity, accepted/revoked status and reason/time.
+Source entries are archive-only without smoke; target entries require current
+passing fixtures and bounded resume smoke. Revocation and acceptance cannot
+coexist.
+
+<code>SupportedEnvironmentTupleKey</code> contains exactly
+<code>direction:source_read|target_write</code>,
+<code>environment:EnvironmentTuple</code>, <code>provider_id:provider-id</code>,
+<code>candidate_kind:builtin|external</code>,
+<code>executable_sha256:digest</code>,
+<code>provider_manifest_digest:digest</code>, and
+<code>session_adapter_manifest_digest:digest</code>. The host constructs the
+key from the adapter tuple and independently observed execution binding.
+
+The complete registry object contains exactly:
+
+| Member | Type and constraint |
+| --- | --- |
+| <code>schema</code> / <code>schema_version</code> | Exact <code>urn:ax:schema:supported-environment-tuples</code> / <code>1.0.0</code> |
+| <code>registry_digest</code> | JCS digest with only this member omitted |
+| <code>registry_sequence</code> | uint53&gt;0 and strictly greater than every accepted predecessor |
+| <code>ax_release</code> | Exact publishing/refreshing SemVer |
+| <code>issued_at</code> / <code>not_before</code> / <code>not_after</code> | UTC timestamps; not-before no later than issued, not-after later than issued |
+| <code>entries</code> | <code>SupportedEnvironmentTupleEntry[1..65536]</code>, sorted unique by JCS key bytes |
+| <code>extensions</code> | Reverse-DNS keys with no effect on identity, evidence, validity, admission, or revocation |
+
+<code>SupportedEnvironmentTupleEntry</code> contains exactly
+<code>key:SupportedEnvironmentTupleKey</code>,
+<code>entry_sequence:uint53&gt;0</code> no greater than registry sequence,
+<code>contracts:SupportedContractVersions[1..64]</code> sorted unique by
+contract ID, <code>strategies</code> as a sorted unique non-empty subset of the
+five projection strategies, <code>fixture_evidence:FixtureEvidence</code>,
+<code>resume_smoke_evidence:ResumeSmokeEvidence|null</code>,
+<code>known_fidelity_limits:FidelityLimit[0..1024]</code> sorted unique by
+code/class, <code>valid_from:timestamp</code>, <code>valid_until:timestamp</code>,
+<code>status:accepted|revoked</code>,
+<code>revocation_reason:string[1..4096]|null</code>,
+<code>revoked_at:timestamp|null</code>, and <code>extensions</code>.
+
+<code>SupportedContractVersions</code> contains exactly
+<code>contract_id:string[1..256]</code> and
+<code>versions:sorted unique SemVer[1..32]</code>. Allowed IDs are the
+registered Provider Protocol, Session Adapter Protocol, Clone Raw/Capture/Bundle/
+Projected/Read-Back manifests, Canonical Session/Event, Projection Plan,
+Migration Checkpoint, Fidelity Report, Clone Validation Report,
+Materialization Plan, Session Record/Event, Checkpoint, Transfer Manifest, and
+Blob Descriptor identifiers. Wildcards, <code>latest</code>, empty, duplicated,
+unknown, or unbounded versions are invalid.
+
+<code>FixtureEvidence</code> contains exactly
+<code>suite_revision:string[1..128]</code>, <code>suite_digest:digest</code>,
+<code>result=pass</code>, <code>executed_at:timestamp</code>,
+<code>evidence_digest:digest</code>, and <code>fixture_count:uint53&gt;0</code>.
+<code>ResumeSmokeEvidence</code> contains exactly <code>result=pass</code>,
+<code>executed_at:timestamp</code>, <code>evidence_digest:digest</code>,
+<code>native_cli_family:string[1..128]</code>, and
+<code>bounded_continuation_turn_passed=true</code>.
+<code>FidelityLimit</code> contains exactly <code>code:string[1..128]</code>,
+<code>affected_class:string[1..128]</code>,
+<code>maximum_disposition:fidelity-disposition</code>, and
+<code>detail:string[1..4096]</code>.
+
+Source-read entries have exactly <code>strategies=[archive_only]</code> and null
+resume evidence. Target-write entries exclude archive-only, require current
+non-null passing resume evidence, and name only fixture-exercised strategies.
+Accepted requires null revocation members and a current interval. Revoked
+requires both revocation members; status is not part of the unique key, so
+accepted and revoked rows cannot coexist.
+
+The JCS registry and detached SSHSIG are published at
+<code>compatibility/supported-environment-tuples-v1.json</code> and
+<code>compatibility/supported-environment-tuples-v1.json.sshsig</code> under
+namespace <code>ax-supported-environment-tuples-v1</code> with the
+release-pinned signer. Parsing, digest, signature, validity, ordering, and
+monotonic sequence all fail closed. Failed/partial reads never mean absence.
+Only AX release authority accepts or globally revokes; local policy may further
+deny but cannot self-approve or override revocation.
+
 ## 14. CLI and operator experience
 
 ### 14.1 Command surface
 
-The v0.2.1 command surface is:
+The v0.3.0 command surface is:
 
 ~~~text
 ax NAME [--action attach|takeover|fork|cancel] [--to HOST] [--as NEW_NAME] [--workspace-mode whole-group|separate-worktrees]
@@ -6696,6 +7925,14 @@ ax logs [--operation OPERATION_ID] [--session NAME] [--since TIME] [--peer HOST]
 ax peer list
 ax peer probe HOST
 ax session set-profile NAME standard|yolo
+ax session clone adapters
+ax session clone doctor [--from-provider ID] [--to-provider ID] [--refresh-registry]
+ax session clone list --from-provider ID [--workspace PATH]
+ax session clone inspect SOURCE --from-provider ID
+ax session clone plan SOURCE --from-provider ID [--to-provider ID] [OPTIONS]
+ax session clone run SOURCE --from-provider ID [--to-provider ID] [OPTIONS]
+ax session clone verify BUNDLE_OR_RECEIPT
+ax session clone open TARGET_OR_RECEIPT
 ax pane SESSION_ID
 ax rpc serve --stdio
 ~~~
@@ -6711,6 +7948,98 @@ the resolved owner and accepts neither action-specific flag.
 
 Internal commands <code>pane</code> and <code>rpc serve</code> MAY be hidden
 from short help but MUST have documented <code>--help</code>.
+
+There is no <code>ax clone</code> alias. Clone run options are
+<code>--workspace</code>, <code>--target-workspace</code>,
+<code>--fidelity</code>, repeatable <code>--require</code>, repeatable
+<code>--forbid-reason</code>, <code>--bundle</code>, <code>--no-open</code>,
+<code>--json</code>, and <code>--idempotency-key</code>. Target profiles require
+<code>--to-provider</code>; archive-only forbids it, target workspace, and
+no-open. <code>plan</code> is the sole no-target-write surface and returns G2
+for a target plan or A2 for archive. <code>run --dry-run</code> is invalid before
+target allocation. Structured mode never prompts. Force cannot bypass tuple,
+integrity, authority, generation, or fidelity gates.
+
+CLI Result 2.0.0 adds the closed command tags
+<code>session.clone.adapters|doctor|list|inspect|plan|run|verify|open</code>.
+Plan result is exactly <code>target_projection</code> or <code>archive</code>,
+both with <code>dry_run=true</code>. Run result is exactly
+<code>native_clone_committed</code>,
+<code>continuation_context_prepared</code>, or
+<code>archive_created</code>. Target outcomes name target Session Record,
+Provider Identity, Checkpoint, Migration Checkpoint, receipt, G4, Fidelity and
+Validation reports, exact resume argv, and staged-and-live validation; archive
+names Capture/Canonical/A2/Fidelity IDs and completeness evidence and creates
+no Session. Continuation context remains unopened. Top-level
+<code>session_id</code> is the UUID inside the target Session Record, never its
+digest; it is null only for archive. Open requires committed receipt and exact
+Checkpoint/Provider Identity and cannot fall back to blank launch.
+
+CLI Result 2.0.0 retains the exact major-1 top-level members and all major-1
+variants. For clone commands its <code>command</code> selects exactly one closed
+body:
+
+| Command tag | Exact body |
+| --- | --- |
+| <code>session.clone.adapters</code> | <code>{adapters:CloneAdapterSummary[0..256]}</code> |
+| <code>session.clone.doctor</code> | <code>{healthy:boolean,source_environment:EnvironmentTuple&#124;null,target_environment:EnvironmentTuple&#124;null,findings:CloneFinding[0..4096]}</code> |
+| <code>session.clone.list</code> | <code>{sources:CloneSourceSummary[0..65536],partial:boolean}</code> |
+| <code>session.clone.inspect</code> | <code>{source:CloneSourceSummary,snapshot_status:stable&#124;unstable&#124;unknown,capture_plan_digest:digest,candidate_count:uint53,excluded_classes:sorted unique capture-class[0..9],blockers:sorted unique string[1..1024][0..1024]}</code> |
+| <code>session.clone.plan</code> | Closed <code>ClonePlanResult</code> below |
+| <code>session.clone.run</code> | Closed <code>CloneRunResult</code> below |
+| <code>session.clone.verify</code> | <code>{verified_kind:bundle&#124;lineage_receipt,verified_id:digest,latest_bundle_manifest_id:digest,lineage_receipt_id:digest&#124;null,valid:true,findings:CloneFinding[0..4096]}</code> |
+| <code>session.clone.open</code> | <code>{target_session_record_id:digest,target_checkpoint_id:digest,provider_identity_record_id:digest,session_resumed_event_id:digest,resume_argv:string[1..4096][1..128],opened:true}</code> |
+
+<code>CloneAdapterSummary</code> contains exactly
+<code>provider_id:provider-id</code>, <code>environment_id:string[1..64]</code>,
+<code>display_name:string[1..128]</code>, <code>adapter_version:SemVer</code>,
+<code>environment_version_range:string[1..256]</code>,
+<code>platforms</code> as a sorted unique non-empty platform subset,
+<code>candidate_kind:builtin|external</code>,
+<code>executable_sha256:digest</code>,
+<code>provider_manifest_digest:digest</code>,
+<code>session_adapter_manifest_digest:digest</code>, the complete ordered
+<code>operations[14]</code>, the complete Probe <code>capabilities[15]</code>,
+and <code>trusted:boolean</code>. Trust and digests come from the host binding;
+no path, owner, <code>adapter_id</code>, or self-reported executable identity is
+present.
+
+<code>CloneSourceSummary</code> contains exactly
+<code>environment:EnvironmentTuple</code>,
+<code>native_session_id:string[1..512]</code>,
+<code>logical_workspace_id:UUIDv7</code>,
+<code>ax_session_id:UUIDv7|null</code>,
+<code>source_generation:string[1..512]</code>, and
+<code>snapshot_status:stable|unstable|unknown</code>.
+<code>CloneFinding</code> contains exactly
+<code>severity:info|warning|error</code>, <code>code:string[1..128]</code>,
+<code>message:string[1..4096]</code>,
+<code>remediation:string[1..4096]|null</code>, and
+<code>source:core|session_adapter|provider|tuple_registry|clone_policy</code>.
+
+<code>ClonePlanResult</code> has exactly two tags; members absent from a row are
+forbidden:
+
+| Plan tag | Exact additional members |
+| --- | --- |
+| <code>plan_kind=target_projection</code> | <code>projection_plan_id:digest</code>, <code>bundle_manifest_id:digest</code> (G2), <code>source_snapshot_digest:digest</code>, <code>target_environment:EnvironmentTuple</code>, <code>expected_target_native_session_id:string[1..512]</code>, <code>strategy:same_environment_native_rewrite&#124;target_native_writer&#124;target_official_import&#124;continuation_context</code>, <code>fidelity_profile:strict_exact&#124;maximal_safe&#124;compact&#124;messages_only</code>, <code>predicted:FidelityCounts</code>, <code>native_resumable_expected:boolean</code>, <code>write_resource_count:uint53</code>, <code>security_exclusions:sorted unique capture-class[0..9]</code>, <code>dry_run:true</code> |
+| <code>plan_kind=archive</code> | <code>capture_manifest_id:digest</code>, <code>canonical_session_id:digest</code>, <code>bundle_manifest_id:digest</code> (A2), <code>fidelity_report_id:digest</code>, <code>source_snapshot_digest:digest</code>, <code>fidelity_profile=archive_only</code>, <code>counts:FidelityCounts</code>, <code>raw_complete:boolean</code>, <code>canonical_complete:boolean</code>, <code>security_exclusions:sorted unique capture-class[0..9]</code>, <code>dry_run:true</code> |
+
+<code>CloneRunResult</code> has exactly three tags; members absent from a row are
+forbidden:
+
+| Outcome tag | Exact additional members |
+| --- | --- |
+| <code>outcome=native_clone_committed</code> | <code>source:CloneSourceSummary</code>, <code>target_session_record_id:digest</code>, <code>target_provider_identity_record_id:digest</code>, <code>target_checkpoint_id:digest</code>, <code>migration_checkpoint_id:digest</code>, <code>lineage_receipt_id:digest</code>, <code>bundle_manifest_id:digest</code> (G4), <code>fidelity_report_id:digest</code>, <code>validation_report_id:digest</code>, <code>resume_argv:string[1..4096][1..128]</code>, <code>validation_level=staged_and_live</code>, <code>opened:boolean</code> |
+| <code>outcome=continuation_context_prepared</code> | <code>source:CloneSourceSummary</code>, <code>target_session_record_id:digest</code>, <code>target_provider_identity_record_id:digest</code>, <code>target_checkpoint_id:digest</code>, <code>migration_checkpoint_id:digest</code>, <code>lineage_receipt_id:digest</code>, <code>bundle_manifest_id:digest</code> (G4), <code>fidelity_report_id:digest</code>, <code>validation_report_id:digest</code>, <code>context_capsule_id:digest</code>, <code>resume_argv:string[1..4096][1..128]</code>, <code>validation_level=staged_and_live</code>, <code>opened=false</code> |
+| <code>outcome=archive_created</code> | <code>source:CloneSourceSummary</code>, <code>capture_manifest_id:digest</code>, <code>canonical_session_id:digest</code>, <code>bundle_manifest_id:digest</code> (A2), <code>fidelity_report_id:digest</code>, <code>raw_complete:boolean</code>, <code>canonical_complete:boolean</code>, <code>archive_validation_evidence_digest:digest</code> |
+
+Top-level clone nullability is exact. Adapters, doctor, list, inspect, and
+verify have null operation/session IDs. Plan has non-null operation and null
+session. Run has non-null operation; session is null exactly for archive and
+otherwise equals the UUIDv7 inside <code>target_session_record_id</code>. Open
+has both IDs non-null with the same UUID/digest relation. Clone failures are
+Structured Error 1.1, never a CLI Result with <code>ok=false</code>.
 
 A task-board start has no implicit board, launch mode, goal, or binding lookup.
 <code>--board-id</code> uses the Section 5.1 logical-ID grammar. Omitting
@@ -6805,8 +8134,8 @@ All user commands MUST support:
 - <code>--state-dir PATH</code>;
 - <code>--cache-dir PATH</code>;
 - <code>--runtime-dir PATH</code>;
-- <code>--json</code> for one CLI Result 1.0.0 success object or Structured
-  Error 1.0.0 failure object;
+- <code>--json</code> for one version-selected CLI Result success object or
+  Structured Error failure object;
 - <code>--no-color</code>;
 - <code>--non-interactive</code>, which forbids prompts;
 - <code>--timeout DURATION</code>; and
@@ -6825,7 +8154,11 @@ non-interactive mode. <code>--yes</code> alone MUST NOT bypass an expected
 owner/epoch/checkpoint check.
 
 JSON success output uses the independently versioned closed schema
-<code>urn:ax:schema:cli-result</code> version <code>1.0.0</code>. It contains
+<code>urn:ax:schema:cli-result</code>. Legacy commands select CLI Result 1.0.0
+and Structured Error 1.0.0; every <code>session.clone.*</code> command selects
+CLI Result 2.0.0 on success and Structured Error 1.1.0 on failure. No command
+may emit another registered version or retry a different major after parsing
+begins. Both CLI Result versions contain
 exactly <code>schema</code>, <code>schema_version</code>,
 <code>command</code>, <code>ok = true</code>, <code>operation_id</code>
 (UUIDv7 or null), <code>session_id</code> (UUIDv7 or null), the tagged
@@ -6969,6 +8302,22 @@ ax payments-api --non-interactive --action takeover --to local
 ax payments-api --non-interactive --action fork --as payments-api-experiment --to local
 ~~~
 
+Cross-environment clone plan, run, verification, and open:
+
+~~~shell
+ax session clone plan 019f9e10-source --from-provider codex --to-provider claude --fidelity maximal-safe --json
+ax session clone run 019f9e10-source --from-provider codex --to-provider claude --no-open --idempotency-key migration-2026-08-27 --json
+ax session clone verify sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --json
+ax session clone open sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb --json
+ax session clone run 019f9e10-source --from-provider codex --fidelity archive-only --bundle ./session-evidence --json
+~~~
+
+The first command performs no live target write and returns G2. The second
+returns one committed target UUID/record/Checkpoint/receipt tuple. The archive
+command creates A2 and no target Session. Reusing its idempotency key with any
+different source snapshot, tuple, policy, adapter binding, workspace, or target
+identity returns <code>idempotency_mismatch</code>.
+
 Force recovery:
 
 ~~~shell
@@ -7065,8 +8414,9 @@ bundle contents by default.
 
 ### 15.1 Structured Error
 
-All machine-readable errors use <code>urn:ax:schema:error</code> version
-<code>1.0.0</code>:
+All machine-readable errors use <code>urn:ax:schema:error</code>. Existing
+Provider/RPC/Bridge and legacy CLI surfaces select version <code>1.0.0</code>,
+whose exact shape is:
 
 | Field | Type | Constraint |
 | --- | --- | --- |
@@ -7121,6 +8471,25 @@ supported-major failure MUST use that exact object; the containing protocol
 version is sufficient to select it. RPC hello MUST NOT advertise or negotiate
 an <code>error</code> contract key. A future containing-protocol version may
 bind another error version only by stating the new binding explicitly.
+
+Session Adapter 1.0 and <code>session.clone.*</code> bind Structured Error
+1.1.0. It retains the 1.0.0 shape and codes, changes only
+<code>schema_version</code> to exact <code>1.1.0</code>, and adds:
+
+| Exit | Stable clone codes |
+| ---: | --- |
+| 4 | <code>source_not_found</code>, <code>source_ambiguous</code> |
+| 6 | <code>unsupported_environment_tuple</code>, <code>operation_unknown</code>, <code>target_resume_invalid</code> |
+| 9 | <code>source_corrupt</code>, <code>bundle_integrity_failed</code>, <code>credential_material_detected</code> |
+| 11 | <code>source_not_quiescent</code>, <code>source_changed_during_clone</code> |
+| 12 | <code>target_prepare_failed</code>, <code>target_validation_failed</code>, <code>target_checkpoint_failed</code>, <code>transaction_unknown</code> |
+| 13 | <code>session_adapter_protocol_error</code>, <code>session_adapter_process_failed</code>, <code>session_adapter_timeout</code> |
+| 16 | <code>projection_loss_unacceptable</code>, <code>unsafe_pending_action</code> |
+
+Existing semantically identical codes remain reused. Transaction unknown is a
+parked ambiguous effect, never success or absence. Target checkpoint failure
+occurs only after Provider commit and grants no rollback; the exact inert target
+remains recoverable.
 
 Bootstrap and incompatible-major behavior is exact:
 
@@ -7214,7 +8583,7 @@ provider plugin, or a compromised local user account.
 
 Peers MUST be explicitly allowlisted by stable host ID and SSH endpoint.
 Tailscale discovery MAY propose hosts but MUST NOT authorize them. SSH protects
-authentication, integrity, and confidentiality in transport. v0.2.1 provides no
+authentication, integrity, and confidentiality in transport. v0.3.0 provides no
 default payload encryption at rest and MUST NOT claim otherwise.
 
 Machine-local credentials are a prerequisite at the destination. A successful
@@ -7243,7 +8612,7 @@ MUST NOT be treated as current process, ownership, or routing authority. This
 does not permit copying a live PID/lock control artifact.
 
 Transcripts and tool outputs can themselves contain secrets entered by an
-operator or printed by tools. v0.2.1 does not claim reliable content-level
+operator or printed by tools. v0.3.0 does not claim reliable content-level
 secret scrubbing. Operators MUST therefore treat all payloads as sensitive and
 authorize only trusted project peers. An implementation SHOULD offer a
 best-effort scanner and warning, but scanner success MUST NOT be described as a
@@ -7280,6 +8649,14 @@ unless compiled in. Plugin stdout is protocol input and MUST be validated.
 Plugin stderr, provider logs, and doctor output MUST be redacted before
 persistence.
 
+For cloning, historical instructions/messages/tool output are untrusted data
+and cannot select operations, paths, capabilities, or authority. The Session
+Adapter receives only operation-specific read handles and fresh sinks, never
+the AX object-store root or Provider rollback token. Credentials, auth stores,
+cookies, keychain material, approval/trust caches, MCP credentials, secret
+environment values, live process/PTY state, sockets, PIDs, locks, WAL/SHM,
+rate-limit state, and account/server state MUST NOT enter a Clone Bundle.
+
 ### 16.5 Force-takeover risk
 
 Epoch fencing protects converged <code>ax</code> state; it cannot stop an
@@ -7294,11 +8671,13 @@ Force takeover MUST therefore:
 
 ### 16.6 Out of scope
 
-v0.2.1 does not provide Byzantine consensus, hostile-peer isolation,
+v0.3.0 does not provide Byzantine consensus, hostile-peer isolation,
 multi-tenant access control, end-to-end snapshot encryption, secret
 distribution, provider-account migration, revocation of actions already sent
-to external services, or sandboxing stronger than the provider/OS configuration
-selected by the operator.
+to external services, live-process cloning, task-board authority cloning, or
+sandboxing stronger than the provider/OS configuration selected by the
+operator. Clone does not add an N-by-N converter matrix or a second workspace
+replication system.
 
 ## 17. Compatibility and migration
 
@@ -7506,6 +8885,14 @@ At minimum, emit:
   <code>provider.failed</code>;
 - <code>task_board.launched</code>, <code>task_board.exported</code>, <code>task_board.imported</code>,
   <code>task_board.opened</code>, and <code>task_board.adopted</code>; and
+- <code>clone.started</code>, <code>source.resolved</code>,
+  <code>source.snapshot_established</code>, <code>source.captured</code>,
+  <code>canonical.normalized</code>, <code>projection.planned</code>,
+  <code>projection.policy_rejected</code>, <code>target.prepared</code>,
+  <code>target.staged_validated</code>, <code>target.published</code>,
+  <code>target.live_validated</code>, <code>target.committed</code>,
+  <code>target.rolled_back</code>, <code>lineage.published</code>,
+  <code>target.opened</code>, and <code>clone.failed</code>; and
 - one <code>takeover.phase</code> or <code>fork.phase</code> event for every
   numbered transition in Section 13.
 
@@ -7570,7 +8957,7 @@ Events are not.
 ### 19.1 Implementation phases
 
 These are ordered phases for an implementation that intends to claim
-<code>ax</code> product conformance version 0.2.1. They are not prerequisites
+<code>ax</code> product conformance version 0.3.0. They are not prerequisites
 for publishing this specification and are not permission to ship a required
 core target half-implemented:
 
@@ -7581,11 +8968,17 @@ core target half-implemented:
 3. <strong>Mesh and workspace</strong>: implement SSH RPC, Merkle union,
    resumable chunks, staging, Git/non-Git materialization, tombstones, and
    conflicts.
-4. <strong>Provider and task-board adapters</strong>: enable only
+4. <strong>Session cloning read/archive</strong>: implement schemas, canonical
+   fixtures, raw capture, normalization, archive A2, and fail-closed tuple
+   registry with every target writer disabled.
+5. <strong>Clone target writers</strong>: enable Claude Code to Codex and Codex
+   to Claude Code separately only after exact signed tuple, staged/live
+   read-back, resume smoke, transaction, Checkpoint, and crash gates pass.
+6. <strong>Provider and task-board adapters</strong>: enable only
    tuple-specific accepted capabilities; implement the opaque bridge.
-5. <strong>Native Windows</strong>: implement ConPTY/process supervisor,
+7. <strong>Native Windows</strong>: implement ConPTY/process supervisor,
    PowerShell-safe SSH, Windows materialization/atomicity, and user service.
-6. <strong>Product release hardening</strong>: run every required acceptance
+8. <strong>Product release hardening</strong>: run every required acceptance
    lane, validate product-facing docs/examples, test migration/downgrade, and
    retain the implementation's conformance evidence.
 
@@ -7690,6 +9083,14 @@ SQLite handles.
 | <code>AC-RESTORE-001</code> | tmux restore invokes wrapper and parks remote/stale owners; it does not migrate a session. |
 | <code>AC-RESTORE-002</code> | Native Windows recreates ConPTY after reboot and resumes only after lease/checkpoint validation. |
 | <code>AC-CRASH-001</code> | Every applicable <code>CR-LAUNCH-*</code>, <code>CR-SYNC-*</code>, <code>CR-MAT-*</code>, <code>CR-GRACE-*</code>, <code>CR-FORCE-*</code>, <code>CR-FORK-*</code>, <code>CR-STOP-*</code>, <code>CR-RESUME-*</code>, and <code>CR-RESTORE-*</code> injection classifies into exactly one of <code>safe_retry</code>, <code>explicit_rollback</code>, or <code>recoverable_parked_state</code> with the Section 13.13 evidence record; no run produces duplicate live/authoritative owners, treats an unfenced external continuation as safe, or substitutes a fresh native provider/manager session for the persisted identity. |
+| <code>AC-CLONE-001</code> | Every Capture Manifest candidate reconciles to included raw evidence or stable exclusion; every raw item reconciles to canonical evidence/disposition; every canonical item reconciles to staged/live target evidence or stable target disposition, including opaque events/reasoning, inert tools, stripped authority, and excluded credentials/live state. |
+| <code>AC-CLONE-002</code> | Production <code>ax session clone run</code> rejects forged/self-minted, absent, stale, revoked, malformed, partially read, environment-only, or digest-drifted tuple evidence and rejects force bypass; a narrowing mutant that compares only environment ID fails. |
+| <code>AC-CLONE-003</code> | G0-G1-A2 and G0-G4 positive chains validate; missing/skipped/forked/wrong-stage/forward/cyclic/byte-different successor chains fail through the production resolver. |
+| <code>AC-CLONE-004</code> | Staged and live read-back, exact target identity, semantic markers, resume plan, Provider publication/finalization, target Checkpoint, events, receipt, and optional open use one transaction and never launch a blank replacement. |
+| <code>AC-CLONE-005</code> | Every <code>CR-CLONE-01..16</code> boundary selects exactly one Section 13.13 outcome; rollback remains available through finalization intent and is forbidden after Provider commit; all bundle evidence survives. |
+| <code>AC-CLONE-006</code> | Session Record/Event 2 fixtures prove a new target Session and immutable source provider ID; Provider-2 launch/fork rejects Session Record 2 and continues using exact Session Record 1 provenance. |
+| <code>AC-CLONE-007</code> | The clone-only <code>creating -> stopped</code> edge accepts only the complete committed Provider/Checkpoint/no-process predicate and rejects origin/fork, missing/stale Checkpoint, rollback token, or process evidence. |
+| <code>AC-CLONE-008</code> | Plan returns target G2 or archive A2 without live mutation; run rejects dry-run, archive flags are targetless, and CLI Result 2 preserves the target UUID versus record-digest distinction. |
 | <code>AC-WORK-001</code> | The exact Section 10.4 Git root/child fixtures round-trip branch/detached HEAD, object pack, raw/logical index, staged versus working bytes, untracked files, modes, submodules, features, cwd, and project config without network access. |
 | <code>AC-WORK-002</code> | The exact managed-tree variant round-trips and rejects Git-only members; concurrent capture mutation retries/fails. |
 | <code>AC-WORK-003</code> | Divergent managed and unmanaged destinations fail closed; diff/copy/worktree/explicit managed replacement behave as specified. |
@@ -7724,7 +9125,7 @@ SQLite handles.
 
 ### 19.5 <code>ax</code> implementation release acceptance rule
 
-An implementation MAY claim <code>ax</code> product conformance 0.2.1 only when:
+An implementation MAY claim <code>ax</code> product conformance 0.3.0 only when:
 
 1. all product-release-blocking core platform lanes pass;
 2. every A provider cell passes its suites;
@@ -7749,8 +9150,8 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
 the default branch, and carry the MIT License. The current specification
-release is <code>v0.2.1</code>. The existing <code>v0.1.0</code> and
-<code>v0.2.0</code> tags are immutable history and MUST NOT be moved or
+release is <code>v0.3.0</code>. The existing <code>v0.1.0</code>,
+<code>v0.2.0</code>, and <code>v0.2.1</code> tags are immutable history and MUST NOT be moved or
 rewritten.
 
 The release commit and annotated tag MUST both be signed using Ivan Oparin's
@@ -7774,7 +9175,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-specification release <code>v0.2.1</code>, not an <code>ax</code> executable
+specification release <code>v0.3.0</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -7786,8 +9187,8 @@ release. The publication task MUST:
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
 4. verify <code>VERSION</code>, current document metadata, changelog, release
-   notes, and the proposed tag all say <code>v0.2.1</code>, while the existing
-   <code>v0.1.0</code> and <code>v0.2.0</code> tags remain unchanged;
+   notes, and the proposed tag all say <code>v0.3.0</code>, while the existing
+   <code>v0.1.0</code>, <code>v0.2.0</code>, and <code>v0.2.1</code> tags remain unchanged;
 5. run the semantic crash/restart gate and its focused expected-red mutations;
    validation MUST emit an actionable diagnostic when the three-outcome
    exclusivity/exhaustiveness rule, boundary registry, evidence requirements,
@@ -7797,14 +9198,14 @@ release. The publication task MUST:
    <code>Ivan Oparin &lt;oparin@me.com&gt;</code> and no AI trailer, and hand it
    to the user for explicit review; automation MUST NOT stage or commit before
    human approval;
-7. prepare the exact signed annotated <code>v0.2.1</code> tag command and hand it
+7. prepare the exact signed annotated <code>v0.3.0</code> tag command and hand it
    to the user for explicit review; automation MUST NOT create the tag before
    human approval;
 8. after the human creates the commit and tag, verify both signatures locally
    with <code>git log --show-signature -1</code> and
-   <code>git tag --verify v0.2.1</code>;
+   <code>git tag --verify v0.3.0</code>;
 9. hand the exact <code>git push</code> commands for <code>main</code> and the
-   <code>v0.2.1</code> tag to the user; automation MUST NOT push before explicit
+   <code>v0.3.0</code> tag to the user; automation MUST NOT push before explicit
    human approval and only after accepted validation/review;
 10. verify the public repository, default branch, license, commit signature, tag
    signature, and release URL; and
@@ -7856,7 +9257,7 @@ requirement rather than only reporting a generic document digest mismatch.
 | All settled decisions are traceable | Appendix A.1 |
 | Independent reviewer accepts the artifact | Required board reviewer route after this task's <code>to-review</code> handoff |
 
-The Epic criterion for a signed public <code>v0.2.1</code> specification release
+The Epic criterion for a signed public <code>v0.3.0</code> specification release
 maps only to Section 20 and remains owned by the downstream validation and
 publication tasks. Section 19 governs a future product implementation and is
 not a prerequisite for that publication.
@@ -7935,7 +9336,20 @@ not a prerequisite for that publication.
 | No duplicate owner or silent fresh native session | Section 13.13 rejects two live/authoritative owners, unfenced continuation presented as safe recovery, new-session launch, fresh native handles/manager references, blank relabeling, and realm substitution. |
 | Runtime conformance acceptance | Section 19.4 <code>AC-CRASH-001</code> executes every applicable boundary with exact classification and evidence. |
 | Specification publication acceptance and mutation gate | Section 20.2 <code>SPEC-PUB-CRASH-001</code> requires semantic validation plus an actionable focused expected-red mutation. |
-| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version; Section 20.1 identifies <code>v0.2.1</code> and preserves the existing <code>v0.1.0</code>/<code>v0.2.0</code> tags. |
+| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version and its immutable history; Section 20.1 identifies <code>v0.3.0</code> and preserves existing <code>v0.1.0</code>/<code>v0.2.0</code>/<code>v0.2.1</code> tags. |
+
+### A.9 Cross-environment cloning traceability
+
+| Cloning requirement | Normative closure |
+| --- | --- |
+| New logical/native identity; immutable source provider | Session Record 2 in Section 5.1 and Section 13.14 |
+| One adapter per environment and stripped authority | Sections 7.8, 13.14.1–13.14.2, and 16.4 |
+| Raw evidence, opaque events/reasoning, inert tools, item-level fidelity | Sections 13.14.1–13.14.2 and <code>AC-CLONE-001</code> |
+| Immutable acyclic generations and lineage | Sections 13.14.2–13.14.3 and <code>AC-CLONE-003</code> |
+| Rollback-retaining transaction and crash recovery | Sections 13.13–13.14.5 and <code>AC-CLONE-004..005</code> |
+| Exact signed tuple admission, revocation, and force refusal | Sections 7.8, 13.14.5, and <code>AC-CLONE-002</code> |
+| AX Checkpoint before stopped/open | Sections 13.14.4–13.14.5 and <code>AC-CLONE-007</code> |
+| Closed CLI/errors/examples and conformance | Sections 14–15, 19.4, and Appendix D |
 
 ## Appendix B. Explicit provider version gates
 
@@ -7993,7 +9407,7 @@ host. They do not establish another platform cell.
 ### D.1 Fixture execution rules
 
 This appendix is part of the normative contract. A fixture marked positive
-MUST parse under its named 1.0.0 contract, satisfy every conditional invariant,
+MUST parse under its named contract version, satisfy every conditional invariant,
 and, when identity-addressed, reproduce its embedded digest after omitting only
 the schema-defined self-ID. A negative mutation is applied alone to a fresh
 positive fixture. It MUST fail before state derivation or destination mutation;
@@ -8028,9 +9442,12 @@ display-language label.
 | Provider protocol | Section 7.2 envelopes and every Section 7.5 row | Mismatch request ID; success with both body/error; operation/body tag mismatch; compatible/major/invalid-first-output Error binding fixtures |
 | Provider manifest | Section 7.3 with all fifteen operations | Remove <code>capture</code> or one transaction operation; duplicate provider ID discovery remains fatal |
 | Provider probe | Section 7.4 | Set <code>enabled=true</code> on conditional/unknown/unsupported; omit one requested capability |
+| Session Adapter protocol | Section 7.8 envelopes and every operation-body row | Duplicate or unknown operation; operation/body mismatch; request/context digest mismatch; partial, malformed, over-limit, or escaped output treated as absence |
+| Session Adapter manifest | Section 7.8 exact manifest table with the ordered fourteen-name registry | Duplicate, omit, reorder, or add an operation; mismatch provider/environment/executable binding |
+| Session Adapter probe | Section 7.8 exact probe table with all fifteen capabilities | Omit a capability; report an unrequested tuple; mismatch manifest, executable, provider, candidate kind, or environment version |
 | Mesh RPC | Section 11.2 envelopes and every Section 11.3 row | Send non-hello first; mismatch nonce; advertise an <code>error</code> contract; use legacy state/destination enum; exercise compatible/major/unframed failure behavior |
-| Session Record | Section 5.1 direct and task-board examples plus Section 13.8 fork | Direct with task-board object; task-board creation with non-null manager ref; fork without provenance |
-| Session Event | Section 5.2 envelope instantiated for every payload row, including profile-bearing launch/resume/fork and bootstrap abort/stop | Payload/tag mismatch; lease sequence zero/gap; profile/source mismatch; bootstrap null/resumable/state mismatch; unknown member in one payload |
+| Session Record | Section 5.1 direct and task-board major-1 examples, Section 13.8 fork, and Section 5.1 major-2 clone derivation | Direct with task-board object; task-board creation with non-null manager ref; fork without provenance; clone reusing source Session/provider identity or carrying a final fact at creation; either major admitted at the other's Provider-2 boundary |
+| Session Event | Section 5.2 major-1 envelope instantiated for every payload row plus every Section 13.14.5 major-2 clone payload | Payload/tag mismatch; lease sequence zero/gap; profile/source mismatch; bootstrap null/resumable/state mismatch; clone rollback/Checkpoint/report/receipt mismatch; cross-major payload leakage |
 | Lease Record | Section 5.3 | Epoch 4 with null predecessor; epoch jump; checkpoint from another session |
 | Checkpoint Record | Section 5.4 and <code>CP-N1..N4</code> | Both persistence IDs null/non-null; unsafe boundary published as validated |
 | Workspace Group | Section 5.6 Git record and managed-tree fragment | <code>WG-N1..N4</code>; duplicate/case-colliding group path; conflicting same-group topology record |
@@ -8040,13 +9457,27 @@ display-language label.
 | Transfer Chunk Descriptor | Section 10.3 | Offset/index disagreement, non-final short chunk, raw digest mismatch |
 | Tombstone | Section 10.7 full workspace entry and three target fragments | Target/scope mismatch, wildcard/root path, losing-lease issuance |
 | Tombstone Acknowledgement | Section 10.7 acknowledgement | Conflict disposition with null checkpoint; non-conflict disposition with non-null checkpoint |
-| Materialization Plan | Section 10.5 full workspace/provider/task-board/composite plans, full direct-native fork plan, ForkWorkspaceProjection, and task-board authority | All full <code>PLAN-*-N1</code> objects; kind/source/authority/action/validation/strategy mismatch; fork projection/map/derived-ID mismatch; operation sequence gap; plan for another host; replace without exact prior checkpoint |
-| Materialization recovery state | Section 10.6 journal, Provider/Task-board Journal Transactions, and Managed Replica Marker variants | Flat chunk indexes; prepared provider transaction without token or full authority; task-board state/token/reference/null mismatch; changed retry IDs; <code>MARKER-*</code> identity/path/predecessor/crash mismatches; cross-variant member leakage |
+| Materialization Plan | Section 10.5 full major-1 workspace/provider/task-board/composite plans and direct-native fork plan, plus Section 13.14.4 complete major-2 clone plan | All full <code>PLAN-*-N1</code> objects; kind/source/authority/action/validation/strategy mismatch; fork or clone projection/map/derived-ID mismatch; operation sequence gap; invented AX lease for an external source; clone projected input absent from <code>derived_manifest_ids</code> |
+| Materialization recovery state (journal and managed-replica marker variants) | Section 10.6 major-2 journal and managed-replica-marker variants | Flat chunk indexes; prepared transaction without token or full authority; task-board state/token/reference/null mismatch; changed retry IDs; <code>MARKER-*</code> identity/path/predecessor/crash mismatches; cross-variant member leakage |
+| Clone materialization recovery state (journal variant) | Section 13.14.4 complete clone-only Journal 3 and every phase row | Journal-2 field inheritance; early, missing, or changed immutable clone fact; rollback token omitted before finalize; committed and rolled-back results together; phase/fact/nullability mismatch |
 | Task-board bridge | Section 9.2 launch pair, safe-boundary pair, and every operation row | Internal/new retry operation ID; unsafe proof marked safe; changed lost-response retry; graceful stop without token; force stop with token; compatible/major/invalid-first-output Error binding fixtures |
 | Task-board bundle | Section 9.3 primary, prompt, and profile-changed projections plus exact archive member set | <code>TB-BUNDLE-*</code> goal/binding/projection/profile mutations; full-digest leaf, wrong shard, missing/extra/directory member, noncanonical JSON, or blob mismatch |
-| Structured Error | Section 15.1 | Unknown top-level member; nesting depth 5; secret canary in details; all nine containing-protocol binding fixtures plus unframed input |
+| Structured Error | Section 15.1 major-1 and Session Adapter/clone major-minor bindings | Unknown top-level member; nesting depth 5; secret canary in details; wrong Error version for its statically bound protocol/command; compatible/major/unframed input |
 | Observation Event | Section 18.1 and its listed negative fixtures | Partial/failure without error; incomplete counts; unsafe integer |
-| CLI Result | Section 14.2 takeover and Section 14.3 materialize/log examples | Command/body tag mismatch; wrong null top-level IDs; false success invariant; null/wrong log emitter or mixed event hosts |
+| CLI Result | Section 14.2 legacy command rows, Section 14.3 examples, and every Section 14.1 clone Result 2 command/plan/run tag | Command/body tag mismatch; wrong null top-level IDs; false success invariant; null/wrong log emitter or mixed event hosts; clone tag under Result 1 or legacy tag under Result 2; archive carrying a target Session |
+| Clone Raw Object Manifest | Section 13.14.1 exact raw-manifest table and entry closure | Add forbidden <code>bundle_id</code> or source generation; mismatch descriptor/blob/byte count; omit or add an included Capture Item |
+| Clone Capture Manifest | Section 13.14.1 exact capture-manifest and source-basis/boundary variants | Source-basis nullability mismatch; raw-manifest closure drift; credential inclusion; size-only stable proof; unstable archive admitted to projection |
+| Clone Bundle Manifest | Section 13.14.3 complete G0, G1, A2, G2, G3, and G4 rows | Skip, fork, or reverse a generation; add a future-stage member; change predecessor bytes; introduce a report/receipt/manifest digest cycle |
+| Canonical Session | Section 13.14.1 exact session and Actor tables | Duplicate, reorder, or omit an Event ID; invalid actor parent/root; source logical Session or Workspace Binding mismatch |
+| Canonical Event | Section 13.14.1 exact envelope, every event kind, content block, and Source Evidence variant | Drop an unknown native event; mismatch kind/payload or ordinal; omit raw evidence; relabel foreign authority-bearing history or opaque reasoning as native authority |
+| Migration Checkpoint | Section 13.14.2 exact checkpoint and lineage-link variants | Name the final Fidelity Report instead of its basis/locator; mismatch source/target tuple or Projection Plan; add a forward receipt edge or digest cycle |
+| Fidelity Report | Section 13.14.2 archive and target-scope reports with every disposition | Omit or double-account a Capture Item/Canonical Event; omit a stable loss reason; make aggregate counts disagree; cite target evidence in archive scope |
+| Projection Plan | Section 13.14.2 exact plan, expected-event/resource, and strategy variants | Omit an item disposition; allocate conflicting target identity/resource; name a predicted final Fidelity Report; admit archive-only or unregistered tuple projection |
+| Clone Projected Object Manifest | Section 13.14.2 exact projected-object table and entry closure | Add an unplanned or escaped resource; mismatch target native identity, Projection Plan, Blob Descriptor, sequence, or created-resource keys |
+| Clone Read-Back Evidence Manifest | Section 13.14.2 exact staged and live evidence variants | Swap or relabel mode; mismatch planned/observed identity or environment; cite bytes outside the supplied authority; substitute a Provider Transfer Manifest |
+| Clone Validation Report | Section 13.14.2 exact independent staged/live validation report | Report valid with a failed applicable check or error finding; omit staged/live evidence; mismatch projected/live Provider closure or Fidelity Report |
+| Clone Lineage Receipt | Section 13.14.2 exact receipt and prior-hop variants | Name G4 instead of G3; mismatch source/target identity, Checkpoint, reports, commit event, or prior receipt; add a receipt/manifest cycle |
+| Supported Environment Tuple Registry | Section 13.14.5 exact signed registry, entry, capability/version, and fixture-evidence tables | Accept unsigned, stale, rollbacked, revoked, malformed, partially read, environment-only, or digest-drifted evidence; compare only environment ID; let force bypass refusal |
 
 ### D.3 Embedded tagged-union coverage
 
@@ -8060,6 +9491,16 @@ or the documented normative value, and recompute any containing self-ID.
 | Embedded family | Required positive tags | Required family-specific negatives |
 | --- | --- | --- |
 | Session Record kind | <code>direct</code>, <code>task_board</code> | Wrong task-board nullability; creation manager ref non-null |
+| Session Record 2 derivation | <code>cross_environment_clone</code> plus reserved <code>origin</code>, <code>same_provider_fork</code> | Source/target nullability, provider mutation, final-fact-at-creation, or Provider-2 boundary admission |
+| Session Adapter operation/capability | Every Section 7.8 closed name | Unknown member/name, missing context echo, purpose/authority escape, partial-read fallback, tuple/binding drift |
+| Clone Capture item/boundary | Included/excluded and stable/unstable-archive | Credential inclusion, missing disposition, size-only proof, unstable target projection |
+| Canonical Event kind | Every Section 13.14.1 kind | Unknown event dropped, authority-bearing historical instruction/tool, opaque reasoning relabeled native |
+| Fidelity disposition | Every Section 13.14.2 value | Missing item mapping/reason, aggregate-only success, target evidence mismatch |
+| Clone Bundle stage | G0, G1, A2, G2, G3, G4 | Skip/fork/forward edge, archive/target field leakage, byte-different successor, digest cycle |
+| Clone object manifest | Raw, Projected, staged/live Read-Back Evidence | Relabel as unrelated Transfer Manifest kind, mode swap, Checkpoint substitution, escaped resource |
+| Clone Journal phase | Every Section 13.14.4 phase | Journal-2 field inheritance, early/omitted/changed immutable fact, committed plus rolled-back results |
+| Session Event 2 clone payload | Every Section 13.14.5 type | Pre-target failure event, rollback-retained mismatch, stale checkpoint/report/receipt ID |
+| Clone CLI Result 2 | All eight command tags and both plan/three run variants | UUID/digest confusion, archive target member, run dry-run, blank-open fallback |
 | Task-board launch mode | <code>primary_owner</code>, <code>tracked_prompt</code> | Goal/binding conditional mismatch |
 | Fork provenance mode | <code>native</code>, <code>supported_import</code>, <code>task_board_clone</code> | Source/checkpoint/operation mismatch |
 | Session Event payload | Every event type in Section 5.2, including task-board launch/adoption and tombstone audit | Payload/tag mismatch and unknown payload member |
@@ -8171,7 +9612,15 @@ MUST also run, without substituting mocks for the relevant state boundary:
   emitting-host equality, SSH host mismatch, and forged-result rejection; and
 - every <code>ERR-*</code> binding fixture in Section 15.1, proving that provider,
   bridge, and RPC supported-major failures use Error 1.0.0 while unsupported or
-  unframed input is never trusted as a remote/child error.
+  unframed input is never trusted as a remote/child error; and
+- identity-correct G0-G1-A2 and G0-G4 clone chains, all Session Adapter
+  operation envelopes, raw/canonical/projection/fidelity/read-back/validation/
+  lineage fixtures, signed tuple admission and revocation negatives, source
+  races, Provider response loss, <code>CR-CLONE-01..16</code>, the clone-only
+  state edge, target Checkpoint recovery, and CLI plan/run/open gates through
+  their real production entry points. Gate tests MUST include narrowing mutants
+  (environment-ID-only tuple match, relaxed sink purpose, or unrelated manifest
+  kind admission), not only delete-only mutants.
 
 The document-fixture gate MUST also derive the Section 3.2 and 6.1 environment
 names independently and require equal sets; match every normative extension

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Expected-red mutation suite for v0.2.1 specification validation ==="
+echo "=== Expected-red mutation suite for v0.3.0 specification validation ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -56,6 +56,64 @@ fixture_copy() {
     exit 1
   fi
   echo "$dir"
+}
+
+# Semantic mutations intentionally advance the frozen SPEC digest inside their
+# isolated fixture. This proves the semantic diagnostic survives a reviewed
+# release-baseline refresh instead of passing only because content integrity
+# noticed that SPEC.md changed.
+refresh_frozen_spec_digest() {
+  local fixture_dir="$1"
+  python3 - "$fixture_dir" <<'PY'
+from pathlib import Path
+import hashlib
+import re
+import sys
+
+root = Path(sys.argv[1])
+spec = root / "SPEC.md"
+validator = root / "scripts" / "validate_spec.py"
+normalized = spec.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n").encode()
+digest = hashlib.sha256(normalized).hexdigest()
+text = validator.read_text(encoding="utf-8")
+updated, count = re.subn(
+    r'("SPEC\.md": ")[0-9a-f]{64}("[,])',
+    rf'\g<1>{digest}\2',
+    text,
+    count=1,
+)
+if count != 1:
+    raise SystemExit("could not refresh frozen SPEC.md digest in fixture validator")
+validator.write_text(updated, encoding="utf-8")
+PY
+}
+
+refresh_frozen_document_digest() {
+  local fixture_dir="$1"
+  local document_name="$2"
+  python3 - "$fixture_dir" "$document_name" <<'PY'
+from pathlib import Path
+import hashlib
+import re
+import sys
+
+root = Path(sys.argv[1])
+name = sys.argv[2]
+document = root / name
+validator = root / "scripts" / "validate_spec.py"
+normalized = document.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n").encode()
+digest = hashlib.sha256(normalized).hexdigest()
+text = validator.read_text(encoding="utf-8")
+updated, count = re.subn(
+    rf'("{re.escape(name)}": ")[0-9a-f]{{64}}("[,])',
+    rf'\g<1>{digest}\2',
+    text,
+    count=1,
+)
+if count != 1:
+    raise SystemExit(f"could not refresh frozen {name} digest in fixture validator")
+validator.write_text(updated, encoding="utf-8")
+PY
 }
 
 echo "Mutation 1: Missing required file (VERSION)"
@@ -154,7 +212,9 @@ python3 -c "
 import pathlib
 p=pathlib.Path('$FIX/SPEC.md')
 t=p.read_text()
-t=t.replace('there is no v0.2.1 direct <code>ax-provider-qwen</code> claim.','ax-provider-qwen is available for direct use.')
+old='there is no v0.2.1 direct claim and no v0.3.0 direct <code>ax-provider-qwen</code> claim.'
+assert old in t
+t=t.replace(old, 'there is no v0.2.1 direct claim, but Qwen is directly supported in v0.3.0.', 1)
 p.write_text(t)
 "
 expect_fail "forbidden qwen direct claim" "forbidden" "$FIX"
@@ -498,31 +558,31 @@ echo ""
 echo "Mutation 46: Active default-encryption wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-encryption-active")
 printf '\nBy default, all session snapshots receive at-rest encryption.\n' >> "$FIX/SPEC.md"
-expect_fail "frozen release baseline rejects active default-encryption wording" "SPEC.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active default-encryption wording" "SPEC.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
 printf '\nQwen sessions do not need task-board in v0.2.1.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.2.1 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
@@ -737,6 +797,701 @@ assert old in t
 p.write_text(t.replace(old, 'external effect note', 1))
 "
 expect_fail "crash classification must retain external-effect status evidence" "crash/restart gate classification evidence field external effect and status probe" "$FIX"
+
+echo ""
+echo "Mutation 66: Session Adapter contract is removed from the normative registry"
+FIX=$(fixture_copy "clone-contract-registry-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+lines=p.read_text().splitlines()
+prefix='| Session Adapter protocol |'
+assert any(line.startswith(prefix) for line in lines)
+p.write_text('\n'.join(line for line in lines if not line.startswith(prefix)) + '\n')
+"
+expect_fail "clone contract registry must close over Session Adapter" "clone gate contract registry mismatch for Session Adapter protocol" "$FIX"
+
+echo ""
+echo "Mutation 67: Adapter normalize operation is independently removed"
+FIX=$(fixture_copy "clone-adapter-operation-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+lines=p.read_text().splitlines()
+prefix='| <code>normalize</code> |'
+assert any(line.startswith(prefix) for line in lines)
+p.write_text('\n'.join(line for line in lines if not line.startswith(prefix)) + '\n')
+"
+expect_fail "Session Adapter operation registry must remain exact" "clone gate Session Adapter operation registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 68: Adapter canonical-write capability is narrowed away"
+FIX=$(fixture_copy "clone-adapter-capability-narrowed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+start=t.index('The exact capability names are')
+pos=t.index('<code>canonical_write</code>', start)
+t=t[:pos] + t[pos:].replace('<code>canonical_write</code>', '<code>canonical_archive_only</code>', 1)
+p.write_text(t)
+"
+expect_fail "Session Adapter capability registry must remain exact" "clone gate Session Adapter capability registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 69: Snapshot proof is narrowed to file-size equality"
+FIX=$(fixture_copy "clone-snapshot-size-proxy")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='File-size equality is never proof.'
+assert old in t
+p.write_text(t.replace(old, 'File-size equality is sufficient proof.', 1))
+"
+expect_fail "stable snapshot must reject size-only proxy evidence" "clone gate size is not snapshot proof" "$FIX"
+
+echo ""
+echo "Mutation 70: Foreign instruction authority stripping is weakened"
+FIX=$(fixture_copy "clone-foreign-instruction-authority")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Foreign instructions are low-authority history'
+assert old in t
+p.write_text(t.replace(old, 'Foreign instructions retain controller authority', 1))
+"
+expect_fail "foreign instructions must remain inert history" "clone gate foreign authority stripping" "$FIX"
+
+echo ""
+echo "Mutation 71: Unknown native records stop being opaque-preserved"
+FIX=$(fixture_copy "clone-opaque-preservation-removed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Unknown native records become raw-addressable opaque\nevents.'
+assert old in t
+p.write_text(t.replace(old, 'Unknown native records are discarded.\n', 1))
+"
+expect_fail "unknown native records must remain opaque evidence" "clone gate opaque native preservation" "$FIX"
+
+echo ""
+echo "Mutation 72: Exact fidelity rows are allowed to carry reasons"
+FIX=$(fixture_copy "clone-exact-reasons-weakened")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Exact requires an empty reason set'
+assert old in t
+p.write_text(t.replace(old, 'Exact may carry reason codes', 1))
+"
+expect_fail "exact fidelity rows must have no reason codes" "clone gate exact reason prohibition" "$FIX"
+
+echo ""
+echo "Mutation 73: Non-exact fidelity rows no longer require reasons"
+FIX=$(fixture_copy "clone-nonexact-reasons-weakened")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='every other\ndisposition requires at least one reason'
+assert old in t
+p.write_text(t.replace(old, 'every other\ndisposition may omit reasons', 1))
+"
+expect_fail "non-exact fidelity rows must name stable reasons" "clone gate non-exact reason requirement" "$FIX"
+
+echo ""
+echo "Mutation 74: Per-item fidelity reconciliation is narrowed to events only"
+FIX=$(fixture_copy "clone-per-item-reconciliation-narrowed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Every Capture Manifest item and Canonical Event occurs in exactly one\nnon-synthesized disposition row'
+assert old in t
+p.write_text(t.replace(old, 'Every Canonical Event occurs in a disposition row', 1))
+"
+expect_fail "fidelity must reconcile capture items and canonical events" "clone gate per-item fidelity closure" "$FIX"
+
+echo ""
+echo "Mutation 75: Fidelity report is allowed to point at validation report"
+FIX=$(fixture_copy "clone-fidelity-digest-cycle")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='A target report does not name Clone Validation Report,\nLineage Receipt, G4, or a future event'
+assert old in t
+p.write_text(t.replace(old, 'A target report may name Clone Validation Report', 1))
+"
+expect_fail "fidelity graph must remain acyclic" "clone gate fidelity/report digest acyclicity" "$FIX"
+
+echo ""
+echo "Mutation 76: Bundle predecessor admits byte-different successors"
+FIX=$(fixture_copy "clone-generation-mutable")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='one predecessor cannot\nhave byte-different successors'
+assert old in t
+p.write_text(t.replace(old, 'one predecessor may\nhave byte-different successors', 1))
+"
+expect_fail "clone generations must be immutable" "clone gate immutable generation chain" "$FIX"
+
+echo ""
+echo "Mutation 77: Archive and target generation-2 branches are collapsed"
+FIX=$(fixture_copy "clone-generation-branch-collapse")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='generation 2 is exactly A2 naming G1\nor G2 naming G1. A2 is terminal. The target branch continues G2 to G3 to G4'
+assert old in t
+p.write_text(t.replace(old, 'generation 2 may mix archive and target facts', 1))
+"
+expect_fail "archive and target bundle branches must remain exclusive" "clone gate branch-exclusive generation" "$FIX"
+
+echo ""
+echo "Mutation 78: Clone materialization no longer requires rollback"
+FIX=$(fixture_copy "clone-rollback-not-required")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Clone requires rollback, null prior checkpoint, collision absence'
+assert old in t
+p.write_text(t.replace(old, 'Clone permits no rollback and a prior checkpoint', 1))
+"
+expect_fail "clone transaction must require rollback retention" "clone gate clone rollback required" "$FIX"
+
+echo ""
+echo "Mutation 79: Journal 3 is changed into an inherited delta"
+FIX=$(fixture_copy "clone-journal-inherits-v2")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Journal 3.0.0 is a complete clone-only schema and does not\ninherit Journal 2'
+assert old in t
+p.write_text(t.replace(old, 'Journal 3.0.0 inherits Journal 2 as a partial delta', 1))
+"
+expect_fail "clone journal must remain independently complete" "clone gate journal 3 independent schema" "$FIX"
+
+echo ""
+echo "Mutation 80: Journal phase facts are allowed to change after admission"
+FIX=$(fixture_copy "clone-journal-facts-mutable")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Fields become non-null only at their phase and then\nremain immutable'
+assert old in t
+p.write_text(t.replace(old, 'Fields may be rewritten after later phases', 1))
+"
+expect_fail "journal facts must remain phase-monotonic and immutable" "clone gate journal facts immutable" "$FIX"
+
+echo ""
+echo "Mutation 81: Finalizing discards rollback before Provider commit"
+FIX=$(fixture_copy "clone-finalizing-without-rollback")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Provider remains rollback-capable'
+assert old in t
+p.write_text(t.replace(old, 'Provider rollback is already discarded', 1))
+"
+expect_fail "rollback must survive through finalizing intent" "clone gate rollback retention through finalizing" "$FIX"
+
+echo ""
+echo "Mutation 82: Post-commit byte rollback is allowed"
+FIX=$(fixture_copy "clone-postcommit-rollback")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Post-commit rollback is forbidden'
+assert old in t
+p.write_text(t.replace(old, 'Post-commit rollback is allowed', 1))
+"
+expect_fail "post-commit recovery must not byte-rollback" "clone gate post-commit rollback forbidden" "$FIX"
+
+echo ""
+echo "Mutation 83: Recovery status is allowed to mint a fresh target"
+FIX=$(fixture_copy "clone-recovery-mints-target")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='No status result authorizes a fresh Provider materialization, target native\nidentity, Session Record, lease, process, or transaction authority'
+assert old in t
+p.write_text(t.replace(old, 'A status result may authorize a fresh Provider materialization', 1))
+"
+expect_fail "recovery must preserve the exact target identity" "clone gate new-session retry prohibition" "$FIX"
+
+echo ""
+echo "Mutation 84: Clone committed lifecycle event is independently removed"
+FIX=$(fixture_copy "clone-lifecycle-event-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+lines=p.read_text().splitlines()
+prefix='| <code>clone.committed</code> |'
+assert any(line.startswith(prefix) for line in lines)
+p.write_text('\n'.join(line for line in lines if not line.startswith(prefix)) + '\n')
+"
+expect_fail "clone lifecycle event registry must remain exact" "clone gate lifecycle event registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 85: Source tuple entry gains target-write strategy"
+FIX=$(fixture_copy "clone-source-tuple-writes")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Source-read entries have exactly <code>strategies=[archive_only]</code>'
+assert old in t
+p.write_text(t.replace(old, 'Source-read entries may use target_native_writer', 1))
+"
+expect_fail "source tuple evidence must not authorize target writing" "clone gate tuple source archive restriction" "$FIX"
+
+echo ""
+echo "Mutation 86: Target tuple admission no longer requires resume smoke"
+FIX=$(fixture_copy "clone-target-tuple-no-smoke")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Target-write entries exclude archive-only, require current\nnon-null passing resume evidence'
+assert old in t
+p.write_text(t.replace(old, 'Target-write entries may omit resume evidence', 1))
+"
+expect_fail "target tuple admission must require bounded resume smoke" "clone gate tuple target smoke gate" "$FIX"
+
+echo ""
+echo "Mutation 87: Partial tuple-registry read is treated as absence"
+FIX=$(fixture_copy "clone-tuple-partial-as-absence")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Failed/partial reads never mean absence.'
+assert old in t
+p.write_text(t.replace(old, 'Failed/partial reads mean absence.', 1))
+"
+expect_fail "tuple read failures must fail closed" "clone gate tuple read failure fail-closed" "$FIX"
+
+echo ""
+echo "Mutation 88: Clone run becomes a no-target-write surface"
+FIX=$(fixture_copy "clone-run-no-write-bypass")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='<code>plan</code> is the sole no-target-write surface'
+assert old in t
+p.write_text(t.replace(old, '<code>plan</code> and <code>run</code> are no-target-write surfaces', 1))
+"
+expect_fail "plan must remain the sole no-write surface" "clone gate CLI plan sole no-write" "$FIX"
+
+echo ""
+echo "Mutation 89: run --dry-run becomes valid"
+FIX=$(fixture_copy "clone-run-dry-run")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='<code>run --dry-run</code> is invalid before\ntarget allocation'
+assert old in t
+p.write_text(t.replace(old, '<code>run --dry-run</code> is valid', 1))
+"
+expect_fail "run dry-run must fail before target allocation" "clone gate CLI run dry-run rejected" "$FIX"
+
+echo ""
+echo "Mutation 90: Standalone traceability drops one mapped section"
+FIX=$(fixture_copy "clone-traceability-row-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/STANDALONE_TO_AX_TRACEABILITY.md')
+lines=p.read_text().splitlines()
+prefix='| 20. Delivery Phases |'
+assert any(line.startswith(prefix) for line in lines)
+p.write_text('\n'.join(line for line in lines if not line.startswith(prefix)) + '\n')
+"
+expect_fail "standalone traceability must retain all 129 rows" "clone gate standalone traceability row count mismatch" "$FIX"
+
+echo ""
+echo "Mutation 91: Component diagram loses the no-converter marker"
+FIX=$(fixture_copy "clone-component-diagram-marker-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/diagrams/plantuml/cloning_components.puml')
+t=p.read_text()
+old='No source×target converter pair'
+assert old in t
+p.write_text(t.replace(old, 'A source×target converter pair exists', 1))
+"
+expect_fail "component diagram must retain companion-adapter boundary" "clone gate diagram semantic marker missing in cloning_components.puml" "$FIX"
+
+echo ""
+echo "Mutation 92: Transaction diagram loses lineage-last ordering"
+FIX=$(fixture_copy "clone-transaction-diagram-ordering-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/diagrams/plantuml/cloning_transaction.puml')
+t=p.read_text()
+old='publish Lineage Receipt, then G4 committed bundle'
+assert old in t
+p.write_text(t.replace(old, 'publish G4 before Lineage Receipt', 1))
+"
+expect_fail "transaction diagram must retain lineage-last order" "clone gate diagram semantic marker missing in cloning_transaction.puml" "$FIX"
+
+echo ""
+echo "Mutation 93: Critical transaction_unknown error code is removed"
+FIX=$(fixture_copy "clone-error-code-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+start=t.index('Session Adapter 1.0 and <code>session.clone.*</code> bind Structured Error')
+pos=t.index('<code>transaction_unknown</code>', start)
+t=t[:pos] + t[pos:].replace('<code>transaction_unknown</code>', '<code>transaction_status_missing</code>', 1)
+p.write_text(t)
+"
+expect_fail "clone error registry must retain ambiguous transaction code" "clone gate error registry transaction_unknown" "$FIX"
+
+echo ""
+echo "Mutation 94: Required target.staged_validated observation is removed"
+FIX=$(fixture_copy "clone-observation-event-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+start=t.index('### 18.2 Required events')
+pos=t.index('<code>target.staged_validated</code>', start)
+t=t[:pos] + t[pos:].replace('<code>target.staged_validated</code>', '<code>target.staged</code>', 1)
+p.write_text(t)
+"
+expect_fail "clone observation closure must include staged validation" "clone gate observation event target.staged_validated" "$FIX"
+
+echo ""
+echo "Mutation 95: Target Checkpoint no longer proves fully idle identity"
+FIX=$(fixture_copy "clone-checkpoint-proof-narrowed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='proves the exact native identity, input blocked,\nfull idle, zero processes and handles'
+assert old in t
+p.write_text(t.replace(old, 'proves only the target path exists', 1))
+"
+expect_fail "target Checkpoint must prove identity and full idle" "clone gate target checkpoint identity proof" "$FIX"
+
+echo ""
+echo "Mutation 96: Clone is allowed to mutate the source lease"
+FIX=$(fixture_copy "clone-source-immutability-weakened")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='MUST leave source\nbytes, Session Record, provider ID, lease, workspace authority, task-board\nbinding, and native identity unchanged'
+assert old in t
+p.write_text(t.replace(old, 'MAY rewrite the source lease and native identity', 1))
+"
+expect_fail "clone must preserve source authority and identity" "clone gate source immutability" "$FIX"
+
+echo ""
+echo "Mutation 97: Credential capture class is allowed into projection"
+FIX=$(fixture_copy "clone-credential-class-included")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Credential, auth, runtime, and lock classes are always excluded'
+assert old in t
+p.write_text(t.replace(old, 'Credential classes may be included for fidelity', 1))
+"
+expect_fail "clone must strip credential and runtime authority" "clone gate security class stripping" "$FIX"
+
+echo ""
+echo "Mutation 98: Local policy is allowed to self-approve a tuple"
+FIX=$(fixture_copy "clone-local-policy-self-approval")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='local policy may further\ndeny but cannot self-approve or override revocation'
+assert old in t
+p.write_text(t.replace(old, 'local policy may self-approve and override revocation', 1))
+"
+expect_fail "local policy may only restrict tuple admission" "clone gate tuple local policy monotonicity" "$FIX"
+
+echo ""
+echo "Mutation 99: Execution binding is no longer refreshed before target mutation"
+FIX=$(fixture_copy "clone-binding-refresh-removed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Before every call and\ntarget mutation, these facts MUST equal freshly read trusted-candidate facts\nand the Journal binding'
+assert old in t
+p.write_text(t.replace(old, 'Execution binding is trusted once at startup', 1))
+"
+expect_fail "target mutation must refresh observed execution binding" "clone gate adapter trust binding refresh" "$FIX"
+
+echo ""
+echo "Mutation 100: Malformed adapter result falls back as absence"
+FIX=$(fixture_copy "clone-adapter-malformed-as-absence")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Partial, malformed, over-limit, or escaped results are errors, never\nabsence or fallback permission'
+assert old in t
+p.write_text(t.replace(old, 'Malformed results are treated as absence and permit fallback', 1))
+"
+expect_fail "adapter result failure must remain distinct from absence" "clone gate adapter failure/absence distinction" "$FIX"
+
+echo ""
+echo "Mutation 101: Lineage receipt is allowed to name G4"
+FIX=$(fixture_copy "clone-lineage-g4-cycle")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='It names G3,\nnever G4; G4 names it'
+assert old in t
+p.write_text(t.replace(old, 'It names G4 and G4 names it', 1))
+"
+expect_fail "lineage and committed bundle must remain acyclic" "clone gate lineage G3/G4 acyclicity" "$FIX"
+
+echo ""
+echo "Mutation 102: Clone crash boundary family is removed"
+FIX=$(fixture_copy "clone-crash-boundary-family-missing")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='<code>CR-CLONE-01..16</code>'
+assert old in t
+p.write_text(t.replace(old, '<code>CR-CLONE-01..15</code>'))
+"
+expect_fail "clone crash boundary registry must remain closed" "clone gate clone crash boundary closure" "$FIX"
+
+echo ""
+echo "Mutation 103: Public ax clone alias is introduced"
+FIX=$(fixture_copy "clone-public-alias-added")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='There is no <code>ax clone</code> alias.'
+assert old in t
+p.write_text(t.replace(old, 'The <code>ax clone</code> alias is supported.', 1))
+"
+expect_fail "clone namespace must remain ax session clone only" "clone gate CLI sole namespace" "$FIX"
+
+echo ""
+echo "Mutation 104: Target write no longer requires signed tuple evidence"
+FIX=$(fixture_copy "clone-target-write-self-evidence")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='accepted non-revoked signed source/target tuple entries'
+assert old in t
+p.write_text(t.replace(old, 'self-minted source/target tuple entries', 1))
+"
+expect_fail "target write must require signed non-revoked tuple evidence" "clone gate target-write signed tuple admission" "$FIX"
+
+echo ""
+echo "Mutation 105: Internal v0.3.0 task ownership ID leaks into public docs"
+FIX=$(fixture_copy "clone-public-internal-task-id")
+printf '\nGate owner: TASK-260826-example.\n' >> "$FIX/README.md"
+expect_fail "public package must not expose active internal task ownership" "stale/internal v0.3.0 publication marker" "$FIX"
+
+echo ""
+echo "Mutation 106: Stale v0.2.1 diagram-ledger wording returns"
+FIX=$(fixture_copy "clone-stale-diagram-ledger")
+printf '\nUses the unchanged v0.2.1 SHA-256 ledger.\n' >> "$FIX/diagrams/README.md"
+expect_fail "diagram docs must describe the v0.3.0 ledger" "stale/internal v0.3.0 publication marker" "$FIX"
+
+echo ""
+echo "Mutation 107: Target derivation mutates the source provider identity after digest refresh"
+FIX=$(fixture_copy "clone-target-mutates-source-provider")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='The new target Session ID and target <code>provider_id</code> are allocated at\ncreation and never reuse or mutate the source Session or source provider ID.'
+assert old in t
+p.write_text(t.replace(old, 'AX mutates the source Session <code>provider_id</code> in place to represent the target environment.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "target derivation must not mutate source provider identity" "clone gate target derivation preserves source provider identity" "$FIX"
+
+echo ""
+echo "Mutation 108: Source authorities transfer to the target after digest refresh"
+FIX=$(fixture_copy "clone-source-authority-transfers")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='source goals, manager references, leases,\napprovals, tokens, and pending operations do not transfer.'
+assert old in t
+p.write_text(t.replace(old, 'source goals, manager references, leases, approvals, tokens, and pending operations transfer to the target.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "source authority must not transfer" "clone gate source authority non-transfer" "$FIX"
+
+echo ""
+echo "Mutation 109: Historical tools replay as live pending actions after digest refresh"
+FIX=$(fixture_copy "clone-historical-tools-replay")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Historical tools\nare inert; incomplete calls become aborted history and block pending action.'
+assert old in t
+p.write_text(t.replace(old, 'Historical tools may replay as live actions; incomplete calls remain pending target actions.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "historical tools must remain inert" "clone gate historical tools remain inert" "$FIX"
+
+echo ""
+echo "Mutation 110: Foreign reasoning and source usage gain target authority after digest refresh"
+FIX=$(fixture_copy "clone-reasoning-usage-authority")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='foreign encrypted/signed\nreasoning is opaque-preserved, and source usage is not target accounting.'
+assert old in t
+p.write_text(t.replace(old, 'foreign encrypted/signed reasoning is presented as target-native, and source usage becomes target billing.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "foreign reasoning and usage must remain non-authoritative" "clone gate reasoning and usage authority stripping" "$FIX"
+
+echo ""
+echo "Mutation 111: Continuation context claims native historical fidelity after digest refresh"
+FIX=$(fixture_copy "clone-continuation-native-claim")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Continuation context is explicitly non-native historical fidelity.'
+assert old in t
+p.write_text(t.replace(old, 'Continuation context is reported as a native historical clone.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "continuation context must disclose non-native fidelity" "clone gate continuation context fidelity disclosure" "$FIX"
+
+echo ""
+echo "Mutation 112: Visible migration text gains assistant control authority after digest refresh"
+FIX=$(fixture_copy "clone-visible-text-control-authority")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Visible text comes from\ntyped escaped fields and is user context, never an assistant reply or control\ninstruction.'
+assert old in t
+p.write_text(t.replace(old, 'Visible text may be fabricated as an assistant acknowledgement with control authority.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "visible migration text must remain low-authority user context" "clone gate visible migration text has no control authority" "$FIX"
+
+echo ""
+echo "Mutation 113: Raw evidence becomes a lossy inline summary after digest refresh"
+FIX=$(fixture_copy "clone-raw-evidence-lossy-summary")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='key, capture class, byte count, blob ID, Blob Descriptor ID, and extensions.'
+assert old in t
+p.write_text(t.replace(old, 'key, capture class, byte count, a lossy inline summary, and extensions.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "raw evidence must remain content-addressed" "clone gate raw evidence remains content-addressed" "$FIX"
+
+echo ""
+echo "Mutation 114: G1 discards raw evidence after digest refresh"
+FIX=$(fixture_copy "clone-g1-discards-raw")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='G0 names Capture Manifest. G1 adds Canonical Session/Events.'
+assert old in t
+p.write_text(t.replace(old, 'G0 names Capture Manifest. G1 discards raw evidence and keeps only target text.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "G1 must retain raw evidence while adding canonical records" "clone gate canonical generation retains raw evidence" "$FIX"
+
+echo ""
+echo "Mutation 115: Fidelity disposition registry collapses after digest refresh"
+FIX=$(fixture_copy "clone-fidelity-dispositions-collapsed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='<code>exact</code>, <code>semantic</code>, <code>summarized</code>,\n<code>opaque_preserved</code>, <code>synthesized</code>, <code>omitted</code>,\nand <code>unrecoverable</code>.'
+assert old in t
+p.write_text(t.replace(old, '<code>exact</code>, <code>semantic</code>, and <code>omitted</code>.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "fidelity disposition registry must retain seven exact values" "clone gate fidelity disposition registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 116: Journal publishes before prepared after digest refresh"
+FIX=$(fixture_copy "clone-transaction-order-reversed")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='resolving -> snapshotting -> captured -> normalized -> planned\n-> preparing -> prepared -> publishing -> published'
+assert old in t
+p.write_text(t.replace(old, 'resolving -> snapshotting -> captured -> normalized -> planned\n-> preparing -> publishing -> prepared -> published', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "transaction must reach prepared before publishing" "clone gate transaction phase ordering mismatch" "$FIX"
+
+echo ""
+echo "Mutation 117: Clone introduces a second blob-transfer subsystem after digest refresh"
+FIX=$(fixture_copy "clone-second-transfer-subsystem")
+python3 -c "
+import pathlib
+p=pathlib.Path('$FIX/SPEC.md')
+t=p.read_text()
+old='Transfer Manifest 1.0.0 remains unchanged.'
+assert old in t
+p.write_text(t.replace(old, 'Cloning introduces a second independent blob-transfer subsystem.', 1))
+"
+refresh_frozen_spec_digest "$FIX"
+expect_fail "clone must reuse AX transfer contracts" "clone gate reuses AX transfer contracts" "$FIX"
+
+echo ""
+echo "Mutation 118: Public diagram ledgers regress to three PlantUML sources and seven SVG artifacts"
+FIX=$(fixture_copy "clone-public-diagram-ledgers-narrowed")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+for name in ("README.md", "CONTRIBUTING.md"):
+    path = root / name
+    text = path.read_text(encoding="utf-8")
+    text = text.replace("five handwritten PlantUML sources", "three handwritten PlantUML sources")
+    text = text.replace("nine committed SVG artifacts", "seven committed SVG artifacts")
+    path.write_text(text, encoding="utf-8")
+PY
+refresh_frozen_document_digest "$FIX" "README.md"
+refresh_frozen_document_digest "$FIX" "CONTRIBUTING.md"
+expect_fail "public diagram ledgers must not narrow to stale 3/7 counts" "public diagram ledger must declare five handwritten PlantUML sources" "$FIX"
 
 echo ""
 echo "=========================================="

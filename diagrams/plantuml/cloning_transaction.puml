@@ -1,0 +1,160 @@
+@startuml cloning_transaction
+skinparam BackgroundColor #FFFFFF
+skinparam maxMessageSize 78
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam sequence {
+    ArrowColor #0D47A1
+    LifeLineBorderColor #1565C0
+    LifeLineBackgroundColor #E3F2FD
+    ParticipantBorderColor #1565C0
+    ParticipantBackgroundColor #E3F2FD
+    ParticipantFontColor #000000
+    DatabaseBorderColor #2E7D32
+    DatabaseBackgroundColor #E8F5E9
+    DatabaseFontColor #000000
+    BoxBorderColor #616161
+    BoxBackgroundColor #FAFAFA
+}
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #F9A825
+    FontColor #000000
+}
+hide footbox
+
+title AX Cross-Environment Clone — Transaction and Lineage Flow
+
+actor Operator
+
+box "Executing AX Host" #FAFAFA
+participant "Clone Controller" as Core
+collections "Fresh Isolated\nObject Sinks" as Sinks
+database "Host-Local AX Store\nJournal 3 + Bundle Chain" as AXStore
+end box
+
+box "Source Host" #FAFAFA
+participant "Source Session Adapter 1.0\n(trusted ax-provider executable)" as Source
+database "Source Host-Local\nNative Store" as SourceStore
+end box
+
+box "Target Host" #FAFAFA
+participant "Target Session Adapter 1.0\n(trusted ax-provider executable)" as Target
+participant "Target Provider 2.0\n(transaction authority)" as Provider
+database "Target Host-Local\nNative Store + Rollback State" as TargetStore
+participant "Native Target CLI" as TargetCLI
+end box
+
+autonumber
+
+== Resolve, bind, and prove a stable source ==
+
+Operator -> Core: ax session clone run SOURCE --from-provider A --to-provider B
+Core -> Source: manifest + probe + inspect (read authority)
+Source -> SourceStore: discover exact native identity and store generation
+Source --> Core: source basis + exact observed execution binding
+Core -> Target: manifest + probe exact target tuple and capabilities
+Target --> Core: exact observed target execution binding
+Core -> AXStore: persist Journal 3 snapshotting\n(two immutable adapter bindings + source basis)
+Core -> Source: snapshot-proof(expected generation)
+Source -> SourceStore: prove closed store / snapshot / log prefix / quiescence
+
+alt Stable boundary unavailable
+    Source --> Core: fail-closed evidence
+    Core --> Operator: failure; no target object or native-store mutation
+else Stable source proven
+    Source --> Core: stable proof + generation + equal pre/post digests
+end
+
+== Capture, normalize, and plan in isolated authority ==
+
+Core -> Source: capture-plan + capture (fresh bounded sinks)
+Source -> SourceStore: read allowlisted durable native items
+Source -> Sinks: raw objects + Capture Manifest candidates
+Core -> Core: reconcile, validate, rehash, and seal candidates
+Core -> AXStore: persist G0 capture
+Core -> Source: normalize(raw authority, fresh canonical sink)
+Source -> Sinks: Canonical Session + ordered Canonical Events
+Core -> Core: validate graph, evidence closure, IDs, and policy inputs
+Core -> AXStore: persist G1 canonical
+
+Core -> Target: projection-plan + project (fresh target-object sink)
+Target -> Sinks: Projection Plan + Projected Object Manifest candidates
+Core -> Core: enforce per-item fidelity policy and target limits
+
+alt Required fidelity cannot be met
+    Core --> Operator: fail before target mutation; retain G0–G1
+else Projection accepted
+    Core -> Target: staged read-back + validate over isolated projected objects
+    Target -> Sinks: staged evidence (identity/workspace/markers/resume surface)
+    Core -> AXStore: persist Plan 2 + Migration Checkpoint + G2\nand Journal prepared
+end
+
+== Publish with Provider-owned rollback ==
+
+Core -> Source: recheck source generation before Provider materialize
+Source -> SourceStore: read unchanged generation/digest
+Source --> Core: prepublication source check
+break Prepublication source changed
+    Core -> AXStore: persist failure; retain G0–G2
+    Core --> Operator: source_changed; no Provider or target mutation
+end
+Core -> Provider: materialize(Plan 2, projected objects,\nhost-created transaction authority)
+Provider -> TargetStore: publish exact new native identity\nwhile retaining rollback state
+Provider --> Core: prepared + rollback token + native discovery proof
+Core -> AXStore: persist Journal published + prepared-result fact
+
+Core -> Source: postpublication source generation recheck
+Source -> SourceStore: read generation/digest again
+Source --> Core: postpublication source check
+Core -> Target: live read-back exact target identity
+Target -> TargetStore: independently parse inert published target
+Target -> Sinks: live evidence
+Core -> Target: validate live evidence + resume-plan(existing identity)
+Target --> Core: validation facts + explicit resume argv
+Core -> Provider: capture exact published native identity
+Provider -> TargetStore: capture ordinary live Provider Transfer Manifest\nwhile rollback remains retained
+Provider --> Core: ordinary live Provider Transfer Manifest
+
+alt Source check, live validation, or Provider capture fails
+    Core -> AXStore: persist rolling_back intent
+    Core -> Provider: materialize-rollback(same transaction authority)
+    Provider -> TargetStore: restore predecessor / remove introduced identity
+    Provider --> Core: rolled_back; rollback token cleared
+    Core -> AXStore: persist rolled_back; retain highest verified G0–G3 evidence
+    Core --> Operator: failure report; no target activation
+else Live validation passes
+    Core -> AXStore: persist Fidelity + Validation Reports + G3\nand Journal finalizing intent
+    Core -> Provider: materialize-commit(activation=dormant_validated)
+    Provider -> TargetStore: commit exact identity and discard rollback state
+    Provider --> Core: committed result (rollback token null)
+    Core -> AXStore: persist provider_committed fact
+end
+
+note over Core,Provider
+  After Provider commit, byte rollback is forbidden.
+  Recovery may only complete the same deterministic suffix or park input-blocked.
+end note
+
+== Seal target authority, then publish lineage ==
+
+Core -> Target: read-back + validate exact closed committed target
+Target -> TargetStore: independently prove identity, full idle,\ninput blocked, zero processes/handles
+Target --> Core: post-commit revalidation evidence
+Core -> AXStore: seal epoch-1 target Checkpoint
+Core -> AXStore: emit checkpoint.created, then clone.committed
+Core -> AXStore: publish Lineage Receipt, then G4 committed bundle
+
+opt Open requested after lineage publication
+    Core -> TargetCLI: resume explicit existing TARGET_ID
+    TargetCLI -> TargetStore: open committed native identity
+end
+
+Core --> Operator: target ID + resume argv + fidelity/validation + lineage receipt
+
+note over Source,Target
+  Each environment has one companion Session Adapter.
+  Canonical contracts bridge them; there is no A×B converter matrix.
+end note
+
+@enduml

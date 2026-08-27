@@ -5,6 +5,22 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.0] - 2026-08-27
+
+### Added
+
+- Integrated cross-environment session cloning as a first-class `ax session clone` subsystem with closed plan, run, verification, and open outcomes.
+- Added the companion Session Adapter protocol `1.0.0`, canonical capture/projection contracts, immutable clone bundle generations, per-item fidelity accounting, migration checkpoints, target-native read-back evidence, lineage receipts, and signed exact-environment-tuple admission/revocation.
+- Added Session Record and Session Event `2.0.0` variants for cross-environment clone targets, Materialization Plan `2.0.0`, clone-only Materialization Journal `3.0.0`, CLI Result `2.0.0`, and Structured Error `1.1.0` bindings.
+- Added complete non-normative standalone-to-AX traceability in `STANDALONE_TO_AX_TRACEABILITY.md`.
+
+### Changed
+
+- Advanced the specification release from `v0.2.1` to `v0.3.0`; existing `v0.1.0`, `v0.2.0`, and `v0.2.1` tags remain immutable.
+- Kept Provider Protocol and Mesh RPC at `2.0.0`; semantic conversion is independently versioned and served by the same trusted provider executable instead of introducing Provider Protocol `3.0.0` or an N-by-N converter matrix.
+- Restricted support claims to signed, unexpired, non-revoked exact environment tuples with binding and fixture evidence. Provider-name claims and self-minted evidence do not establish support.
+- Resolved all four deferred merge decisions: the sole public namespace is `ax session clone`; the Session Adapter remains a companion protocol; clone targets use tagged Session Record `2.0.0` derivation provenance; and the AX release authority publishes and revokes the signed tuple registry while local policy may only restrict it further.
+
 ## [v0.2.1] - 2026-08-23
 ### Added
 - Defined `safe_retry`, `explicit_rollback`, and `recoverable_parked_state` as the mutually exclusive and collectively exhaustive outcomes for every inter-phase crash/restart boundary.

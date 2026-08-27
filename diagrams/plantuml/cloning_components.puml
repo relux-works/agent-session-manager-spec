@@ -1,0 +1,105 @@
+@startuml cloning_components
+skinparam BackgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+    FontColor #000000
+}
+skinparam database {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontColor #000000
+}
+skinparam folder {
+    BackgroundColor #FFF9C4
+    BorderColor #F9A825
+    FontColor #000000
+}
+skinparam node {
+    BackgroundColor #FAFAFA
+    BorderColor #616161
+    FontColor #000000
+}
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #F9A825
+    FontColor #000000
+}
+top to bottom direction
+
+title AX Cross-Environment Clone — Component Boundaries
+
+actor Operator
+
+node "Executing AX Host" as ControllerHost {
+    component "ax session clone\nCLI / Controller" as CloneCore
+    component "Trusted Plugin Host\n+ Exact-Tuple Admission" as PluginHost
+    component "Fidelity, Graph, and\nValidation Core" as ValidationCore
+    folder "Fresh Isolated Object Sinks\n(raw / canonical / projection / evidence)" as Sinks
+    database "Host-Local AX Durable Store\nJournal 3 + G0–G4 Bundles + Reports" as AXStore
+
+    CloneCore --> PluginHost : bind trusted candidates\nby observed executable digest
+    CloneCore --> ValidationCore : seal and validate\ncanonical objects
+    CloneCore --> Sinks : allocate bounded\nfresh authorities
+    ValidationCore --> AXStore : immutable bundles, reports,\ncheckpoint, lineage
+}
+
+node "Source Host" as SourceHost {
+    frame "Trusted ax-provider-<source> Executable" as SourceExecutable {
+        component "Provider Protocol 2.0\n(quiesce only when AX-owned)" as SourceProvider
+        component "Session Adapter 1.0\n(source environment)" as SourceAdapter
+    }
+    database "Source Host-Local\nNative Provider Store" as SourceNativeStore
+
+    SourceAdapter --> SourceNativeStore : declared read authority only
+    SourceProvider --> SourceNativeStore : optional safe-boundary control
+}
+
+node "Target Host" as TargetHost {
+    frame "Trusted ax-provider-<target> Executable" as TargetExecutable {
+        component "Session Adapter 1.0\n(target environment)" as TargetAdapter
+        component "Provider Protocol 2.0\nmaterialize / status / commit / rollback" as TargetProvider
+    }
+    database "Target Host-Local\nNative Provider Store" as TargetNativeStore
+    folder "Host-Local Provider\nTransaction + Rollback State" as TargetTransaction
+    component "Native Target CLI" as TargetCLI
+
+    TargetProvider --> TargetTransaction : sole rollback custody
+    TargetProvider --> TargetNativeStore : sole live-store mutation\nand publication authority
+    TargetAdapter --> TargetNativeStore : live read authority only
+    TargetCLI --> TargetNativeStore : resume explicit existing identity
+}
+
+Operator --> CloneCore : clone command surfaces
+PluginHost --> SourceAdapter : discover / inspect / snapshot-proof\ncapture / normalize
+SourceAdapter --> Sinks : raw and canonical candidates
+PluginHost --> TargetAdapter : projection-plan / project\nread-back / validate / resume-plan
+TargetAdapter --> Sinks : projected objects and evidence
+CloneCore --> TargetProvider : Plan 2 + projected objects\n+ host-created transaction authority
+CloneCore --> TargetCLI : optional open only after\ncheckpoint + lineage publication
+
+note right of PluginHost
+  Plugin extensibility is protocol-based:
+  each native environment supplies one companion
+  Session Adapter in its trusted provider executable.
+  Exact signed tuples and observed bindings fail closed.
+end note
+
+note bottom of Sinks
+  Source Adapter -> canonical contracts -> Target Adapter.
+  No source×target converter pair and no sink is a live native store.
+end note
+
+note bottom of AXStore
+  This store is local to the executing AX host, not shared by all hosts.
+  Source and target native stores remain local and independently authoritative.
+end note
+
+note bottom of TargetTransaction
+  Rollback is retained through live validation/finalizing intent.
+  Provider commit discards it; post-commit byte rollback is forbidden.
+end note
+
+@enduml

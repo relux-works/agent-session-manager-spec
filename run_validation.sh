@@ -5,8 +5,8 @@ set -euo pipefail
 # Works in a clean public checkout where .temp/ and .task-board/ do not exist.
 # Never overwrites committed artifacts before freshness comparison.
 
-echo "=== ax v0.2.1 specification validation ==="
-echo "Repository: relux-works/agent-session-manager-spec, branch: main, release: v0.2.1"
+echo "=== ax v0.3.0 specification validation ==="
+echo "Repository: relux-works/agent-session-manager-spec, branch: main, release: v0.3.0"
 echo ""
 
 echo "[1/3] Validating specification contracts, metadata, links, and examples..."
@@ -95,7 +95,7 @@ if ! diff -u "$committed_svgs" "$generated_svgs"; then
   echo "  Extra or missing SVGs detected."
   exit 1
 fi
-echo "  -> SVG file sets match (7 files)"
+echo "  -> SVG file sets match (9 files)"
 
 echo "  Checking SVG release-byte integrity and cross-platform source freshness..."
 for f in "$TEMP_DIR/artefacts"/*.svg; do

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for the normative ax v0.2.1 specification.
+"""Public, repository-only validation for the normative ax v0.3.0 specification.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
-and adds publication/metadata, anchor, matrix, and security closure for v0.2.1.
+and adds publication/metadata, anchor, matrix, recovery, and cloning closure for v0.3.0.
 Repository-only: no ax binary, provider CLI, or task-board runtime required.
 """
 
@@ -27,16 +27,16 @@ LICENSE_FILE = ROOT / "LICENSE"
 CHANGELOG = ROOT / "CHANGELOG.md"
 RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen v0.2.1 publication prose. Hashes use UTF-8 text with all line endings
+# Frozen v0.3.0 publication prose. Hashes use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. Future
 # specification releases must deliberately replace this bounded map after the
 # semantic checks and expected-red suite have been reviewed for the new prose.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "ba8c72fd230e416fd770511f99b2039faf140d25b67534847ab8691133ce229f",
-    "README.md": "5db2705e219e07d0c7e75c3cd620b4fe4c793ba8977d1771771b645ce0e7ee27",
-    "CONTRIBUTING.md": "a1a518cc245d9688f474b5744a8bda54f09dcda46f77276ef9ea35c565eec277",
-    "CHANGELOG.md": "a058495e6d9902b9bdff68ab1940410597e1a2ff1b3d12ea9d3af44198d71e0a",
-    "RELEASE_NOTES.md": "f8e6608fb534a26b5ecb2418d0a1f8911c6ecde88b1db4f8fdeec33e30f447f3",
+    "SPEC.md": "86e675c13c4d7caf569a139b5b8376be52cdcff07d63d2745d637fc20cdbf987",
+    "README.md": "1a411f2b08a7150a217e2ff2ad1136227a7cce0b78d82838e1ef2747547eeb75",
+    "CONTRIBUTING.md": "fe9f0f70e5d2104f8275ec07348c58429dd099f1c18a0e2a01e977271b9a151b",
+    "CHANGELOG.md": "b29fa1c18c2196a654459f7d7ee7fb9e2d70c11f80572d812b963fa07d586de2",
+    "RELEASE_NOTES.md": "033f249c93e457b09bd2669671ff8649da33b3abbc30a592b35dd97eaac9364b",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -48,6 +48,8 @@ ARTEFACTS = ROOT / "diagrams" / "artefacts"
 PLANTUML_DIR = ROOT / "diagrams" / "plantuml"
 
 EXPECTED_SVG_SHA256 = {
+    "cloning_components.svg": "d9521205b83419a37582696699f43f178ed68f57a7846a2328f9aaff11a0bfbc",
+    "cloning_transaction.svg": "03ec313c341ff0903ab4aa03e59e3e43c710e293059359510497a84472019d89",
     "mesh_deployment.svg": "0b38e885aac889795b1464ce8227ae6ae858ff2590229a9163a6701d9b99dd8e",
     "session_state.svg": "fae377f21fd374a40c2b831c6ced4e9f61c662a993c0b550d1c9ca0f0c0be507",
     "structurizr-ContainerContext-key.svg": "6424ee4d1ffebef9f37f54a8e5afc47358f9522f4a4908bbfe2cb44144b82dbc",
@@ -55,6 +57,21 @@ EXPECTED_SVG_SHA256 = {
     "structurizr-SystemContext-key.svg": "d2b29e2efb08aa803166c8be5366933359c1b136d97fa01b0eedfce8406b65d1",
     "structurizr-SystemContext.svg": "4509fea3ea56556862757ae43d113908b150acb3ee67843d8640b21618e2a1e4",
     "takeover.svg": "b06f3553a7bc09f316c73bc83169f0b637ebfaa6ff86f9fcd576ec82162b3b55",
+}
+
+EXPECTED_HANDWRITTEN_PLANTUML = {
+    "takeover.puml",
+    "session_state.puml",
+    "mesh_deployment.puml",
+    "cloning_components.puml",
+    "cloning_transaction.puml",
+}
+
+FROZEN_ACCEPTED_INPUT_SHA256 = {
+    "STANDALONE_TO_AX_TRACEABILITY.md": "61d2c036ee358199f8406ab40b9663f91d7b6eeb1dc2ededde902306e93139d5",
+    "diagrams/README.md": "e872fc665106e1c83f604bfa1b56223a68a110d904d6512bd370792548a477ba",
+    "diagrams/plantuml/cloning_components.puml": "50e728af2fddbc5f3b161d661068fc33c4fe341884c4c28a8ea541c24577118a",
+    "diagrams/plantuml/cloning_transaction.puml": "aadeb780d4cbbe129059dd327bd67b42c1947e13660143f7b91a06c59c99887f",
 }
 
 SAFE_INTEGER = 9_007_199_254_740_991
@@ -72,6 +89,19 @@ SELF_FIELDS = {
     "urn:ax:schema:tombstone": "tombstone_id",
     "urn:ax:schema:tombstone-ack": "ack_id",
     "urn:ax:schema:task-board-bundle": "bundle_id",
+    "urn:ax:schema:clone-raw-object-manifest": "raw_object_manifest_id",
+    "urn:ax:schema:clone-capture-manifest": "capture_manifest_id",
+    "urn:ax:schema:session-clone-bundle": "bundle_manifest_id",
+    "urn:ax:schema:canonical-session": "canonical_session_id",
+    "urn:ax:schema:canonical-event": "event_id",
+    "urn:ax:schema:migration-checkpoint": "migration_checkpoint_id",
+    "urn:ax:schema:fidelity-report": "fidelity_report_id",
+    "urn:ax:schema:projection-plan": "projection_plan_id",
+    "urn:ax:schema:clone-projected-object-manifest": "projected_object_manifest_id",
+    "urn:ax:schema:clone-read-back-evidence-manifest": "read_back_evidence_manifest_id",
+    "urn:ax:schema:clone-validation-report": "validation_report_id",
+    "urn:ax:schema:clone-lineage-receipt": "lineage_receipt_id",
+    "urn:ax:schema:supported-environment-tuples": "registry_digest",
 }
 
 
@@ -234,6 +264,9 @@ def check_required_files(errors: list[str]) -> None:
         ROOT / "diagrams" / "plantuml" / "takeover.puml",
         ROOT / "diagrams" / "plantuml" / "session_state.puml",
         ROOT / "diagrams" / "plantuml" / "mesh_deployment.puml",
+        ROOT / "diagrams" / "plantuml" / "cloning_components.puml",
+        ROOT / "diagrams" / "plantuml" / "cloning_transaction.puml",
+        ROOT / "STANDALONE_TO_AX_TRACEABILITY.md",
         ROOT / ".github" / "workflows" / "validate.yml",
         ROOT / "scripts" / "validate_spec.py",
         ROOT / "run_validation.sh",
@@ -250,7 +283,7 @@ def normalized_release_document_sha256(path: pathlib.Path) -> str:
 
 
 def check_frozen_release_baseline(errors: list[str]) -> None:
-    """Protect the reviewed v0.2.1 claim prose without pretending to parse English."""
+    """Protect the reviewed v0.3.0 claim prose without pretending to parse English."""
     expected_names = {path.name for path in PUBLIC_CLAIM_DOCUMENTS}
     configured_names = set(FROZEN_RELEASE_DOCUMENT_SHA256)
     if configured_names != expected_names:
@@ -267,12 +300,13 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual = normalized_release_document_sha256(document)
         if actual != expected:
             errors.append(
-                f"{document.name}: frozen v0.2.1 release baseline mismatch "
+                f"{document.name}: frozen v0.3.0 release baseline mismatch "
                 f"(expected LF-normalized SHA-256 {expected}, got {actual}); "
                 "review the prose and update FROZEN_RELEASE_DOCUMENT_SHA256 only for an intentional release revision"
             )
     expected_svgs = {
         "takeover.svg", "session_state.svg", "mesh_deployment.svg",
+        "cloning_components.svg", "cloning_transaction.svg",
         "structurizr-SystemContext.svg", "structurizr-SystemContext-key.svg",
         "structurizr-ContainerContext.svg", "structurizr-ContainerContext-key.svg",
     }
@@ -298,13 +332,23 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual_pumls = {f.name for f in puml_dir.glob("structurizr-*.puml")}
         if actual_pumls != expected_pumls:
             errors.append(f"diagrams/c4 generated puml set mismatch: expected {sorted(expected_pumls)}, got {sorted(actual_pumls)}")
+    for relative_name, expected_digest in FROZEN_ACCEPTED_INPUT_SHA256.items():
+        path = ROOT / relative_name
+        if not path.is_file():
+            continue
+        actual_digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual_digest != expected_digest:
+            errors.append(
+                f"{relative_name}: reviewer-accepted input byte mismatch: "
+                f"expected sha256:{expected_digest}, got sha256:{actual_digest}"
+            )
 
 
 def check_publication_metadata(errors: list[str]) -> None:
     if VERSION_FILE.exists():
         v = VERSION_FILE.read_text(encoding="utf-8").strip()
-        if v != "0.2.1":
-            errors.append(f"VERSION must be exactly '0.2.1', got {v!r}")
+        if v != "0.3.0":
+            errors.append(f"VERSION must be exactly '0.3.0', got {v!r}")
     if LICENSE_FILE.exists():
         lic = LICENSE_FILE.read_text(encoding="utf-8")
         canonical_mit = """MIT License
@@ -334,6 +378,7 @@ SOFTWARE.
     if CHANGELOG.exists():
         cl = CHANGELOG.read_text(encoding="utf-8")
         for required in (
+            "## [v0.3.0] - 2026-08-27",
             "## [v0.2.1] - 2026-08-23",
             "## [v0.2.0] - 2026-08-23",
             "## [v0.1.0] - 2026-08-22",
@@ -344,8 +389,8 @@ SOFTWARE.
         # CHANGELOG must at least mention qwen prohibition (already checked), but also we check RELEASE_NOTES for full set
     if RELEASE_NOTES.exists():
         rn = RELEASE_NOTES.read_text(encoding="utf-8")
-        if "v0.2.1" not in rn:
-            errors.append("RELEASE_NOTES.md missing v0.2.1")
+        if "v0.3.0" not in rn:
+            errors.append("RELEASE_NOTES.md missing v0.3.0")
         if "specification" not in rn.lower():
             errors.append("RELEASE_NOTES.md missing specification disclosure")
         if "specification artifacts only" not in rn.lower() and "specification only" not in rn.lower():
@@ -355,6 +400,30 @@ SOFTWARE.
             txt = p.read_text(encoding="utf-8")
             if not txt.strip():
                 errors.append(f"{p.relative_to(ROOT)} is empty")
+
+
+def check_public_diagram_ledgers(errors: list[str]) -> None:
+    """Keep public diagram inventories aligned with the v0.3.0 release sets."""
+    if len(EXPECTED_HANDWRITTEN_PLANTUML) != 5 or len(EXPECTED_SVG_SHA256) != 9:
+        errors.append("public diagram ledger validator configuration must contain five PlantUML sources and nine SVG artifacts")
+        return
+
+    for document in (README, CONTRIBUTING):
+        if not document.exists():
+            continue
+        text = document.read_text(encoding="utf-8")
+        missing_sources = sorted(name for name in EXPECTED_HANDWRITTEN_PLANTUML if f"`{name}`" not in text)
+        missing_svgs = sorted(name for name in EXPECTED_SVG_SHA256 if f"`{name}`" not in text)
+        if "five handwritten PlantUML sources" not in text or missing_sources:
+            errors.append(
+                f"{document.name}: public diagram ledger must declare five handwritten PlantUML sources; "
+                f"missing {missing_sources}"
+            )
+        if "nine committed SVG artifacts" not in text or missing_svgs:
+            errors.append(
+                f"{document.name}: public diagram ledger must declare nine committed SVG artifacts; "
+                f"missing {missing_svgs}"
+            )
 
 
 def check_changelog_release_caveats(errors: list[str]) -> None:
@@ -471,8 +540,8 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         txt = doc.read_text(encoding="utf-8")
         if "relux-works/agent-session-manager-spec" not in txt:
             errors.append(f"{doc.name}: missing repository identity relux-works/agent-session-manager-spec")
-        if "v0.2.1" not in txt and "0.2.1" not in txt:
-            errors.append(f"{doc.name}: missing version v0.2.1/0.2.1")
+        if "v0.3.0" not in txt and "0.3.0" not in txt:
+            errors.append(f"{doc.name}: missing version v0.3.0/0.3.0")
     for doc in [SPEC, README, CONTRIBUTING]:
         if doc.exists():
             txt = doc.read_text(encoding="utf-8")
@@ -497,6 +566,20 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         d = ROOT / candidate
         if not d.exists() or not any(d.iterdir()):
             errors.append(f"missing or empty {candidate}/ artifacts directory")
+    stale_publication_markers = (
+        "TASK-260826", "STORY-260826", "EPIC-260826",
+        "Release-candidate gate status", "still identify and freeze `v0.2.1`",
+        "unchanged v0.2.1 SHA-256 ledger",
+    )
+    for document in [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES, DIAGRAMS_README]:
+        if not document.exists():
+            continue
+        content = document.read_text(encoding="utf-8")
+        for marker in stale_publication_markers:
+            if marker in content:
+                errors.append(
+                    f"{document.relative_to(ROOT)}: stale/internal v0.3.0 publication marker {marker!r}"
+                )
 
 
 def check_ci_workflow(errors: list[str]) -> None:
@@ -1059,7 +1142,7 @@ def check_critical_protocol_contracts(text: str, errors: list[str]) -> None:
         row = f"| {name} | <code>{identifier}</code> | <code>{version}</code> |"
         if row not in text:
             errors.append(
-                f"critical contract version mismatch: {name} must be {version} in v0.2.1"
+                f"critical contract version mismatch: {name} must be {version} in v0.3.0"
             )
     for required in (
         '<code>protocol_version = "2.0.0"</code>',
@@ -1158,7 +1241,7 @@ def check_critical_protocol_contracts(text: str, errors: list[str]) -> None:
 
 
 def check_crash_restart_outcome_gate(text: str, errors: list[str]) -> tuple[int, int]:
-    """Validate the v0.2.1 crash/restart gate inside its normative sections.
+    """Validate the retained v0.2.1 crash/restart gate inside v0.3.0.
 
     The frozen document hashes protect reviewed bytes. These scoped checks give
     gate-specific diagnostics when a mutation weakens the recovery contract.
@@ -1358,6 +1441,435 @@ def check_crash_restart_outcome_gate(text: str, errors: list[str]) -> tuple[int,
     return checks, len(errors) - initial_error_count
 
 
+def check_cloning_contract_gate(
+    text: str, objects: list[dict[str, object]], errors: list[str]
+) -> tuple[int, int, dict[str, int]]:
+    """Machine-check the v0.3.0 cloning contract closure and invariants.
+
+    Checks are deliberately scoped to the normative registry and cloning
+    sections so an unrelated prose occurrence cannot mask a missing contract.
+    """
+
+    initial_error_count = len(errors)
+    gate = Gate(text)
+    ledger: dict[str, int] = {}
+
+    registry_rows = first_table_in_section(
+        text, "### 1.5 Normative contract registry", "### 1.6 Common data rules"
+    )
+    registry: dict[str, tuple[str, str]] = {}
+    identifiers: dict[str, list[str]] = {}
+    for row in registry_rows:
+        if len(row) != 3:
+            errors.append(f"clone gate contract registry malformed row: {row!r}")
+            continue
+        name, identifier, version = row
+        identifier = re.sub(r"</?code>", "", identifier)
+        if name in registry:
+            errors.append(f"clone gate contract registry duplicate name: {name}")
+        registry[name] = (identifier, version)
+        identifiers.setdefault(identifier, []).append(name)
+    ledger["contracts"] = len(registry)
+    for identifier, names in identifiers.items():
+        if len(names) > 1 and not (
+            identifier == "urn:ax:schema:materialization-journal"
+            and names == [
+                "Materialization recovery state (journal and managed-replica marker variants)",
+                "Clone materialization recovery state (journal variant)",
+            ]
+        ):
+            errors.append(
+                f"clone gate contract registry identifier is not unique: {identifier} -> {names}"
+            )
+
+    required_contracts = {
+        "Session Adapter protocol": ("urn:ax:protocol:session-adapter", "1.0.0"),
+        "Session Adapter manifest": ("urn:ax:schema:session-adapter-manifest", "1.0.0"),
+        "Session Adapter probe": ("urn:ax:schema:session-adapter-probe", "1.0.0"),
+        "Clone Raw Object Manifest": ("urn:ax:schema:clone-raw-object-manifest", "1.0.0"),
+        "Clone Capture Manifest": ("urn:ax:schema:clone-capture-manifest", "1.0.0"),
+        "Clone Bundle Manifest": ("urn:ax:schema:session-clone-bundle", "1.0.0"),
+        "Canonical Session": ("urn:ax:schema:canonical-session", "1.0.0"),
+        "Canonical Event": ("urn:ax:schema:canonical-event", "1.0.0"),
+        "Migration Checkpoint": ("urn:ax:schema:migration-checkpoint", "1.0.0"),
+        "Fidelity Report": ("urn:ax:schema:fidelity-report", "1.0.0"),
+        "Projection Plan": ("urn:ax:schema:projection-plan", "1.0.0"),
+        "Clone Projected Object Manifest": ("urn:ax:schema:clone-projected-object-manifest", "1.0.0"),
+        "Clone Read-Back Evidence Manifest": ("urn:ax:schema:clone-read-back-evidence-manifest", "1.0.0"),
+        "Clone Validation Report": ("urn:ax:schema:clone-validation-report", "1.0.0"),
+        "Clone Lineage Receipt": ("urn:ax:schema:clone-lineage-receipt", "1.0.0"),
+        "Supported Environment Tuple Registry": ("urn:ax:schema:supported-environment-tuples", "1.0.0"),
+    }
+    for name, (identifier, version) in required_contracts.items():
+        gate.checks += 1
+        actual = registry.get(name)
+        if actual is None or actual[0] != identifier or f"<code>{version}</code>" not in actual[1]:
+            gate.errors.append(
+                f"clone gate contract registry mismatch for {name}: expected {identifier} {version}, got {actual}"
+            )
+
+    registered_schema_ids = {
+        identifier for identifier in identifiers if identifier.startswith("urn:ax:schema:")
+    }
+    for candidate in objects:
+        schema = candidate.get("schema")
+        if not isinstance(schema, str) or schema == "board-goal-v2":
+            continue
+        gate.checks += 1
+        if schema not in registered_schema_ids:
+            gate.errors.append(f"clone gate JSON schema reference is not registered: {schema}")
+
+    adapter_start = text.find("### 7.8 Companion Session Adapter protocol")
+    adapter_end = text.find("## 8. Provider and platform contracts", adapter_start)
+    adapter = text[adapter_start:adapter_end] if adapter_start >= 0 and adapter_end >= 0 else ""
+    adapter_rows = first_table_in_section(
+        adapter,
+        "The exact request and success <code>body</code> registry is:",
+        "Candidate objects are addressed only",
+    )
+    adapter_operations = [re.sub(r"</?code>", "", row[0]) for row in adapter_rows if row]
+    expected_adapter_operations = [
+        "manifest", "probe", "discover", "inspect", "snapshot-proof",
+        "capture-plan", "capture", "normalize", "projection-plan", "project",
+        "read-back", "validate", "resume-plan", "doctor",
+    ]
+    ledger["adapter_operations"] = len(adapter_operations)
+    gate.checks += 1
+    if adapter_operations != expected_adapter_operations:
+        gate.errors.append(
+            "clone gate Session Adapter operation registry mismatch: "
+            f"expected {expected_adapter_operations}, got {adapter_operations}"
+        )
+
+    capability_start = adapter.find("The exact capability names are")
+    capability_end = adapter.find("Each value contains exactly", capability_start)
+    capability_section = adapter[capability_start:capability_end]
+    adapter_capabilities = re.findall(r"<code>([a-z_]+)</code>", capability_section)
+    expected_adapter_capabilities = [
+        "native_discovery", "stable_snapshot", "raw_capture", "canonical_read",
+        "canonical_write", "native_read_back", "native_resume_plan", "official_import",
+        "same_environment_lossless_clone", "tool_history", "usage_history",
+        "compaction_history", "subagent_graph", "opaque_reasoning_roundtrip",
+        "workspace_binding",
+    ]
+    ledger["adapter_capabilities"] = len(adapter_capabilities)
+    gate.checks += 1
+    if adapter_capabilities != expected_adapter_capabilities:
+        gate.errors.append(
+            "clone gate Session Adapter capability registry mismatch: "
+            f"expected {expected_adapter_capabilities}, got {adapter_capabilities}"
+        )
+
+    for label, literal in (
+        ("adapter/provider executable binding", "same host-observed executable digest as Provider Protocol 2.0.0"),
+        ("adapter failure/absence distinction", "Partial, malformed, over-limit, or escaped results are errors, never absence or fallback permission"),
+        ("adapter trust binding refresh", "Before every call and target mutation, these facts MUST equal freshly read trusted-candidate facts and the Journal binding"),
+        ("target-write capability conjunction", "A target write requires available canonical-write or official-import"),
+        ("target-write signed tuple admission", "accepted non-revoked signed source/target tuple entries"),
+        ("target-write force bypass prohibition", "--force</code>, experimental profiles, and environment-name-only matches cannot bypass these gates"),
+    ):
+        gate.normalized_has(f"clone gate {label}", literal)
+
+    clone_start = text.find("### 13.14 Cross-environment clone")
+    clone_end = text.find("## 14. CLI and operator experience", clone_start)
+    clone = text[clone_start:clone_end] if clone_start >= 0 and clone_end >= 0 else ""
+    clone_gate = Gate(clone)
+
+    session_record_start = text.find("### 5.1 Session Record")
+    session_record_end = text.find("### 5.2 Session Event", session_record_start)
+    session_record = (
+        text[session_record_start:session_record_end]
+        if session_record_start >= 0 and session_record_end >= 0
+        else ""
+    )
+    session_record_gate = Gate(session_record)
+    session_record_gate.normalized_has(
+        "clone gate target derivation preserves source provider identity",
+        "The new target Session ID and target <code>provider_id</code> are allocated at "
+        "creation and never reuse or mutate the source Session or source provider ID",
+    )
+    session_record_gate.normalized_has(
+        "clone gate source authority non-transfer",
+        "source goals, manager references, leases, approvals, tokens, and pending operations do not transfer",
+    )
+
+    capture_start = clone.find("#### 13.14.1 Capture and canonical contracts")
+    capture_end = clone.find("#### 13.14.2 Fidelity, projection, and lineage", capture_start)
+    capture = clone[capture_start:capture_end] if capture_start >= 0 and capture_end >= 0 else ""
+    capture_gate = Gate(capture)
+    capture_gate.normalized_has(
+        "clone gate historical tools remain inert",
+        "Historical tools are inert; incomplete calls become aborted history and block pending action",
+    )
+    capture_gate.normalized_has(
+        "clone gate reasoning and usage authority stripping",
+        "foreign encrypted/signed reasoning is opaque-preserved, and source usage is not target accounting",
+    )
+    capture_gate.normalized_has(
+        "clone gate raw evidence remains content-addressed",
+        "key, capture class, byte count, blob ID, Blob Descriptor ID, and extensions",
+    )
+
+    fidelity_start = clone.find("#### 13.14.2 Fidelity, projection, and lineage")
+    fidelity_end = clone.find("#### 13.14.3 Immutable bundle chain", fidelity_start)
+    fidelity = clone[fidelity_start:fidelity_end] if fidelity_start >= 0 and fidelity_end >= 0 else ""
+    fidelity_gate = Gate(fidelity)
+    fidelity_gate.normalized_has(
+        "clone gate continuation context fidelity disclosure",
+        "Continuation context is explicitly non-native historical fidelity",
+    )
+    fidelity_gate.normalized_has(
+        "clone gate visible migration text has no control authority",
+        "Visible text comes from typed escaped fields and is user context, never an assistant reply or control instruction",
+    )
+    expected_dispositions = [
+        "exact", "semantic", "summarized", "opaque_preserved",
+        "synthesized", "omitted", "unrecoverable",
+    ]
+    disposition_match = re.search(
+        r"The dispositions are <code>([^<]+)</code>\.", fidelity
+    )
+    counts_match = re.search(
+        r"<code>FidelityCounts</code> contains exactly the seven uint53 members\s+(.*?)\.",
+        fidelity,
+        re.DOTALL,
+    )
+    declared_dispositions = disposition_match.group(1).split("|") if disposition_match else []
+    counted_dispositions = (
+        re.findall(r"<code>([a-z_]+)</code>", counts_match.group(1))
+        if counts_match
+        else []
+    )
+    fidelity_gate.checks += 1
+    if declared_dispositions != expected_dispositions or counted_dispositions != expected_dispositions:
+        fidelity_gate.errors.append(
+            "clone gate fidelity disposition registry mismatch: "
+            f"expected {expected_dispositions}, got dispositions={declared_dispositions}, "
+            f"FidelityCounts={counted_dispositions}"
+        )
+
+    bundle_start = clone.find("#### 13.14.3 Immutable bundle chain")
+    bundle_end = clone.find("#### 13.14.4 Transaction and target Checkpoint", bundle_start)
+    bundle = clone[bundle_start:bundle_end] if bundle_start >= 0 and bundle_end >= 0 else ""
+    bundle_gate = Gate(bundle)
+    bundle_gate.normalized_has(
+        "clone gate canonical generation retains raw evidence",
+        "G0 names Capture Manifest. G1 adds Canonical Session/Events",
+    )
+
+    transaction_start = clone.find("#### 13.14.4 Transaction and target Checkpoint")
+    transaction_end = clone.find("#### 13.14.5 Events, state, and tuple admission", transaction_start)
+    transaction = (
+        clone[transaction_start:transaction_end]
+        if transaction_start >= 0 and transaction_end >= 0
+        else ""
+    )
+    transaction_gate = Gate(transaction)
+    transaction_gate.normalized_has(
+        "clone gate reuses AX transfer contracts",
+        "Only a clone Plan 2 may use Projected Object Manifest as provider merge input; "
+        "Transfer Manifest 1.0.0 remains unchanged",
+    )
+    phase_match = re.search(
+        r"~~~text\s+(resolving\s*->.*?lineage_published)\s+archive:",
+        transaction,
+        re.DOTALL,
+    )
+    actual_phases = (
+        [part.strip() for part in re.sub(r"\s+", " ", phase_match.group(1)).split("->")]
+        if phase_match
+        else []
+    )
+    expected_phases = [
+        "resolving", "snapshotting", "captured", "normalized", "planned",
+        "preparing", "prepared", "publishing", "published", "live_validating",
+        "finalizing", "provider_committed", "sealing_checkpoint", "committed",
+        "lineage_published",
+    ]
+    transaction_gate.checks += 1
+    if actual_phases != expected_phases:
+        transaction_gate.errors.append(
+            "clone gate transaction phase ordering mismatch: "
+            f"expected {expected_phases}, got {actual_phases}"
+        )
+    for label, literal in (
+        ("source immutability", "MUST leave source bytes, Session Record, provider ID, lease, workspace authority, task-board binding, and native identity unchanged"),
+        ("new target identities", "creates one new direct Session Record 2.0.0, target workspace identity, native identity, and epoch-1 lease"),
+        ("stable snapshot digest equality", "Capture digests are equal"),
+        ("size is not snapshot proof", "File-size equality is never proof"),
+        ("security class stripping", "Credential, auth, runtime, and lock classes are always excluded"),
+        ("opaque native preservation", "Unknown native records become raw-addressable opaque events"),
+        ("foreign authority stripping", "Foreign instructions are low-authority history"),
+        ("per-item fidelity closure", "Every Capture Manifest item and Canonical Event occurs in exactly one non-synthesized disposition row"),
+        ("non-exact reason requirement", "every other disposition requires at least one reason"),
+        ("exact reason prohibition", "Exact requires an empty reason set"),
+        ("fidelity aggregate reconciliation", "Aggregate maps reconcile exactly to the rows and cannot replace them"),
+        ("fidelity/report digest acyclicity", "A target report does not name Clone Validation Report, Lineage Receipt, G4, or a future event"),
+        ("projection/report digest acyclicity", "never a report locator"),
+        ("lineage G3/G4 acyclicity", "It names G3, never G4; G4 names it"),
+        ("immutable generation chain", "one predecessor cannot\nhave byte-different successors"),
+        ("branch-exclusive generation", "generation 2 is exactly A2 naming G1\nor G2 naming G1. A2 is terminal. The target branch continues G2 to G3 to G4"),
+        ("clone rollback required", "Clone requires rollback, null prior checkpoint, collision absence"),
+        ("journal 3 independent schema", "Journal 3.0.0 is a complete clone-only schema and does not inherit Journal 2"),
+        ("journal facts immutable", "Fields become non-null only at their phase and then remain immutable"),
+        ("rollback retention through finalizing", "Provider remains rollback-capable"),
+        ("post-commit rollback forbidden", "Post-commit rollback is forbidden"),
+        ("target checkpoint identity proof", "proves the exact native identity, input blocked, full idle, zero processes and handles"),
+        ("checkpoint before clone committed", "then core emits <code>checkpoint.created</code> and\n<code>clone.committed</code>"),
+        ("failed-read integrity", "failed, partial, or malformed Journal, Provider, adapter, registry, or native-store\nread is <code>integrity_failure</code>, never absence"),
+        ("new-session retry prohibition", "No status result authorizes a fresh Provider materialization, target native\nidentity, Session Record, lease, process, or transaction authority"),
+        ("tuple source archive restriction", "Source-read entries have exactly <code>strategies=[archive_only]</code>"),
+        ("tuple target smoke gate", "Target-write entries exclude archive-only, require current\nnon-null passing resume evidence"),
+        ("tuple read failure fail-closed", "Failed/partial reads never mean absence"),
+        ("tuple local policy monotonicity", "local policy may further\ndeny but cannot self-approve or override revocation"),
+    ):
+        clone_gate.normalized_has(f"clone gate {label}", literal)
+
+    for scoped_gate in (
+        session_record_gate,
+        capture_gate,
+        fidelity_gate,
+        bundle_gate,
+        transaction_gate,
+    ):
+        clone_gate.checks += scoped_gate.checks
+        clone_gate.errors.extend(scoped_gate.errors)
+    gate.normalized_has("clone gate clone crash boundary closure", "CR-CLONE-01..16")
+
+    expected_events = [
+        "clone.planned", "clone.target_prepared", "clone.target_published",
+        "clone.target_validation_failed", "clone.rolled_back", "clone.committed",
+        "clone.lineage_published", "clone.failed",
+    ]
+    event_rows = first_table_in_section(
+        clone, "| Event type | Exact payload members beyond the tag |", "Clone adds one derived-state edge"
+    )
+    event_types = [re.sub(r"</?code>", "", row[0]) for row in event_rows if row]
+    ledger["clone_events"] = len(event_types)
+    clone_gate.checks += 1
+    if event_types != expected_events:
+        clone_gate.errors.append(
+            f"clone gate lifecycle event registry mismatch: expected {expected_events}, got {event_types}"
+        )
+
+    cli_start = text.find("### 14.1 Command surface")
+    cli_end = text.find("### 14.2 Common flags and output", cli_start)
+    cli = text[cli_start:cli_end] if cli_start >= 0 and cli_end >= 0 else ""
+    command_rows = first_table_in_section(
+        cli, "| Command tag | Exact body |", "<code>CloneAdapterSummary</code> contains exactly"
+    )
+    clone_commands = [re.sub(r"</?code>", "", row[0]) for row in command_rows if row]
+    expected_clone_commands = [f"session.clone.{leaf}" for leaf in (
+        "adapters", "doctor", "list", "inspect", "plan", "run", "verify", "open"
+    )]
+    ledger["clone_commands"] = len(clone_commands)
+    clone_gate.checks += 1
+    if clone_commands != expected_clone_commands:
+        clone_gate.errors.append(
+            f"clone gate CLI command registry mismatch: expected {expected_clone_commands}, got {clone_commands}"
+        )
+    for label, literal in (
+        ("sole namespace", "There is no <code>ax clone</code> alias"),
+        ("plan sole no-write", "<code>plan</code> is the sole no-target-write surface"),
+        ("run dry-run rejected", "<code>run --dry-run</code> is invalid before target allocation"),
+        ("open no blank fallback", "cannot fall back to blank launch"),
+    ):
+        gate.normalized_has(f"clone gate CLI {label}", literal)
+
+    error_start = text.find("Session Adapter 1.0 and <code>session.clone.*</code> bind Structured Error")
+    error_end = text.find("Existing semantically identical codes remain reused", error_start)
+    error_rows: list[tuple[str, ...]] = []
+    if error_start >= 0 and error_end >= 0:
+        table_started = False
+        for line in text[error_start:error_end].splitlines():
+            if line == "| Exit | Stable clone codes |":
+                table_started = True
+                continue
+            if not table_started or not line.startswith("|"):
+                continue
+            cells = table_cells(line)
+            if all(re.fullmatch(r"[-: ]+", cell) for cell in cells):
+                continue
+            error_rows.append(cells)
+    expected_error_exits = ["4", "6", "9", "11", "12", "13", "16"]
+    actual_error_exits = [row[0] for row in error_rows]
+    ledger["clone_error_classes"] = len(actual_error_exits)
+    clone_gate.checks += 1
+    if actual_error_exits != expected_error_exits:
+        clone_gate.errors.append(
+            f"clone gate error registry exit classes mismatch: expected {expected_error_exits}, got {actual_error_exits}"
+        )
+    for required_code in (
+        "unsupported_environment_tuple", "credential_material_detected",
+        "source_changed_during_clone", "target_validation_failed",
+        "target_checkpoint_failed", "transaction_unknown",
+        "projection_loss_unacceptable", "unsafe_pending_action",
+    ):
+        gate.has(f"clone gate error registry {required_code}", f"<code>{required_code}</code>")
+
+    observation_start = text.find("### 18.2 Required events")
+    observation_end = text.find("### 18.3 Metrics and health", observation_start)
+    observation = text[observation_start:observation_end]
+    for event in (
+        "clone.started", "source.snapshot_established", "source.captured",
+        "canonical.normalized", "projection.planned", "projection.policy_rejected",
+        "target.prepared", "target.staged_validated", "target.published",
+        "target.live_validated", "target.committed", "target.rolled_back",
+        "lineage.published", "target.opened", "clone.failed",
+    ):
+        gate.has(f"clone gate observation event {event}", f"<code>{event}</code>")
+
+    traceability = ROOT / "STANDALONE_TO_AX_TRACEABILITY.md"
+    clone_gate.checks += 1
+    if not traceability.is_file():
+        clone_gate.errors.append("clone gate standalone traceability document missing")
+    else:
+        trace_text = traceability.read_text(encoding="utf-8")
+        mapping_start = trace_text.find("## Complete section mapping")
+        mapping_end = trace_text.find("## Resolved deferred decisions", mapping_start)
+        mapping_rows = [
+            line for line in trace_text[mapping_start:mapping_end].splitlines()
+            if line.startswith("| ") and not line.startswith("| ---")
+            and "Standalone section" not in line
+        ]
+        ledger["traceability_rows"] = len(mapping_rows)
+        if len(mapping_rows) != 129:
+            clone_gate.errors.append(
+                f"clone gate standalone traceability row count mismatch: expected 129, got {len(mapping_rows)}"
+            )
+        for literal in (
+            "No AX implementation or release process needs it to interpret `SPEC.md`",
+            "None of these decisions weakens the adapter boundary",
+        ):
+            clone_gate.checks += 1
+            if " ".join(literal.split()) not in " ".join(trace_text.split()):
+                clone_gate.errors.append(
+                    f"clone gate standalone traceability completeness: missing {literal!r}"
+                )
+
+    clone_gate.checks += 1
+    diagram_sources = {
+        "cloning_components.puml": ("No source×target converter pair", "sole live-store mutation"),
+        "cloning_transaction.puml": ("rollback remains retained", "publish Lineage Receipt, then G4 committed bundle"),
+    }
+    for name, required_literals in diagram_sources.items():
+        source = PLANTUML_DIR / name
+        if not source.is_file():
+            clone_gate.errors.append(f"clone gate diagram source missing: {name}")
+            continue
+        source_text = source.read_text(encoding="utf-8")
+        for literal in required_literals:
+            if literal not in source_text:
+                clone_gate.errors.append(
+                    f"clone gate diagram semantic marker missing in {name}: {literal!r}"
+                )
+
+    errors.extend(gate.errors)
+    errors.extend(clone_gate.errors)
+    checks = gate.checks + clone_gate.checks
+    return checks, len(errors) - initial_error_count, ledger
+
+
 def check_semantic_coverage(text: str, errors: list[str]) -> tuple[int, int, int, dict[str,int]]:
     # Run exact registry checks first
     ledger = check_exact_registries(text, errors)
@@ -1383,7 +1895,7 @@ def check_semantic_coverage(text: str, errors: list[str]) -> tuple[int, int, int
     for provider in ["Codex", "Claude", "Gemini", "Muse", "Antigravity", "Pi"]:
         gate.has(f"provider {provider} row", provider)
     gate.normalized_has("Qwen task-board only", "Qwen through task-board")
-    gate.normalized_has("no direct qwen claim", "no v0.2.1 direct")
+    gate.normalized_has("no direct qwen claim", "no v0.3.0 direct")
     gate.has("ax-provider-qwen prohibited", "ax-provider-qwen")
     gate.normalized_has("Claude appserver unsupported", "appserver")
     gate.normalized_has("prompt_spawn capability", "prompt_spawn")
@@ -1518,6 +2030,7 @@ def main() -> int:
     check_required_files(errors)
     check_frozen_release_baseline(errors)
     check_publication_metadata(errors)
+    check_public_diagram_ledgers(errors)
     check_changelog_release_caveats(errors)
     check_contextual_forbidden_claims(errors)
     check_cross_file_consistency(errors)
@@ -1572,6 +2085,11 @@ def main() -> int:
     checks += crash_checks
     failed += crash_failures
     passed += crash_checks - crash_failures
+    clone_checks, clone_failures, clone_ledger = check_cloning_contract_gate(text, objects, errors)
+    checks += clone_checks
+    failed += clone_failures
+    passed += clone_checks - clone_failures
+    ledger.update(clone_ledger)
 
     local_link_count = 0
     for doc in [SPEC, README, CONTRIBUTING, DIAGRAMS_README]:
@@ -1601,7 +2119,8 @@ def main() -> int:
     print(f"  Local links: {local_link_count}")
     print(f"  Semantic checks: {checks} total, {passed} passed, {failed} failed")
     print(f"  Ledger: provider_operations={ledger.get('provider_operations',0)}, bridge_operations={ledger.get('bridge_operations',0)}, rpc_body_operations={ledger.get('rpc_body_operations',0)}, cli_bodies={ledger.get('cli_bodies',0)}, SessionState={ledger.get('SessionState',0)}, Git_payloads={ledger.get('Git_payloads',0)}")
-    print("  Registry evidence: parsed provider, bridge, RPC-body, CLI-body, SessionState, and Git-payload registries; no aggregate parity count is claimed")
+    print(f"  Clone ledger: contracts={ledger.get('contracts',0)}, adapter_operations={ledger.get('adapter_operations',0)}, adapter_capabilities={ledger.get('adapter_capabilities',0)}, clone_commands={ledger.get('clone_commands',0)}, clone_events={ledger.get('clone_events',0)}, clone_error_classes={ledger.get('clone_error_classes',0)}, traceability_rows={ledger.get('traceability_rows',0)}")
+    print("  Registry evidence: parsed provider, bridge, RPC-body, CLI-body, SessionState, Git-payload, cloning contract/adapter/CLI/event/error, and standalone traceability registries; no aggregate parity count is claimed")
     return 0
 
 

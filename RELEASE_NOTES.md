@@ -1,58 +1,53 @@
-# Agent Session Manager (`ax`) Specification v0.2.1
+# Agent Session Manager (`ax`) Specification v0.3.0
 
-This patch release supersedes `v0.2.0` without moving or rewriting the
-`v0.1.0` or `v0.2.0` tags. It adds a normative crash/restart outcome gate
-without changing any wire-contract version.
+This minor specification release adds cross-environment session cloning as a first-class AX subsystem. It supersedes `v0.2.1` without moving or rewriting the `v0.1.0`, `v0.2.0`, or `v0.2.1` tags.
 
-## Crash/restart outcome gate
+**Status caveat:** this release publishes specification artifacts only. It contains no executable `ax` product binary, and publication does not imply that any provider/platform product-conformance lane has passed.
 
-- Every inter-phase crash/restart boundary in launch, sync, materialization,
-  graceful and force takeover, fork, stop, owner resume, and reboot restore
-  must classify into exactly one of `safe_retry`, `explicit_rollback`, or
-  `recoverable_parked_state`.
-- Safe retry preserves caller-stable operation IDs and the exact persisted
-  native provider identity or task-board manager binding.
-- Explicit rollback is durable, visible, and proves predecessor restoration or
-  closure; parked recovery is fail-closed and preserves reconciliation facts.
-- Recovery may not produce duplicate live/authoritative owners, treat an
-  unfenced continuation as safe, or silently allocate a fresh native session.
-- `AC-CRASH-001` and `SPEC-PUB-CRASH-001` gate runtime conformance and
-  specification publication respectively.
+## Cross-environment cloning
 
-## Critical Corrections
+The sole public namespace is `ax session clone`; there is no `ax clone` alias in `v0.3.0`. Its closed leaf commands are `adapters`, `doctor`, `list`, `inspect`, `plan`, `run`, `verify`, and `open`. `plan` is the only no-target-write operation, while `run --dry-run` is rejected before target allocation.
 
-- Mesh `materialize.prepare` uses caller-stable IDs and a durable request receipt, so a lost response cannot create a second materialization.
-- Provider `materialize-status` is an evolving read rather than a byte-identical mutation receipt.
-- Provider protocol, Mesh RPC, and Materialization recovery state are versioned `2.0.0`; their published `1.0.0` shapes are not wire-compatible with these corrections.
-- All normative strict-JSON `jsonc` fixtures are parsed and identity-checked.
-- JCS property ordering follows RFC 8785 UTF-16 code units, including non-BMP keys.
-- Recovery state represents the full 65,536-entry materialization closure.
+A clone derives a new AX logical session and native target identity without moving, stopping, or mutating the source. The source lease, task-board authority, approvals, credentials, pending operations, and foreign instruction authority never transfer. Raw evidence is retained, every canonical item and projection is accounted for, and non-exact fidelity is disclosed per item with stable reasons.
 
-**Status Caveat:** This release publishes **specification artifacts only**. It does not contain an executable `ax` product binary, and no runtime product validation is implied by this release.
+The transaction requires a stable source capture, authority-scoped target staging, independent staged read-back, publication with rollback retained, live discovery/read-back, a resume plan, a second source-generation check, Provider commit, an ordinary target AX Checkpoint, and lineage publication. Crash/restart behavior remains limited to `safe_retry`, `explicit_rollback`, or `recoverable_parked_state`.
 
-## Normative Architecture
-The `ax` product manages durable coding-agent sessions across an explicitly trusted, allowlisted mesh. Highlights include:
-- A single active owner host with zero or more dormant replicas.
-- Versioned JSON-over-stdio provider plugin protocol supporting Codex, Claude, Gemini, Muse, Antigravity, and Pi.
-- Content-addressed anti-entropy replication mechanism over SSH without a permanent public TCP listener.
-- Task-board integration preserving `tb-sessiond` ownership while transporting opaque bundles.
-- C4 container context and rigorous ownership state machine documentation.
+## Plugin and contract boundary
 
-## Capability Limits and Unimplemented Features
-Capabilities are gated and reported per-provider and per-platform:
+Semantic conversion uses companion `urn:ax:protocol:session-adapter` `1.0.0`, served by the same trusted `ax-provider-<id>` executable and bound to its observed executable digest. The Session Adapter performs native-to-canonical capture and canonical-to-native projection; Provider Protocol `2.0.0` retains native object-sink, transaction, commit, rollback, discovery, capture, and resume-plan responsibilities. This release does not introduce Provider Protocol `3.0.0`, change Mesh RPC `2.0.0`, or create pairwise environment converters.
+
+New or clone-specific contract versions include:
+
+| Contract | Version |
+| --- | --- |
+| Session Adapter protocol, manifest, and probe | `1.0.0` |
+| Canonical Session/Event, Projection Plan, Fidelity Report, Migration Checkpoint, clone manifests/reports/receipt, supported-tuple registry | `1.0.0` |
+| Session Record and Session Event for cross-environment clone targets | `2.0.0` |
+| Materialization Plan | `2.0.0` |
+| Clone-only Materialization Journal | `3.0.0` |
+| CLI Result for `session.clone.*` | `2.0.0` |
+| Structured Error for Session Adapter and clone commands | `1.1.0` |
+
+Session Record `2.0.0` is emitted in `v0.3.0` only for cross-environment clone targets. Provider Protocol `2.0.0` launch and fork continue to use Session Record `1.0.0` and the existing fork provenance until an explicit containing-protocol revision adopts the tagged major-2 record.
+
+## Supported-evidence policy
+
+Support is granted only to an exact source-reader or target-writer environment tuple admitted by the signed `compatibility/supported-environment-tuples-v1.json` registry. The tuple, provider and adapter manifests/probes, host-observed executable binding, contract versions, fixture corpus, native smoke evidence, validity interval, and non-revoked status must agree.
+
+Missing, malformed, stale, partially readable, mismatched, self-minted, wildcard, or revoked evidence fails closed. Only the AX release authority may globally accept or revoke tuples. A local operator may deny additional tuples but cannot approve an absent tuple or override a revocation. Provider-name support, a healthy probe by itself, and archive-only source evidence do not establish target-write support.
+
+## Compatibility and retained boundaries
+
+- Provider Protocol and Mesh RPC remain `2.0.0`; the task-board bridge remains `1.0.0`.
+- The `v0.2.1` crash/restart outcome gate remains normative and now covers the clone boundaries `CR-CLONE-01..16`.
 - Qwen is only supported via task-board prompt-mode bundles (no direct native `ax-provider-qwen` claim).
 - Muse relies on a narrow, version- and platform-gated native store/resume probe and advertises `portable_store=false` (`cron.db` is durable but not safely portable).
 - Antigravity resumes via conversation UUID through its authenticated backend/account realm, rather than relying on copying local cache as a portable store or checkpoint.
 - For Claude, the direct adapter's `appserver` capability is unsupported, but `task_board_primary`, `prompt_spawn`, and `native_goal_binding` are available through task-board.
 - Native Windows and WSL2 are distinctly partitioned. Native Windows does not claim `tmux` support, using native process supervision and ConPTY instead.
+- Payload encryption at rest is not provided; `mesh.payload_encryption` remains `none`.
+- Credentials, secrets, live PIDs/sockets/locks, and live SQLite files remain excluded from replication and clone bundles.
 
-## Security Boundary
-The system assumes an explicitly allowlisted trusted mesh.
-- No payload encryption at rest is provided in v0.2.1 (`mesh.payload_encryption` MUST be `none`).
-- Transport uses standard Tailscale SSH or OpenSSH.
-- Secrets, active sockets, tmux servers, and live database files are explicitly excluded from replication.
+## Traceability
 
-## Known Limitations
-- Network split-brain scenarios must be explicitly managed by force takeover, retaining both histories for manual resolution.
-- Workspace conflict resolution is fail-closed, prioritizing explicit user choices (copy, worktree, or verified replace) over automated merges.
-- v0.2.1 does not specify Byzantine consensus or isolate hostile peers.
+`STANDALONE_TO_AX_TRACEABILITY.md` maps every standalone section to the resulting AX section, identifies reused and new contracts, lists superseded standalone rules with rationale, and records closure of all four deferred AX merge decisions. `SPEC.md` remains the only normative source.
