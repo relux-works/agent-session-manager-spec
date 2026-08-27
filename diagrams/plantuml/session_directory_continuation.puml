@@ -1,0 +1,75 @@
+@startuml session_directory_continuation
+skinparam BackgroundColor #FFFFFF
+skinparam maxMessageSize 72
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam sequence {
+    ArrowColor #0D47A1
+    LifeLineBorderColor #1565C0
+    LifeLineBackgroundColor #E3F2FD
+    ParticipantBorderColor #1565C0
+    ParticipantBackgroundColor #E3F2FD
+    ParticipantFontColor #000000
+}
+hide footbox
+
+title Session Continuation — Select, Plan, Materialize, and Launch
+
+actor Operator
+participant "Session Browser TUI" as TUI
+participant "Directory / Lineage" as Directory
+participant "Continuation Planner" as Planner
+participant "Source Node" as Source
+participant "Target Node" as Target
+participant "AX Data Plane" as AX
+participant "Session Cloning" as Clone
+participant "Target Terminal" as Terminal
+
+autonumber
+
+== Selection and pure planning ==
+
+Operator -> TUI: select lineage/session instance
+TUI -> Directory: resolve exact entry and current catalog head
+Directory --> TUI: instances, owner, freshness, annotations, warnings
+Operator -> TUI: choose intent, target host, target environment
+TUI -> Planner: plan continuation from observed head
+Planner -> Source: revalidate instance, source head, runtime, lease
+Source --> Planner: authoritative source facts or mismatch
+Planner -> Target: probe environment tuple, auth availability, workspace
+Target --> Planner: capabilities and destination facts
+Planner -> Planner: select route and build content-addressed plan
+Planner --> TUI: steps, fidelity, bytes, risks, expiry, confirmations
+
+alt Plan unavailable or policy rejected
+    TUI --> Operator: explain blocker; no mutation
+else Operator confirms exact plan
+    Operator -> TUI: execute PLAN_ID
+    TUI -> Planner: execute with expected source/target facts
+
+    == Revalidation and execution ==
+
+    Planner -> Source: verify head/lease/runtime still match
+    Planner -> Target: verify tuple/workspace/auth still match
+
+    alt Same managed owner and environment
+        Planner -> AX: native resume or remote attach
+    else Ownership takeover without conversion
+        Planner -> AX: checkpoint, transfer, materialize, lease handoff
+    else Fork or same-environment clone
+        Planner -> AX: fork/materialize new managed session
+    else Cross-environment continuation
+        Planner -> Clone: capture, canonicalize, project, validate target
+        Clone -> AX: transfer artifacts and publish lineage
+    end
+
+    AX -> Target: finalize managed target and winning ownership
+    Target -> Terminal: launch exact resume plan under fencing token
+    Terminal --> Target: runtime/attach evidence
+    Target --> Planner: committed target and attach plan
+    Planner --> TUI: target identity, fidelity, lineage, attach command
+    TUI -> Terminal: local attach or authenticated remote attach
+    Terminal --> Operator: interactive native agent terminal
+end
+
+@enduml

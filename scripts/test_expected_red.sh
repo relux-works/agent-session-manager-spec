@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Expected-red mutation suite for v0.3.0 specification validation ==="
+echo "=== Expected-red mutation suite for v0.4.0 ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -557,32 +557,32 @@ expect_fail "Muse portability remains positive despite without-conversion qualif
 echo ""
 echo "Mutation 46: Active default-encryption wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-encryption-active")
-printf '\nBy default, all session snapshots receive at-rest encryption.\n' >> "$FIX/SPEC.md"
-expect_fail "frozen release baseline rejects active default-encryption wording" "SPEC.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+printf '\nSession snapshots are encrypted at rest by default.\n' >> "$FIX/SPEC.md"
+expect_fail "semantic security gate rejects active default-encryption wording" "forbidden positive default at-rest encryption claim" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.4.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.4.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
 printf '\nQwen sessions do not need task-board in v0.2.1.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.4.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.3.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.4.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
@@ -1312,13 +1312,13 @@ echo ""
 echo "Mutation 105: Internal v0.3.0 task ownership ID leaks into public docs"
 FIX=$(fixture_copy "clone-public-internal-task-id")
 printf '\nGate owner: TASK-260826-example.\n' >> "$FIX/README.md"
-expect_fail "public package must not expose active internal task ownership" "stale/internal v0.3.0 publication marker" "$FIX"
+expect_fail "public package must not expose active internal task ownership" "stale/internal v0.4.0 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 106: Stale v0.2.1 diagram-ledger wording returns"
 FIX=$(fixture_copy "clone-stale-diagram-ledger")
 printf '\nUses the unchanged v0.2.1 SHA-256 ledger.\n' >> "$FIX/diagrams/README.md"
-expect_fail "diagram docs must describe the v0.3.0 ledger" "stale/internal v0.3.0 publication marker" "$FIX"
+expect_fail "diagram docs must describe the v0.4.0 ledger" "stale/internal v0.4.0 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 107: Target derivation mutates the source provider identity after digest refresh"
@@ -1475,7 +1475,7 @@ refresh_frozen_spec_digest "$FIX"
 expect_fail "clone must reuse AX transfer contracts" "clone gate reuses AX transfer contracts" "$FIX"
 
 echo ""
-echo "Mutation 118: Public diagram ledgers regress to three PlantUML sources and seven SVG artifacts"
+echo "Mutation 118: Public diagram ledgers regress to five PlantUML sources and nine SVG artifacts"
 FIX=$(fixture_copy "clone-public-diagram-ledgers-narrowed")
 python3 - "$FIX" <<'PY'
 from pathlib import Path
@@ -1485,13 +1485,356 @@ root = Path(sys.argv[1])
 for name in ("README.md", "CONTRIBUTING.md"):
     path = root / name
     text = path.read_text(encoding="utf-8")
-    text = text.replace("five handwritten PlantUML sources", "three handwritten PlantUML sources")
-    text = text.replace("nine committed SVG artifacts", "seven committed SVG artifacts")
+    text = text.replace("eight handwritten PlantUML sources", "five handwritten PlantUML sources")
+    text = text.replace("twelve committed SVG artifacts", "nine committed SVG artifacts")
     path.write_text(text, encoding="utf-8")
 PY
 refresh_frozen_document_digest "$FIX" "README.md"
 refresh_frozen_document_digest "$FIX" "CONTRIBUTING.md"
-expect_fail "public diagram ledgers must not narrow to stale 3/7 counts" "public diagram ledger must declare five handwritten PlantUML sources" "$FIX"
+expect_fail "public diagram ledgers must not narrow to stale 5/9 counts" "public diagram ledger must declare eight handwritten PlantUML sources" "$FIX"
+
+mutate_directory_fixture() {
+  local fixture_dir="$1"
+  local mutation="$2"
+  python3 - "$fixture_dir" "$mutation" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "fixtures" / "session_directory_conformance.json"
+data = json.loads(path.read_text(encoding="utf-8"))
+exec(sys.argv[2], {"data": data})
+path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+}
+
+echo ""
+echo "Mutation 119: Directory object placed in wrong namespace"
+FIX=$(fixture_copy "directory-wrong-namespace")
+mutate_directory_fixture "$FIX" 'data["mesh"]["directory_namespace"]="record"'
+expect_fail "directory object wrong namespace" "directory objects must be placed only in directory_record namespace" "$FIX"
+
+echo ""
+echo "Mutation 120: RPC 3 hello omits a directory contract"
+FIX=$(fixture_copy "directory-hello-missing-contract")
+mutate_directory_fixture "$FIX" 'del data["mesh"]["hello_contracts"]["session_annotation"]'
+expect_fail "hello missing directory contract" "exact 24 required contract keys" "$FIX"
+
+echo ""
+echo "Mutation 121: RPC 3 retains old six-namespace cardinality"
+FIX=$(fixture_copy "directory-old-namespace-cardinality")
+mutate_directory_fixture "$FIX" 'data["mesh"]["namespace_count"]=6'
+expect_fail "old namespace cardinality" "namespace cardinality must be seven" "$FIX"
+
+echo ""
+echo "Mutation 122: Closed directory object admits unknown field"
+FIX=$(fixture_copy "directory-unknown-field")
+mutate_directory_fixture "$FIX" 'data["closed_shapes"]["environment_observation"].append("unexpected")'
+expect_fail "closed directory object unknown field" "unknown field admitted" "$FIX"
+
+echo ""
+echo "Mutation 123: Directory JCS self-ID is wrong"
+FIX=$(fixture_copy "directory-wrong-self-id")
+mutate_directory_fixture "$FIX" 'data["identity_vectors"][0]["expected_id"]="sha256:00"'
+expect_fail "wrong directory self-ID" "wrong self-ID for urn:ax:schema:environment-observation" "$FIX"
+
+echo ""
+echo "Mutation 124: Directory digest array is unsorted"
+FIX=$(fixture_copy "directory-unsorted-ids")
+mutate_directory_fixture "$FIX" 'data["sorted_id_fixture"].reverse()'
+expect_fail "unsorted directory IDs" "must be bytewise sorted and unique" "$FIX"
+
+echo ""
+echo "Mutation 125: Replication policy admits raw transcript metadata"
+FIX=$(fixture_copy "directory-raw-transcript-replication")
+mutate_directory_fixture "$FIX" 'data["disclosure"]["excluded_from_mesh"].remove("raw_transcript")'
+expect_fail "raw transcript admitted to mesh" "replicated metadata must exclude raw IDs/paths/transcripts" "$FIX"
+
+echo ""
+echo "Mutation 126: Partial scan asserts missing"
+FIX=$(fixture_copy "directory-partial-missing")
+mutate_directory_fixture "$FIX" 'data["observation_cases"]["partial"]="missing"'
+expect_fail "partial scan asserts missing" "offline/partial scan cannot assert presence=missing" "$FIX"
+
+echo ""
+echo "Mutation 127: Observation conflict resolves by wall clock"
+FIX=$(fixture_copy "directory-clock-conflict")
+mutate_directory_fixture "$FIX" 'data["observation_cases"]["conflict_resolution"]="wall_clock"'
+expect_fail "wall-clock conflict resolution" "never wall clock" "$FIX"
+
+echo ""
+echo "Mutation 128: Generated annotation omits evidence binding"
+FIX=$(fixture_copy "directory-generated-unbound")
+mutate_directory_fixture "$FIX" 'data["annotation_cases"]["generated_requires"].remove("evidence_ids")'
+expect_fail "generated annotation without evidence" "requires exact subject head, profile, and evidence" "$FIX"
+
+echo ""
+echo "Mutation 129: Enrichment overwrites manual title"
+FIX=$(fixture_copy "directory-enrichment-overwrites-manual")
+mutate_directory_fixture "$FIX" 'data["annotation_cases"]["manual_precedence"]=False'
+expect_fail "enrichment overwrites manual title" "must not overwrite manual title metadata" "$FIX"
+
+echo ""
+echo "Mutation 130: Supersession omits a concurrent head"
+FIX=$(fixture_copy "directory-incomplete-supersession")
+mutate_directory_fixture "$FIX" 'data["annotation_cases"]["conflict_resolution"]="supersede_one_head"'
+expect_fail "incomplete supersession resolution" "supersede every concurrent head" "$FIX"
+
+echo ""
+echo "Mutation 131: Mutation ID changed input reuses success receipt"
+FIX=$(fixture_copy "directory-idempotency-changed-input")
+mutate_directory_fixture "$FIX" 'data["directory_node"]["idempotency"]["same_mutation_changed_input"]="same_receipt"'
+expect_fail "changed-input mutation ID reuse" "must return idempotency_mismatch" "$FIX"
+
+echo ""
+echo "Mutation 132: Stale plan silently replans"
+FIX=$(fixture_copy "directory-stale-plan-replans")
+mutate_directory_fixture "$FIX" 'data["continuation_plan"]["silent_replan"]=True'
+expect_fail "stale plan silent replan" "without silent replan/route substitution" "$FIX"
+
+echo ""
+echo "Mutation 133: Remote unmanaged open is admitted"
+FIX=$(fixture_copy "directory-remote-unmanaged-open")
+mutate_directory_fixture "$FIX" 'data["remote_unmanaged"]["open_allowed"]=True'
+expect_fail "remote unmanaged open" "remote unmanaged open is forbidden" "$FIX"
+
+echo ""
+echo "Mutation 134: Cross-environment route changes provider in place"
+FIX=$(fixture_copy "directory-provider-change-in-place")
+mutate_directory_fixture "$FIX" 'data["cloning"]["provider_change_in_place"]=True'
+expect_fail "provider change in place" "cannot change provider in place" "$FIX"
+
+echo ""
+echo "Mutation 135: Clone succeeds without fidelity/read-back evidence"
+FIX=$(fixture_copy "directory-clone-without-evidence")
+mutate_directory_fixture "$FIX" 'data["cloning"]["success_requires_fidelity"]=False; data["cloning"]["success_requires_read_back"]=False'
+expect_fail "clone without fidelity/read-back" "requires fidelity/read-back" "$FIX"
+
+echo ""
+echo "Mutation 136: Move stops source before target commit"
+FIX=$(fixture_copy "directory-source-stop-first")
+mutate_directory_fixture "$FIX" 'data["move_trace"]=["capture","source_stop_release","transfer","project","validate","target_commit","lineage_publish"]'
+expect_fail "source stop before target commit" "commit target and lineage before source stop/release" "$FIX"
+
+echo ""
+echo "Mutation 137: Launch example permits shell concatenation"
+FIX=$(fixture_copy "directory-shell-concatenation")
+mutate_directory_fixture "$FIX" 'data["security"]["launch"]["shell_concatenation"]=True'
+expect_fail "shell-concatenated launch" "forbids shell concatenation" "$FIX"
+
+echo ""
+echo "Mutation 138: Default directory output contains raw transcript"
+FIX=$(fixture_copy "directory-default-raw-transcript")
+mutate_directory_fixture "$FIX" 'data["interfaces"]["default_contains_raw_transcript"]=True'
+expect_fail "raw transcript in default output" "default output must exclude raw transcript" "$FIX"
+
+echo ""
+echo "Mutation 139: Unsupported v0.4 implementation claim in README"
+FIX=$(fixture_copy "directory-unsupported-readme-claim")
+printf '\nAX v0.4.0 directory implementation is shipped and available.\n' >> "$FIX/README.md"
+refresh_frozen_document_digest "$FIX" "README.md"
+expect_fail "unsupported README implementation claim" "README/release claim is not supported by SPEC and fixtures" "$FIX"
+
+echo ""
+echo "Mutation 140: Publication ownership is stolen from the publication task"
+FIX=$(fixture_copy "directory-publication-owner")
+mutate_directory_fixture "$FIX" 'data["publication"]["frozen_digest_owner"]="conformance-task"'
+expect_fail "directory publication hash ownership" "candidate/release ownership" "$FIX"
+
+mutate_directory_spec() {
+  local fixture_dir="$1"
+  local mutation="$2"
+  python3 - "$fixture_dir" "$mutation" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+before = path.read_text(encoding="utf-8")
+scope = {"text": before}
+exec(sys.argv[2], scope)
+after = scope["text"]
+if after == before:
+    raise SystemExit("directory SPEC mutation made no change")
+path.write_text(after, encoding="utf-8")
+PY
+}
+
+echo ""
+echo "Mutation 141: SPEC drops Directory Node operation registry authority"
+FIX=$(fixture_copy "directory-spec-node-registry")
+mutate_directory_spec "$FIX" 'text=text.replace("The exact operation registry and bodies are:", "The illustrative operation registry and bodies are:", 1)'
+expect_fail "SPEC Directory Node registry regression" "directory gate directory_node: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 142: SPEC narrows RPC 3 hello to 23 keys"
+FIX=$(fixture_copy "directory-spec-hello-map")
+mutate_directory_spec "$FIX" 'text=text.replace("exact 24-key map", "exact 23-key map", 1)'
+expect_fail "SPEC RPC 3 hello regression" "directory gate mesh_namespace: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 143: SPEC opens the route registry"
+FIX=$(fixture_copy "directory-spec-route-registry")
+mutate_directory_spec "$FIX" 'text=text.replace("Continuation routes are the closed registry", "Continuation routes are an open registry", 1)'
+expect_fail "SPEC route registry regression" "directory gate route_outcomes: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 144: SPEC drops immutable receipt-chain derivation"
+FIX=$(fixture_copy "directory-spec-receipt-chain")
+mutate_directory_spec "$FIX" 'text=text.replace("State derives only from a valid\ncontiguous receipt chain", "State may derive from a mutable current row", 1)'
+expect_fail "SPEC receipt chain regression" "directory gate receipt_chains: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 145: SPEC weakens mesh disclosure exclusions"
+FIX=$(fixture_copy "directory-spec-disclosure")
+mutate_directory_spec "$FIX" 'text=text.replace("Raw\nnative/transcript/preview/model payloads, credentials/auth state, terminal\noutput, PIDs/PTYs/sockets, absolute native-store paths, runtime observations,\nand SQLite rows are excluded", "Raw transcript and credential payloads may replicate", 1)'
+expect_fail "SPEC disclosure exclusion regression" "directory gate disclosure_policy: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 146: SPEC moves source release before lineage publication"
+FIX=$(fixture_copy "directory-spec-move-order")
+mutate_directory_spec "$FIX" 'text=text.replace("lineage publication before source\nstop/release", "source stop/release before lineage publication", 1)'
+expect_fail "SPEC target-first move regression" "directory gate target_first_move: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 147: SPEC drops remote unmanaged refusal"
+FIX=$(fixture_copy "directory-spec-remote-unmanaged")
+mutate_directory_spec "$FIX" 'text=text.replace("Remote unmanaged open is always\n<code>unmanaged_remote_forbidden</code>", "Remote unmanaged open is conditionally allowed", 1)'
+expect_fail "SPEC remote unmanaged regression" "directory gate remote_unmanaged: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 148: SPEC drops final cloning contract linkage"
+FIX=$(fixture_copy "directory-spec-cloning-links")
+mutate_directory_spec "$FIX" 'text=text.replace("Cross-environment routes reference the exact v0.3 Clone Capture/Raw Object", "Cross-environment routes use an implementation-defined converter", 1)'
+expect_fail "SPEC cloning linkage regression" "directory gate cloning_fidelity: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 149: SPEC opens the typed query registry"
+FIX=$(fixture_copy "directory-spec-query-registry")
+mutate_directory_spec "$FIX" 'text=text.replace("Read operations are exactly <code>schema</code>", "Read operations include <code>schema</code>", 1)'
+expect_fail "SPEC query registry regression" "directory gate interfaces: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 150: SPEC drops explicit environment/provider mapping"
+FIX=$(fixture_copy "directory-spec-environment-map")
+mutate_directory_spec "$FIX" 'text=text.replace("The initial mapping is exactly <code>claude-code -> claude</code>", "The initial mapping is inferred from equal strings", 1)'
+expect_fail "SPEC environment mapping regression" "directory gate environment_mapping: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 151: SPEC drops structured launch boundary"
+FIX=$(fixture_copy "directory-spec-launch-boundary")
+mutate_directory_spec "$FIX" 'text=text.replace("All native/process launches use structured argv, explicit workspace-derived cwd,\nminimal environment allowlists", "Native/process launches may concatenate a shell command", 1)'
+expect_fail "SPEC launch boundary regression" "directory gate security: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 152: SPEC permits silent continuation replan"
+FIX=$(fixture_copy "directory-spec-silent-replan")
+mutate_directory_spec "$FIX" 'text=text.replace("no silent replan, target/intent/route\nsubstitution", "silent replan and route substitution are allowed", 1)'
+expect_fail "SPEC continuation replan regression" "directory gate continuation_plan: SPEC semantic binding missing" "$FIX"
+
+echo ""
+echo "Mutation 153: Immutable self-ID vector coverage is narrowed"
+FIX=$(fixture_copy "directory-self-id-coverage-narrowed")
+mutate_directory_fixture "$FIX" 'data["identity_vectors"]=[row for row in data["identity_vectors"] if row["schema"] != "urn:ax:schema:native-session-observation"]'
+expect_fail "directory self-ID vector coverage narrowed" "identity vector coverage must contain exactly one vector for every immutable directory schema" "$FIX"
+
+echo ""
+echo "Mutation 154: Canonical self-ID input retains its self field"
+FIX=$(fixture_copy "directory-self-id-field-retained")
+mutate_directory_fixture "$FIX" 'data["identity_vectors"][0]["canonical_input"]["observation_id"]="sha256:self-minted"'
+expect_fail "directory self-ID omission rule" "canonical_input must omit only self field observation_id" "$FIX"
+
+echo ""
+echo "Mutation 155: Native Session Observation closed shape admits a field"
+FIX=$(fixture_copy "directory-native-observation-open-shape")
+mutate_directory_fixture "$FIX" 'data["closed_shapes"]["native_session_observation"].append("native_store_path")'
+expect_fail "native observation closed schema narrowed" "closed directory object member registry mismatch or unknown field admitted" "$FIX"
+
+echo ""
+echo "Mutation 156: Directory Node preview request body drops head binding"
+FIX=$(fixture_copy "directory-preview-body-narrowed")
+mutate_directory_fixture "$FIX" 'data["closed_body_unions"]["directory_node_request"]["preview"].remove("expected_head_digest")'
+expect_fail "Directory Node request union narrowed" "Directory Node request body union/member registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 157: Structured Claude/Codex session case coverage is narrowed"
+FIX=$(fixture_copy "directory-provider-case-narrowed")
+mutate_directory_fixture "$FIX" 'data["synthetic_cases"]["provider_sessions"]=[row for row in data["synthetic_cases"]["provider_sessions"] if row["case_id"] != "codex-corrupt"]'
+expect_fail "provider session fixture coverage narrowed" "provider session fixtures must cover every Claude/Codex shape exactly once" "$FIX"
+
+echo ""
+echo "Mutation 158: Structured route execution coverage omits one route"
+FIX=$(fixture_copy "directory-route-case-narrowed")
+mutate_directory_fixture "$FIX" 'data["synthetic_cases"]["routes"]=[row for row in data["synthetic_cases"]["routes"] if row["route"] != "managed_remote_attach"]'
+expect_fail "route fixture coverage narrowed" "route fixtures must cover every route with its exact outcome matrix" "$FIX"
+
+echo ""
+echo "Mutation 159: Crash matrix omits post-commit lost response"
+FIX=$(fixture_copy "directory-crash-point-narrowed")
+mutate_directory_fixture "$FIX" 'data["synthetic_cases"]["crash_points"]=[row for row in data["synthetic_cases"]["crash_points"] if not (row["step"] == "target_commit" and row["position"] == "after")]'
+expect_fail "crash-point fixture coverage narrowed" "crash fixtures must cover before/after every durable step with same-chain recovery" "$FIX"
+
+echo ""
+echo "Mutation 160: RPC hello retains the right key with a stale version"
+FIX=$(fixture_copy "directory-hello-version-narrowed")
+mutate_directory_fixture "$FIX" 'data["mesh"]["hello_contracts"]["session_record"]=["1.0.0", "2.0.0"]'
+expect_fail "RPC hello version map narrowed" "RPC 3 hello contract version map mismatch" "$FIX"
+
+echo ""
+echo "Mutation 161: directory_record membership omits one immutable schema"
+FIX=$(fixture_copy "directory-namespace-membership-narrowed")
+mutate_directory_fixture "$FIX" 'data["mesh"]["directory_schemas"].remove("urn:ax:schema:session-enrichment-job-receipt")'
+expect_fail "directory namespace membership narrowed" "namespace membership must contain the exact ten immutable directory schemas" "$FIX"
+
+echo ""
+echo "Mutation 162: Operation receipt transition oracle omits uncertain recovery"
+FIX=$(fixture_copy "directory-receipt-transition-narrowed")
+mutate_directory_fixture "$FIX" 'data["receipt_cases"]["operation_transitions"]["uncertain"].remove("succeeded")'
+expect_fail "operation receipt transition oracle narrowed" "Directory Operation Receipt transition oracle mismatch" "$FIX"
+
+echo ""
+echo "Mutation 163: Directory Query result body drops its partial marker"
+FIX=$(fixture_copy "directory-query-result-narrowed")
+mutate_directory_fixture "$FIX" 'data["closed_body_unions"]["query_results"]["directory_entries"].remove("partial")'
+expect_fail "Directory Query result union narrowed" "Directory Query result union/member registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 164: SPEC-only closed authentication enum is widened"
+FIX=$(fixture_copy "directory-spec-auth-enum-widened")
+mutate_directory_spec "$FIX" 'text=text.replace("available|missing|expired|unknown", "available|missing|expired|unknown|admin")'
+refresh_frozen_spec_digest "$FIX"
+expect_fail "SPEC-only closed enum widening" "exact normative directory schema registry drift in directory records and query (members/types/enums)" "$FIX"
+
+echo ""
+echo "Mutation 165: SPEC-only Environment Observation member is removed"
+FIX=$(fixture_copy "directory-spec-member-removed")
+mutate_directory_spec "$FIX" 'text=text.replace("<code>observed_at</code>, <code>extensions</code> | diagnostic timestamp and reverse-DNS object |", "<code>observed_at</code> | diagnostic timestamp |", 1)'
+refresh_frozen_spec_digest "$FIX"
+expect_fail "SPEC-only closed schema member removal" "exact normative directory schema registry drift in directory records and query (members/types/enums)" "$FIX"
+
+echo ""
+echo "Mutation 166: SPEC-only Environment Observation member type changes"
+FIX=$(fixture_copy "directory-spec-member-type-changed")
+mutate_directory_spec "$FIX" 'text=text.replace("<code>runtime_status</code> | <code>available|degraded|unavailable</code> |", "<code>runtime_status</code> | <code>string</code> |", 1)'
+refresh_frozen_spec_digest "$FIX"
+expect_fail "SPEC-only closed schema member type change" "exact normative directory schema registry drift in directory records and query (members/types/enums)" "$FIX"
+
+echo ""
+echo "Mutation 167: Standalone traceability link uses a stale SPEC anchor"
+FIX=$(fixture_copy "traceability-stale-spec-anchor")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "STANDALONE_TO_AX_TRACEABILITY.md"
+text = path.read_text(encoding="utf-8")
+old = "SPEC.md#1314-cross-environment-clone"
+new = "SPEC.md#1314-cross-environment-session-cloning"
+if old not in text:
+    raise SystemExit("traceability anchor mutation source missing")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+refresh_frozen_document_digest "$FIX" "STANDALONE_TO_AX_TRACEABILITY.md"
+expect_fail "traceability stale SPEC anchor" "STANDALONE_TO_AX_TRACEABILITY.md: broken anchor '1314-cross-environment-session-cloning' in link to SPEC.md" "$FIX"
 
 echo ""
 echo "=========================================="

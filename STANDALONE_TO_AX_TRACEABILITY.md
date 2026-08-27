@@ -1,6 +1,6 @@
-# Standalone Cloning to AX v0.3.0 Traceability
+# Standalone Subsystems to AX v0.4.0 Traceability
 
-This document is a non-normative migration index. [SPEC.md](SPEC.md) is the only normative source; this file does not restate or extend its requirements. It accounts for the standalone *Cross-Environment Agent Session Cloning Specification v0.1.0* source identified by SHA-256 `d8e2ef73f6a07ef58219fd2c4e8e16dff681728ec0b153653fc87f1f200af475`.
+This document is a non-normative migration index. [SPEC.md](SPEC.md) is the only normative source; this file does not restate or extend its requirements. It accounts for the standalone *Cross-Environment Agent Session Cloning Specification v0.1.0* source identified by SHA-256 `d8e2ef73f6a07ef58219fd2c4e8e16dff681728ec0b153653fc87f1f200af475` and the standalone *AX Session Directory and Orchestration Specification v0.1.0* source identified by SHA-256 `486612e4c1a10dcfc6e75cf17c60beb974c6989b82c333a9350fa1befd1a448f`.
 
 Disposition codes:
 
@@ -147,6 +147,41 @@ Rows with multiple codes preserve part of the standalone intent while replacing 
 
 ## Resolved deferred decisions
 
+### Directory section mapping
+
+Each row covers the named standalone section and all of its subsections. The
+accepted mapping authority is
+`.research/260827_session-directory-merge-audit.md` and board outcome
+`TASK-260827-32hife_session-directory-merge-audit.md`.
+
+| Standalone directory section | AX v0.4.0 target | Disposition and migration result |
+| --- | --- | --- |
+| 1. Conformance, scope, and product boundary | §§1–2, 19 | N/S — product outcomes are integrated and all 45 merge invariants are individually registered as `DIR-INV-01..45`. |
+| 2. Architecture and responsibility boundaries | §§3.1, 7.9, 10.8, 11.8 | R/N — local-first topology is retained; Directory Node is a companion façade backed by the same environment implementation and gains no separate Provider/workspace authority. |
+| 3. Contract registry and common data rules | §§1.5–1.6 | R/N — AX canonicalization is reused and all independently consumed directory contracts receive exact closed versions. |
+| 4. Directory domain model | §§2.1, 5.1, 10.8 | N/S — observations, lineage, annotations, profiles, jobs, plans, receipts, and queries become AX records; derived entries remain non-authoritative. |
+| 5. Directory node and adapter contracts | §§7.9, 15 | N/S — Directory Node 1 is separately negotiated; Provider 2 and Session Adapter 1 stay authoritative for their existing boundaries. |
+| 6. Catalog convergence, freshness, and search indexing | §§10.8, 11.8, 12 | R/N — catalog/index remains rebuildable; sanitized immutable records use AX anti-entropy and exact source-local freshness. |
+| 7. Enrichment profiles, jobs, and annotations | §§10.8, 16.7 | N — exact-head, immutable receipt, supersession-DAG, model policy, and isolated-worker rules are integrated. |
+| 8. Human and agent query interfaces | §§10.8, 14.5 | N/S — one typed query engine replaces standalone textual shapes; projection, batching, pagination, scoped grep, schema discovery, and guarded mutations are closed. |
+| 9. Continuation planning and routing | §§10.8, 13.15 | N — pure content-addressed plans, exact route/outcome registries, visibility, expiry, and revalidation are integrated. |
+| 10. Continuation execution | §§5.2, 10.8, 13.15 | R/N/S — immutable receipts drive operation state while AX/cloning transactions retain all mutation authority. |
+| 11. Human TUI and CLI | §14.5 | N/S — merged into `ax sessions`, CLI Result 3, query commands, four-region TUI, and shared planner/executor. |
+| 12. Mesh catalog and convergence | §§11.4, 11.8, 17.5 | R/N — RPC 3 adds one disjoint `directory_record` namespace and remains dual-stack with RPC 2; no transcript/index server is introduced. |
+| 13. Security and privacy | §§16.1–16.7 | R/N — AX trust/path/process rules are reused and directory disclosure, enrichment, query, log, metric, and terminal exclusions are added. |
+| 14. Errors and exit semantics | §15.3 | N — Structured Error 1.2 adds exact directory codes and bindings without changing older envelopes. |
+| 15. Compatibility and versioning | §§1.5, 17.5 | N/S — v0.4.0 version changes are explicit; the entire v0.3 cloning/workspace/transfer/materialization authority is reused unchanged. |
+| 16. Observability and operation | §§18.1–18.4 | R/N — the open Observation Event 1 grammar is reused and directory lifecycle, doctor, metric, and audit requirements are added. |
+| 17. Conformance and test requirements | §§19.1–19.5, Appendix D | N/S — AX production-path and focused-negative fixture gates replace the standalone harness layout. |
+| 18. AX integration and merge contract | §§1.5, 5, 7.9, 10.8, 11.8, 13.15, 17.5 | N/S — all merge decisions are closed; duplicate Provider/workspace/blob/transfer/materialization/lease/terminal/cloning authority is forbidden. |
+| 19. Delivery phases | §19.1 | S — standalone delivery sequencing is folded into AX implementation phases. |
+| Appendix A. Prior-art audit | Appendix C | E — evidence only; no runtime dependency. |
+| Appendix B. Example directory and continuation flow | §§10.8, 13.15, 14.5, Appendix D | S — registered AX records/results/fixtures replace standalone examples. |
+| Appendix C. Schema publication layout | §§1.5, 3.2, 17.5, Appendix D | S — AX registry, storage, compatibility, and fixture authorities replace standalone paths. |
+| Appendix D. Requirement traceability | SPEC Appendix A.10 and `AC-DIR-*` | N/S — every requirement is mapped into normative AX sections and acceptance gates. |
+
+### Cloning merge decisions
+
 | Deferred question | AX v0.3.0 decision | Rationale and normative destination |
 | --- | --- | --- |
 | Final CLI namespace | `ax session clone`; no `ax clone` alias | Keeps the feature inside the existing session domain and permits closed plan/run results; [§14.1](SPEC.md#141-command-surface). |
@@ -188,4 +223,16 @@ This register identifies standalone-only rules that must not remain as normative
 
 ## Dependency closure
 
-The standalone document is retained only as historical input identified by its digest. No AX implementation or release process needs it to interpret `SPEC.md`. All normative contracts are registered in [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), and the cloning rules live in [§7.8](SPEC.md#78-companion-session-adapter-protocol), [§13.14.1-§13.14.5](SPEC.md#13141-capture-and-canonical-contracts), [§14-§19](SPEC.md#14-cli-and-operator-experience), and [Appendix D](SPEC.md#appendix-d-normative-contract-fixture-catalog).
+The standalone cloning document is retained only as a historical input
+identified by its digest. No AX implementation or release process needs it to
+interpret `SPEC.md`. The standalone directory document is retained under the
+same historical-input rule and is likewise not a runtime or release-process
+dependency. All normative contracts are registered in
+[SPEC.md §1.5](SPEC.md#15-normative-contract-registry). Cloning rules live in
+[§7.8](SPEC.md#78-companion-session-adapter-protocol),
+[§13.14](SPEC.md#1314-cross-environment-clone), and Appendix D;
+directory rules live in [§7.9](SPEC.md#79-companion-directory-node-protocol),
+[§10.8](SPEC.md#108-directory-records-lineage-enrichment-query-and-continuation),
+[§11.8](SPEC.md#118-mesh-rpc-300-directory-replication),
+[§13.15](SPEC.md#1315-directory-continuation-planning-and-execution),
+[§14.5](SPEC.md#145-session-directory-cli-result-3-query-and-tui), and Appendix D.

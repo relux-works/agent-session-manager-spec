@@ -4,7 +4,7 @@ views {
         autoLayout tb
     }
 
-    container ax "ContainerContext" "Container diagram for Agent Session Manager." {
+    container ax "ContainerContext" "Container diagram for AX state, directory, enrichment, continuation, and cloning boundaries." {
         include *
         autoLayout tb
     }

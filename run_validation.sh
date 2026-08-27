@@ -5,8 +5,8 @@ set -euo pipefail
 # Works in a clean public checkout where .temp/ and .task-board/ do not exist.
 # Never overwrites committed artifacts before freshness comparison.
 
-echo "=== ax v0.3.0 specification validation ==="
-echo "Repository: relux-works/agent-session-manager-spec, branch: main, release: v0.3.0"
+echo "=== ax v0.4.0 specification validation ==="
+echo "Repository: relux-works/agent-session-manager-spec, branch: main, release: v0.4.0"
 echo ""
 
 echo "[1/3] Validating specification contracts, metadata, links, and examples..."
@@ -60,8 +60,12 @@ GENERATED_PUML_DIR="$TEMP_DIR/c4"
 committed_pumls=$(mktemp)
 generated_pumls=$(mktemp)
 trap 'rm -rf "$TEMP_DIR" "$committed_pumls" "$generated_pumls"' EXIT
-ls -1 "$COMMITTED_PUML_DIR"/structurizr-*.puml 2>/dev/null | xargs -I{} basename {} | sort > "$committed_pumls" || true
-ls -1 "$GENERATED_PUML_DIR"/*.puml 2>/dev/null | xargs -I{} basename {} | sort > "$generated_pumls" || true
+for f in "$COMMITTED_PUML_DIR"/structurizr-*.puml; do
+  [ -e "$f" ] && basename "$f"
+done | sort > "$committed_pumls"
+for f in "$GENERATED_PUML_DIR"/*.puml; do
+  [ -e "$f" ] && basename "$f"
+done | sort > "$generated_pumls"
 if ! diff -u "$committed_pumls" "$generated_pumls"; then
   echo "ERROR: Committed C4 PlantUML file set differs from generated set."
   echo "  committed: $(cat "$committed_pumls" | tr '\n' ' ')"
@@ -86,8 +90,12 @@ echo "  Checking SVG file sets..."
 committed_svgs=$(mktemp)
 generated_svgs=$(mktemp)
 trap 'rm -rf "$TEMP_DIR" "$committed_pumls" "$generated_pumls" "$committed_svgs" "$generated_svgs"' EXIT
-ls -1 diagrams/artefacts/*.svg 2>/dev/null | xargs -I{} basename {} | sort > "$committed_svgs" || true
-ls -1 "$TEMP_DIR/artefacts"/*.svg 2>/dev/null | xargs -I{} basename {} | sort > "$generated_svgs" || true
+for f in diagrams/artefacts/*.svg; do
+  [ -e "$f" ] && basename "$f"
+done | sort > "$committed_svgs"
+for f in "$TEMP_DIR/artefacts"/*.svg; do
+  [ -e "$f" ] && basename "$f"
+done | sort > "$generated_svgs"
 if ! diff -u "$committed_svgs" "$generated_svgs"; then
   echo "ERROR: Committed SVG file set differs from generated set."
   echo "  committed: $(cat "$committed_svgs" | tr '\n' ' ')"
@@ -95,7 +103,7 @@ if ! diff -u "$committed_svgs" "$generated_svgs"; then
   echo "  Extra or missing SVGs detected."
   exit 1
 fi
-echo "  -> SVG file sets match (9 files)"
+echo "  -> SVG file sets match (12 files)"
 
 echo "  Checking SVG release-byte integrity and cross-platform source freshness..."
 for f in "$TEMP_DIR/artefacts"/*.svg; do

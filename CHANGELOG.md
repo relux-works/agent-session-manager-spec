@@ -5,6 +5,25 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.0] - 2026-08-27
+
+### Added
+
+- Integrated Session Directory and continuation orchestration as first-class AX subsystems with source-local discovery, immutable observations/batches/lineage/annotations/job receipts, a rebuildable catalog, typed human/agent queries, and a shared four-region TUI model.
+- Added the companion Directory Node protocol `1.0.0`, Directory records and Query `1.0.0`, exact-head bounded enrichment profiles/jobs, content-addressed continuation plans, immutable operation receipts, and production-path conformance fixtures.
+- Added three focused Directory PlantUML views for component authority, inventory/enrichment, and continuation, and integrated Directory/Node/worker/cloning relationships into the C4 model.
+
+### Changed
+
+- Advanced the specification package from the accepted v0.3 cloning baseline to `v0.4.0` without changing Provider Protocol `2.0.0`, Session Adapter `1.0.0`, or the existing cloning transaction authority.
+- Added directory-capable Mesh RPC `3.0.0`, Configuration `2.0.0`, CLI Result `3.0.0`, Session Record/Event `3.0.0`, and Structured Error `1.2.0`; RPC 2 remains dual-stack for core sync and reports Directory support as unavailable.
+- Expanded publication validation and focused expected-red coverage to the closed Directory schema/namespace/query/route/security invariants, the twelve-diagram artifact ledger, and the frozen v0.4.0 public-document baseline.
+
+### Security
+
+- Kept raw transcripts, preview bodies, credentials/auth state, absolute native-store paths, model-provider payloads, terminal output, live process facts, and derived SQLite outside mesh Directory records.
+- Required source-local bounded reads, explicit disclosure policy, sandboxed enrichment workers, server-side field authorization, stale-plan refusal, and target-first cross-environment move semantics.
+
 ## [v0.3.0] - 2026-08-27
 
 ### Added

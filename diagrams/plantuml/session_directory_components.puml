@@ -1,0 +1,97 @@
+@startuml session_directory_components
+skinparam BackgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+    FontColor #000000
+}
+skinparam database {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontColor #000000
+}
+skinparam node {
+    BackgroundColor #FAFAFA
+    BorderColor #616161
+    FontColor #000000
+}
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #F9A825
+    FontColor #000000
+}
+top to bottom direction
+
+title AX Session Directory — Component and Authority Boundaries
+
+actor Operator
+actor "Automation / Agent" as Automation
+
+package "Client Surfaces" as Clients {
+    component "Session Browser TUI" as TUI
+    component "Human CLI +\nTyped Agent Query" as Query
+}
+
+package "Directory Control Plane" as Directory {
+    component "Directory Controller" as Controller
+    component "Catalog + Freshness" as Catalog
+    component "Conversation Lineage" as Lineage
+    component "Enrichment Scheduler\n+ Policy" as Enrichment
+    component "Continuation Planner" as Planner
+    database "Derived SQLite Index" as Index
+    database "Immutable Directory Records" as Records
+}
+
+package "Existing AX Data Plane" as AX {
+    component "State / Lease / Checkpoint" as AXState
+    component "Mesh / Transfer" as AXMesh
+    component "Workspace / Terminal" as AXRuntime
+}
+
+node "Per Local or Mesh Host" as Host {
+    component "Directory Node Service" as NodeService
+    component "Environment Adapter\n(one implementation per environment)" as Adapter
+    component "Sandboxed Enrichment Worker" as Worker
+    database "Claude / Codex / Future\nNative Stores" as NativeStores
+}
+
+package "Session Cloning Subsystem" as CloneSystem {
+    component "Canonical Capture +\nTarget Projection" as Cloning
+}
+
+Operator --> TUI : browse / select / confirm / attach
+Automation --> Query : projected reads / guarded mutations
+TUI --> Controller
+Query --> Controller
+
+Controller --> Catalog
+Controller --> Enrichment
+Controller --> Planner
+Catalog --> Lineage
+Catalog --> Index : rebuildable view
+Catalog --> Records : immutable metadata
+
+Enrichment --> NodeService : idempotent source-local jobs
+NodeService --> Adapter : inventory / preview / exact head
+NodeService --> Worker : bounded typed input
+Adapter --> NativeStores : local authority only
+Worker --> NodeService : typed annotation candidate
+
+NodeService --> AXMesh : sanitized record anti-entropy
+Planner --> AXState : ownership / lifecycle
+Planner --> AXMesh : route / transfer
+Planner --> AXRuntime : workspace / launch / attach
+Planner --> Cloning : cross-environment plan + fidelity
+
+AXState -[hidden]right-> NodeService
+NodeService -[hidden]right-> Cloning
+
+note right of Records
+  The index and display text are not authority.
+  Native transcripts remain source-local;
+  AX, directory, and cloning records persist truth.
+end note
+
+@enduml

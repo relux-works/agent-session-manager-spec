@@ -1,8 +1,8 @@
-# Agent Session Manager (<code>ax</code>) v0.3.0 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.4.0 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.3.0</code> |
+| Specification release | <code>v0.4.0</code> |
 | Document status | Review candidate and implementation contract |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.3.0. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.4.0. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -44,11 +44,19 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
 6. transfer ownership gracefully or, as an explicit recovery action, forcibly;
 7. fork from a checkpoint into a new logical session and workspace identity;
 8. stop a session without deleting its durable state; and
-9. resume a stopped session on its owner host; and
+9. resume a stopped session on its owner host;
 10. clone durable session evidence across supported native environments into a
-    new logical Session and independently validated native target identity.
+    new logical Session and independently validated native target identity;
+11. discover managed and unmanaged Claude Code and Codex native sessions on the
+    local and allowlisted mesh hosts without importing their transcripts into a
+    central index;
+12. browse sanitized, provenance-bearing directory metadata through a terminal
+    TUI, human CLI, and typed query surface; and
+13. produce and execute an exact, expiring Continuation Plan through existing
+    AX ownership, workspace, transfer, materialization, cloning, and terminal
+    authority.
 
-The v0.3.0 product is a Go CLI, optional per-user background service, provider
+The v0.4.0 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -77,6 +85,8 @@ An implementation MUST declare one or more of these targets:
 | Workspace materializer | Conflict-safe Git and non-Git capture/materialization |
 | Provider adapter | Plugin protocol and only the capabilities advertised by probe |
 | Session adapter | Native discovery/capture, canonical normalization, projection, and independent read-back through the companion protocol in the trusted provider executable |
+| Directory node | Source-local discovery, bounded preview, enrichment, runtime observation, and directory-record publication through the companion Directory Node protocol |
+| Directory client | Shared typed query/planner/executor semantics for the TUI, human CLI, and agent-facing interface |
 | Task-board bridge | Official opaque export/import/open/adopt bundle contract |
 | User service | Periodic health and sync work while preserving daemonless core CLI use |
 
@@ -103,22 +113,26 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following versions are active in v0.3.0. Historical Session Record/Event
+The following versions are active in v0.4.0. Historical Session Record/Event
 1.0.0, Materialization Plan 1.0.0, Materialization Journal 2.0.0, CLI Result
 1.0.0, and Structured Error 1.0.0 objects remain readable and immutable.
 
 | Contract | Schema identifier | Version |
 | --- | --- | --- |
-| Configuration | <code>urn:ax:schema:config</code> | <code>1.0.0</code> |
+| Configuration | <code>urn:ax:schema:config</code> | <code>1.0.0</code>, <code>2.0.0</code> for directory-capable installations |
 | Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code> |
 | Provider manifest | <code>urn:ax:schema:provider-manifest</code> | <code>1.0.0</code> |
 | Provider probe | <code>urn:ax:schema:provider-probe</code> | <code>1.0.0</code> |
 | Session Adapter protocol | <code>urn:ax:protocol:session-adapter</code> | <code>1.0.0</code> |
 | Session Adapter manifest | <code>urn:ax:schema:session-adapter-manifest</code> | <code>1.0.0</code> |
 | Session Adapter probe | <code>urn:ax:schema:session-adapter-probe</code> | <code>1.0.0</code> |
-| Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code> |
-| Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code>, <code>2.0.0</code> for cross-environment clone targets |
-| Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code>, <code>2.0.0</code> for cross-environment clone targets |
+| Directory Node protocol | <code>urn:ax:protocol:session-directory-node</code> | <code>1.0.0</code> |
+| Directory Node manifest | <code>urn:ax:schema:session-directory-node-manifest</code> | <code>1.0.0</code> |
+| Directory Node request | <code>urn:ax:schema:session-directory-node-request</code> | <code>1.0.0</code> |
+| Directory Node response | <code>urn:ax:schema:session-directory-node-response</code> | <code>1.0.0</code> |
+| Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code>, <code>3.0.0</code> for directory replication |
+| Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone targets, <code>3.0.0</code> for unified creation provenance |
+| Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone lifecycle, <code>3.0.0</code> for adoption and move lifecycle |
 | Lease record | <code>urn:ax:schema:lease</code> | <code>1.0.0</code> |
 | Checkpoint record | <code>urn:ax:schema:checkpoint</code> | <code>1.0.0</code> |
 | Workspace group | <code>urn:ax:schema:workspace-group</code> | <code>1.0.0</code> |
@@ -133,9 +147,9 @@ The following versions are active in v0.3.0. Historical Session Record/Event
 | Clone materialization recovery state (journal variant) | <code>urn:ax:schema:materialization-journal</code> | <code>3.0.0</code> |
 | Task-board bridge | <code>urn:ax:protocol:task-board-bridge</code> | <code>1.0.0</code> |
 | Task-board bundle | <code>urn:ax:schema:task-board-bundle</code> | <code>1.0.0</code> |
-| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for Session Adapter and cloning surfaces |
+| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for cloning, <code>1.2.0</code> for directory surfaces |
 | Observation event | <code>urn:ax:schema:observation</code> | <code>1.0.0</code> |
-| CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code>, <code>2.0.0</code> for <code>session.clone.*</code> commands |
+| CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code>, <code>2.0.0</code> for <code>session.clone.*</code>, <code>3.0.0</code> for <code>sessions.*</code> commands |
 | Clone Raw Object Manifest | <code>urn:ax:schema:clone-raw-object-manifest</code> | <code>1.0.0</code> |
 | Clone Capture Manifest | <code>urn:ax:schema:clone-capture-manifest</code> | <code>1.0.0</code> |
 | Clone Bundle Manifest | <code>urn:ax:schema:session-clone-bundle</code> | <code>1.0.0</code> |
@@ -149,6 +163,17 @@ The following versions are active in v0.3.0. Historical Session Record/Event
 | Clone Validation Report | <code>urn:ax:schema:clone-validation-report</code> | <code>1.0.0</code> |
 | Clone Lineage Receipt | <code>urn:ax:schema:clone-lineage-receipt</code> | <code>1.0.0</code> |
 | Supported Environment Tuple Registry | <code>urn:ax:schema:supported-environment-tuples</code> | <code>1.0.0</code> |
+| Environment Observation | <code>urn:ax:schema:environment-observation</code> | <code>1.0.0</code> |
+| Native Session Observation | <code>urn:ax:schema:native-session-observation</code> | <code>1.0.0</code> |
+| Inventory Batch | <code>urn:ax:schema:session-inventory-batch</code> | <code>1.0.0</code> |
+| Conversation Lineage Link | <code>urn:ax:schema:conversation-lineage-link</code> | <code>1.0.0</code> |
+| Session Annotation | <code>urn:ax:schema:session-annotation</code> | <code>1.0.0</code> |
+| Session Enrichment Profile | <code>urn:ax:schema:session-enrichment-profile</code> | <code>1.0.0</code> |
+| Session Enrichment Job Request | <code>urn:ax:schema:session-enrichment-job-request</code> | <code>1.0.0</code> |
+| Session Enrichment Job Receipt | <code>urn:ax:schema:session-enrichment-job-receipt</code> | <code>1.0.0</code> |
+| Session Continuation Plan | <code>urn:ax:schema:session-continuation-plan</code> | <code>1.0.0</code> |
+| Session Directory Operation Receipt | <code>urn:ax:schema:session-directory-operation-receipt</code> | <code>1.0.0</code> |
+| Session Directory Query | <code>urn:ax:schema:session-directory-query</code> | <code>1.0.0</code> |
 
 No contract version is implied by the <code>ax</code> executable version.
 Section 17 defines compatibility and migration. Independent versioning means
@@ -221,7 +246,12 @@ fields are <code>record_id</code>, <code>event_id</code>,
 <code>checkpoint_id</code>, <code>descriptor_id</code>,
 <code>manifest_id</code>, <code>plan_id</code>, <code>tombstone_id</code>, or
 <code>ack_id</code>, <code>bundle_id</code>, or <code>marker_id</code>, as
-applicable. Section 10.3 separately defines a
+applicable, plus <code>observation_id</code>, <code>batch_id</code>,
+<code>lineage_link_id</code>, <code>annotation_id</code>,
+<code>profile_id</code>, <code>job_request_id</code>,
+<code>job_receipt_id</code>, and <code>directory_receipt_id</code> for the
+directory contracts. Each schema names exactly one self field; the namespaces
+are total and disjoint. Section 10.3 separately defines a
 <code>chunk_id</code> as the digest of raw chunk bytes; mutable journals and
 observation streams are not identity-addressed objects. A CBOR decoder MUST
 reject values outside the common logical data model and MUST produce the same
@@ -318,6 +348,14 @@ payload-exclusion rules.
 | Task-board session | A session whose private provider mechanics remain owned by <code>tb-sessiond</code> and cross the boundary only as an opaque official bundle. |
 | Safe boundary | A provider-reported or adapter-proven point at which no foreground, child, scheduled, or background work can still mutate durable state. |
 | Managed replica | A destination path created or explicitly adopted by <code>ax</code>, with a recorded last-materialized checkpoint. |
+| Native session instance | One provider-native durable session in one backend realm on one host; it is not an AX logical Session until validated binding or adoption creates that authority. |
+| Environment ID | Native client/store family such as <code>claude-code</code> or <code>codex</code>; it is explicitly mapped to an AX provider and is never inferred by spelling. |
+| Conversation Lineage | A derived graph of AX Sessions and unmanaged native instances joined only by authoritative fork, clone, move, adoption, binding, or operator-link evidence; it is neither a Session Record nor a lease domain. |
+| Directory observation | Immutable source-host statement about an installation, native instance, or completed scan batch. |
+| Observed head | Exact adapter generation and semantic digest of the native history prefix used for inventory, preview, enrichment, or planning. |
+| Display title | Human-facing title resolved from immutable annotations and native candidates; it is not Session Record <code>name</code> or selector identity. |
+| Continuation Plan | Immutable, content-addressed, expiring, non-mutating selection of one continuation route and all facts that execution must revalidate. |
+| Directory Node | Separately negotiated source-local companion façade for discovery, bounded preview, enrichment, runtime observation, and directory health, backed by the same environment implementation as Provider 2 and Session Adapter 1. |
 
 ### 2.2 Global invariants
 
@@ -350,6 +388,147 @@ The following invariants are unconditional:
     be conditional, unsupported, or unknown and MUST be disabled.
 12. A task-board session MUST use the official opaque bridge. <code>ax</code>
     MUST NOT read or mutate private <code>tb-sessiond</code> state.
+The directory merge additionally fixes the following individually testable
+invariants. Their identifiers are stable traceability keys; a conforming
+implementation MUST satisfy every one rather than treating a group summary as
+a substitute:
+
+1. <a id="dir-inv-01"></a><code>DIR-INV-01</code>: AX
+   <code>session_id</code> remains one provider-bound durable logical-session
+   authority.
+2. <a id="dir-inv-02"></a><code>DIR-INV-02</code>: a cross-environment clone
+   or move creates a new target AX logical Session and never changes the
+   provider of an existing Session Record in place.
+3. <a id="dir-inv-03"></a><code>DIR-INV-03</code>: Conversation Lineage is a
+   derived graph over AX Sessions and unmanaged native instances; it is neither
+   a replacement Session Record nor a lease domain.
+4. <a id="dir-inv-04"></a><code>DIR-INV-04</code>: Session Record
+   <code>name</code>, native session ID, directory <code>instance_id</code>,
+   lineage anchor, and display title are distinct.
+5. <a id="dir-inv-05"></a><code>DIR-INV-05</code>: generated, provider, and
+   manual display titles never rewrite Session Record <code>name</code> and
+   never serve as machine identity.
+6. <a id="dir-inv-06"></a><code>DIR-INV-06</code>: every native observation is
+   authored only by the host that can resolve the corresponding local native
+   store.
+7. <a id="dir-inv-07"></a><code>DIR-INV-07</code>: native transcripts and
+   provider stores remain content authority; directory SQLite is a rebuildable
+   projection.
+8. <a id="dir-inv-08"></a><code>DIR-INV-08</code>: similarity, paths, titles,
+   timestamps, or matching text never create an authoritative lineage edge.
+9. <a id="dir-inv-09"></a><code>DIR-INV-09</code>: authoritative lineage
+   comes only from AX fork evidence, cloning lineage receipts, completed move
+   or adoption receipts, validated managed bindings, or an explicit operator
+   link.
+10. <a id="dir-inv-10"></a><code>DIR-INV-10</code>: weak native identity
+    blocks remote continuation and authoritative lineage binding until capture
+    or adoption establishes stable identity.
+11. <a id="dir-inv-11"></a><code>DIR-INV-11</code>: generated title, summary,
+    and recent-activity annotations bind to an exact semantic subject head.
+12. <a id="dir-inv-12"></a><code>DIR-INV-12</code>: a rescan with unchanged
+    history does not stale an annotation; a changed native, AX, or lineage head
+    does.
+13. <a id="dir-inv-13"></a><code>DIR-INV-13</code>: manual title, tag, pin,
+    hidden, and operator metadata is identity-bound and cannot be overwritten
+    by enrichment.
+14. <a id="dir-inv-14"></a><code>DIR-INV-14</code>: manual metadata uses
+    immutable supersession DAGs; concurrent unsuperseded heads are visible
+    conflicts and wall-clock recency never selects a winner.
+15. <a id="dir-inv-15"></a><code>DIR-INV-15</code>: enrichment requests,
+    receipts, annotations, Profiles, and Directory Operation Receipts are
+    immutable and content-addressed where their schemas specify.
+16. <a id="dir-inv-16"></a><code>DIR-INV-16</code>: job and continuation
+    operation state is derived from immutable receipt chains, not mutable rows
+    presented as authority.
+17. <a id="dir-inv-17"></a><code>DIR-INV-17</code>: deterministic extraction
+    works without a model; no remote summarizer is silently enabled.
+18. <a id="dir-inv-18"></a><code>DIR-INV-18</code>: default model input is
+    bounded public user/assistant history; system/developer instructions,
+    hidden or opaque reasoning, raw tool payloads, attachments, files, and
+    secrets are excluded.
+19. <a id="dir-inv-19"></a><code>DIR-INV-19</code>: enrichment workers have no
+    Session, lease, terminal, workspace-write, cloning, shell, or ambient
+    credential authority.
+20. <a id="dir-inv-20"></a><code>DIR-INV-20</code>: Session content is
+    untrusted data and cannot control tools, policies, paths, schemas, routes,
+    or executable arguments.
+21. <a id="dir-inv-21"></a><code>DIR-INV-21</code>: the directory is
+    local-first and leaderless; each node is authoritative for its local native
+    observations.
+22. <a id="dir-inv-22"></a><code>DIR-INV-22</code>: sanitized immutable
+    metadata converges through AX anti-entropy; no central transcript or index
+    service is required.
+23. <a id="dir-inv-23"></a><code>DIR-INV-23</code>: raw transcript bodies,
+    raw previews, credentials, terminal output, live PIDs, PTY handles,
+    sockets, and absolute native-store paths are not mesh directory records.
+24. <a id="dir-inv-24"></a><code>DIR-INV-24</code>: failed, offline, or partial
+    scans never imply deletion; <code>missing</code> requires a successful
+    non-partial scan of the same authoritative root and realm.
+25. <a id="dir-inv-25"></a><code>DIR-INV-25</code>: offline Sessions remain
+    browsable with explicit observation age and stale/offline state.
+26. <a id="dir-inv-26"></a><code>DIR-INV-26</code>: source sequence gaps and
+    concurrent branches remain visible and are not resolved by wall clock.
+27. <a id="dir-inv-27"></a><code>DIR-INV-27</code>: tightening metadata policy
+    does not falsely claim that previously replicated summaries were remotely
+    erased.
+28. <a id="dir-inv-28"></a><code>DIR-INV-28</code>: continuation planning is
+    pure; it may probe but cannot quiesce, capture, transfer, materialize,
+    adopt, launch, attach, or change ownership.
+29. <a id="dir-inv-29"></a><code>DIR-INV-29</code>: every state-changing
+    continuation references an exact unexpired content-addressed Continuation
+    Plan and explicit <code>operation_id</code>.
+30. <a id="dir-inv-30"></a><code>DIR-INV-30</code>: execution immediately
+    revalidates source head, observation, lease/checkpoint/runtime, target
+    tuple/authentication, workspace classification/cohort, policy, and
+    capability before mutation.
+31. <a id="dir-inv-31"></a><code>DIR-INV-31</code>: a mismatch returns a
+    stale-plan failure; the controller never silently replans, changes hosts or
+    intent, downgrades fidelity, forces ownership, or selects an archive
+    fallback.
+32. <a id="dir-inv-32"></a><code>DIR-INV-32</code>: managed ownership,
+    fencing, Checkpoint, workspace, transfer, materialization, terminal,
+    attach, and recovery remain AX responsibilities.
+33. <a id="dir-inv-33"></a><code>DIR-INV-33</code>: cross-environment capture,
+    normalization, projection, fidelity, and validation remain the cloning
+    subsystem's responsibility.
+34. <a id="dir-inv-34"></a><code>DIR-INV-34</code>: remote unmanaged open is
+    forbidden; the source must be adopted source-locally or cloned into a
+    managed target.
+35. <a id="dir-inv-35"></a><code>DIR-INV-35</code>: cross-environment move is
+    target-first; a valid target is committed before source stop/release.
+36. <a id="dir-inv-36"></a><code>DIR-INV-36</code>: if post-commit source
+    stop/release fails, the outcome is
+    <code>cloned_source_still_active</code>; a valid target is not deleted to
+    claim rollback.
+37. <a id="dir-inv-37"></a><code>DIR-INV-37</code>: process spawn is not
+    success; the target must be discoverable, identity-valid, AX-authoritative,
+    natively resumable/readable, and readiness-probed.
+38. <a id="dir-inv-38"></a><code>DIR-INV-38</code>: repeating a mutation after
+    a lost response cannot create another annotation, receipt chain, AX
+    Session, native target, or runtime.
+39. <a id="dir-inv-39"></a><code>DIR-INV-39</code>: human TUI, human CLI, and
+    agent-facing interfaces use the same typed field/query/planner/executor
+    engine.
+40. <a id="dir-inv-40"></a><code>DIR-INV-40</code>: agents never scrape TUI
+    output; the machine surface supports field projection, batching, bounded
+    pagination, scoped full-text search, schema discovery, and guarded
+    mutations.
+41. <a id="dir-inv-41"></a><code>DIR-INV-41</code>: default list/status output
+    contains sanitized title, summary, and recent activity, not raw transcript
+    excerpts.
+42. <a id="dir-inv-42"></a><code>DIR-INV-42</code>: raw public excerpts are
+    bounded, redacted, source-local by default, and fetched only after explicit
+    selection or request.
+43. <a id="dir-inv-43"></a><code>DIR-INV-43</code>: terminal strings are
+    escaped against ANSI, OSC, bidi, control-character, and hostile-width
+    injection.
+44. <a id="dir-inv-44"></a><code>DIR-INV-44</code>: launch uses structured
+    argv, explicit working directory, and an environment allowlist; no
+    provider, title, path, or transcript value is concatenated into a shell
+    command.
+45. <a id="dir-inv-45"></a><code>DIR-INV-45</code>: authentication status may
+    be observed, but credentials and authentication stores never enter
+    directory records, plans, bundles, logs, or peer responses.
 
 ### 2.3 Session name resolution
 
@@ -458,7 +637,20 @@ The implementation is logically divided into:
 - <strong>derived index</strong>: local SQLite cache rebuilt from immutable
   truth; and
 - <strong>user service</strong>: optional periodic health, reconciliation, and
-  sync driver.
+  sync driver;
+- <strong>Directory Controller</strong>: enforces discovery, disclosure,
+  enrichment, query, and continuation policy without acquiring a second lease
+  or workspace authority;
+- <strong>Catalog/Freshness and Conversation Lineage engines</strong>:
+  deterministically derive source-authoritative mesh views and visible
+  conflicts from immutable records;
+- <strong>Enrichment Scheduler and isolated worker</strong>: create exact-head
+  annotations and receipt chains from bounded policy-selected inputs;
+- <strong>Continuation Planner/executor</strong>: persists pure plans and
+  delegates effects to existing AX and cloning transactions; and
+- <strong>Directory Node façade</strong>: exposes source-local environment
+  discovery through the same parsers, identity logic, redaction rules, tuple
+  gates, and fixtures as the Provider and Session Adapter façades.
 
 The core CLI, replication engine, and PTY/ConPTY supervision MUST be
 implemented in Go. Command routing SHOULD use Cobra or an equivalently
@@ -468,12 +660,16 @@ specification permits them, but cross-platform file transfer/chunking MUST be
 Go-native and MUST NOT depend on <code>rsync</code> or
 <code>robocopy</code>.
 
-The diagram deliverable rendered for v0.2.0 remains the unchanged architecture
-baseline for v0.3.0 and MUST render this model as C4 System Context and
-Container views. Runtime takeover, state, and mesh flows MUST be rendered from
-Sections 12 and 13 as focused PlantUML sources. Section 13.13 adds a
-conformance gate over those flows, not a new component or sequence topology.
-Those rendered artifacts MUST NOT add relationships absent from this document.
+The v0.4.0 diagram deliverable MUST render this model as C4 System Context and
+Container views, including the Directory Control Plane, source-local Directory
+Node, isolated enrichment worker, cloning boundary, and their relationships to
+existing AX authority. Runtime takeover, state, mesh, cloning, directory
+component, inventory/enrichment, and continuation flows MUST be rendered as
+separate focused PlantUML sources from Sections 10.8, 12, 13, and 16.7. Section
+13.13 adds a conformance gate over those flows, not a new component or sequence
+topology. Those rendered artifacts MUST NOT add relationships absent from this
+document or depict the derived index, display text, Directory Node, or
+enrichment worker as session, workspace, native-store, or lease authority.
 
 ### 3.2 Platform paths
 
@@ -523,6 +719,8 @@ The durable data layout is:
   objects/sha256/HH/REST
   records/json/sha256/HH/REST
   records/cbor/sha256/HH/REST
+  directory-records/json/sha256/HH/REST
+  directory-records/cbor/sha256/HH/REST
   manifests/json/sha256/HH/REST
   manifests/cbor/sha256/HH/REST
   sessions/<session-id>/refs/
@@ -531,6 +729,8 @@ The durable data layout is:
   quarantine/sha256/HH/REST/<quarantine-id>
 <state>/
   index.sqlite
+  directory-jobs/<job-id>/refs/
+  directory-operations/<operation-id>/refs/
   materializations/<materialization-id>.json
   provider-object-sources/<materialization-id>/<provider-id>/
   provider-transactions/<provider-id>/<transaction-id>/
@@ -908,6 +1108,34 @@ cycle. Task-board references remain orthogonal authority in the existing
 <code>task_board</code> field; source goals, manager references, leases,
 approvals, tokens, and pending operations do not transfer.
 
+Session Record 3.0.0 is the v0.4 creation contract. It retains every v2
+top-level member and replaces the v2 derivation union with the closed creation
+union <code>origin</code>, <code>same_provider_fork</code>,
+<code>cross_environment_clone</code>, and <code>native_adoption</code>. The
+first three retain their v2 exact shapes and semantics. The new
+<code>native_adoption</code> variant contains exactly
+<code>kind=native_adoption</code>, <code>operation_id:UUIDv7</code>,
+<code>source_host_id:UUIDv7</code>, <code>source_instance_id:digest</code>,
+<code>source_observation_id:digest</code>,
+<code>source_head_digest:digest</code>,
+<code>source_environment:EnvironmentTuple</code>,
+<code>target_provider_id:provider-id</code>,
+and <code>extensions</code>. These are creation inputs only. Provider Identity,
+first Checkpoint, adoption events, and Directory Operation Receipts are later
+facts and MUST NOT appear in the creation record.
+
+Adoption creates a new Session ID around the existing native identity and does
+not claim that pre-adoption history was AX-authored or fenced. Provider ID is
+immutable after creation. Cross-environment move uses the existing
+<code>cross_environment_clone</code> creation variant plus later Session Event
+3/Directory Operation Receipt move lifecycle; it is not a fifth creation tag
+and never rewrites the source Session.
+
+Session Record 1 and 2 remain readable and immutable. New origin/fork/clone/
+adopt records written by a directory-capable v0.4 implementation use major 3;
+no reader silently retries another major or translates an existing record in
+place.
+
 ### 5.2 Session Event
 
 Every change after creation is an immutable Session Event with schema
@@ -1123,7 +1351,7 @@ An owner process MUST revalidate its fencing token before:
 - resuming after any transport or sleep interruption longer than the configured
   lease refresh interval.
 
-There is no time-expiring ownership lease in v0.3.0. Liveness is not authority.
+There is no time-expiring ownership lease in v0.4.0. Liveness is not authority.
 A host being offline does not make a replica owner; only a takeover or fork
 does.
 
@@ -1662,6 +1890,78 @@ explicit null is not a TOML value and is never accepted as a substitute.
 SSH arguments that set <code>StrictHostKeyChecking=no</code>, an empty
 <code>UserKnownHostsFile</code>, or an equivalent host-authentication bypass
 MUST fail configuration validation.
+
+### 6.4 Configuration 2.0.0 directory extension
+
+Configuration 2.0.0 retains all Configuration 1 members and replaces the
+closed root/table registry with the directory-capable registry below. It is a
+new major; a v1 reader MUST reject it, and a v2 binary MUST NOT write v1 syntax
+after directory state exists.
+
+The v2 root adds exactly <code>directory</code>,
+<code>directory_installations</code>,
+<code>directory_enrichment_profiles</code>, and
+<code>directory_peer_disclosure</code>. The closed <code>directory</code> table
+contains exactly:
+
+| Key | Default/constraint |
+| --- | --- |
+| <code>enabled</code> | false; boolean |
+| <code>mode</code> | <code>on_demand|service</code>; default on_demand |
+| <code>scan_interval_seconds</code> | 300; uint53[5..86400] |
+| <code>scan_debounce_seconds</code> | 5; uint53[0..3600] |
+| <code>scan_concurrency</code> | 2; uint53[1..32] |
+| <code>fresh_current_seconds</code> | 120; uint53[1..86400] |
+| <code>fresh_aging_seconds</code> | 600; greater than current, at most 604800 |
+| <code>fresh_stale_seconds</code> | 3600; greater than aging, at most 31536000 |
+| <code>plan_expiry_seconds</code> | 300; uint53[30..3600] |
+| <code>default_metadata_policy</code> | <code>local_only|mesh_sanitized|reference_only</code>; default local_only on upgrade and mesh_sanitized only for a newly initialized trusted mesh after explicit setup choice |
+| <code>generated_summary_upgrade_choice</code> | <code>unset|local_only|mesh_sanitized|reference_only</code>; existing meshes require a non-unset choice before replication |
+| <code>default_enrichment_profile_id</code> | digest or empty; empty means deterministic extraction only |
+| <code>query_page_default</code>/<code>query_page_max</code> | 100/1000; positive and default no greater than max |
+| <code>query_batch_max</code> | 64; uint53[1..64] |
+| <code>grep_result_max</code> | 1000; uint53[1..10000] |
+| <code>transcript_grep_enabled</code> | false; source-local only when true |
+| <code>embedding_index</code> | <code>disabled|local_only</code>; default disabled |
+| <code>observation_retention_days</code> | 365; uint53[30..3650] |
+| <code>job_retention_days</code> | 180; uint53[30..3650] |
+| <code>operation_retention_days</code> | 365; uint53[90..3650] |
+| <code>provenance_compaction</code> | false; when true, only Section 10.8 provenance-preserving compaction is legal |
+
+Each <code>directory_installations</code> entry contains exactly
+<code>installation_id:digest</code>, <code>environment_id:string[1..64]</code>,
+<code>provider_id:provider-id</code>,
+<code>adapter_id:string[1..64]</code>,
+<code>scan_root_authority_ids:sorted unique digest[1..64]</code>,
+<code>enabled:boolean</code>, and <code>extensions</code>. A root authority is
+configured through a local opaque resolver; raw roots, auth-store paths, and
+credentials are not serializable fields.
+
+Each <code>directory_enrichment_profiles</code> entry contains exactly
+<code>profile_id:digest</code>, <code>enabled:boolean</code>,
+<code>max_concurrency:uint53[1..32]</code>,
+<code>metadata_policy:local_only|mesh_sanitized|reference_only</code>, and
+<code>extensions</code>; the immutable Profile object owns all generator/input/
+redaction/network semantics. Each <code>directory_peer_disclosure</code> entry
+contains exactly <code>host_id:UUIDv7</code>,
+<code>environment_observations</code>, <code>native_observations</code>,
+<code>manual_metadata</code>, <code>generated_metadata</code>, and
+<code>job_operation_status</code>, each one of the three metadata policies,
+plus <code>extensions</code>. Raw excerpts, embeddings, model payloads, auth
+status details beyond the enum, and runtime/path facts cannot be enabled.
+
+No v2 table accepts a secret, endpoint credential, model token, auth root, or
+arbitrary environment passthrough. Model credentials resolve through a
+destination-local named channel outside the config object. Service mode uses
+the existing per-user service and bounded concurrency; watcher events are only
+debounced scan hints.
+
+Migration is explicit: <code>ax migrate config --to 2.0.0</code> validates v1,
+writes an owner-only backup, obtains the generated-summary disclosure choice,
+writes a complete v2 file to a same-directory temporary file, fsyncs it and the
+directory, and atomically replaces the original. Failure preserves v1 and the
+backup. Downgrading to a v1 binary is read-only; it MUST NOT discard directory
+tables or rewrite the file.
 
 ## 7. Provider plugin protocol
 
@@ -2675,6 +2975,117 @@ plus bounded native-resume smoke evidence. <code>--force</code>, experimental
 profiles, and environment-name-only matches cannot bypass these gates. Unknown
 sources may be archived only after safe byte enumeration; unknown targets never
 write.
+
+### 7.9 Companion Directory Node protocol
+
+Directory Node protocol <code>urn:ax:protocol:session-directory-node</code>
+<code>1.0.0</code> is a separately negotiated, read-mostly façade backed by the
+same per-environment implementation as Provider 2 and Session Adapter 1. It
+does not add operations to Provider 2 and does not execute Continuation Plans
+or transport transcript/workspace bytes.
+
+Transport is one request and one response as line-delimited JSON over
+authenticated local stdio or allowlisted AX SSH. One line is at most 8 MiB.
+The request envelope contains exactly <code>schema</code>,
+<code>schema_version</code>, <code>protocol</code>,
+<code>protocol_version</code>, <code>request_id:UUIDv7</code>,
+<code>operation</code>, <code>deadline_ms:uint53[1..3600000]</code>, and the
+closed operation <code>body</code>. The response echoes protocol/version,
+request/operation and contains exactly <code>ok=true</code> plus body or
+<code>ok=false</code> plus Structured Error 1.2.0. Unknown fields, invalid
+UTF-8/JSON, multiple frames, wrong echo, oversize, timeout, or exit without one
+valid response fail with no partial trusted data. Stdout is protocol-only;
+redacted diagnostics use stderr.
+
+The Directory Node Manifest contains exactly schema/version,
+<code>node_id:string[1..128]</code>, <code>node_version:semver</code>,
+<code>host_id:UUIDv7</code>, <code>executable_sha256:digest</code>,
+<code>provider_manifest_digest:digest</code>,
+<code>session_adapter_manifest_digest:digest</code>,
+<code>supported_protocol_versions:sorted unique SemVer[1..16]</code>,
+<code>operations:sorted unique DirectoryNodeOperation[11]</code>,
+<code>schemas:sorted unique ContractAssertion[15..64]</code>,
+<code>environment_tuple_registry_id:digest</code>,
+<code>capabilities:map(directory-capability,CapabilityResult)[8]</code>,
+<code>redaction_policy_ids:sorted unique digest[1..64]</code>,
+<code>enrichment_profile_ids:sorted unique digest[0..256]</code>,
+<code>limits:DirectoryNodeLimits</code>, and <code>extensions</code>. The three
+façade executable/module bindings and tuple declarations MUST agree; a
+contradiction is <code>integrity_failure</code>.
+
+<code>CapabilityResult</code> contains exactly
+<code>status:available|conditional|unavailable|unknown</code>,
+<code>reason_code:string[1..128]|null</code>,
+<code>evidence_ids:sorted unique digest[0..64]</code>,
+<code>observed_at:timestamp</code>, and <code>extensions</code>. Available has a
+null reason; every other status requires one. <code>DirectoryNodeLimits</code>
+contains exactly <code>max_frame_bytes:uint53[1..8388608]</code>,
+<code>max_scan_instances:uint53[1..65536]</code>,
+<code>max_inventory_take:uint53[1..1000]</code>,
+<code>max_excerpt_count:uint53[0..20]</code>,
+<code>max_excerpt_bytes:uint53[0..4096]</code>,
+<code>max_enrichment_events:uint53[1..5000]</code>,
+<code>max_enrichment_bytes:uint53[1..4194304]</code>, and
+<code>extensions</code>. Both nested objects are closed except for their listed
+reverse-DNS extension maps.
+
+The exact operation registry and bodies are:
+
+| Operation | Exact request body | Exact success body | Mutation |
+| --- | --- | --- | --- |
+| <code>manifest</code> | empty object | complete Directory Node Manifest | none |
+| <code>probe</code> | <code>{platform:darwin\|linux\|windows,architecture:amd64\|arm64,requested_environment_ids:sorted unique environment-id[0..64],requested_capabilities:sorted unique directory-capability[0..8],extensions}</code> | <code>{host_id:UUIDv7,node_build:DirectoryNodeBuild,policy_digest:digest,environments:EnvironmentObservation[0..256],findings:AdapterFinding[0..4096],extensions}</code> | none |
+| <code>scan</code> | <code>{operation_id:UUIDv7,installation_ids:sorted unique digest[1..256],prior_batch_id:digest|null,cursor:string[1..4096]|null,max_instances:uint53[1..65536],extensions}</code> | <code>{batch:InventoryBatch,environment_observation_ids:sorted unique digest[1..256],native_observation_ids:sorted unique digest[0..65536],next_cursor:string[1..4096]|null,extensions}</code> | directory records only |
+| <code>inventory</code> | <code>{installation_ids:sorted unique digest[1..256],fields:sorted unique observation-field[1..32],after:string[1..4096]|null,take:uint53[1..1000],extensions}</code> | <code>{observations:NativeSessionObservation[0..1000],next_cursor:string[1..4096]|null,partial:boolean,extensions}</code> | none |
+| <code>preview</code> | <code>{instance_id:digest,expected_observation_id:digest,expected_head_digest:digest,roles:sorted unique user\|assistant[1..2],excerpt_count:uint53[0..20],excerpt_bytes:uint53[0..4096],redaction_policy_id:digest,extensions}</code> | <code>{host_id:UUIDv7,instance_id:digest,observation_id:digest,head_digest:digest,excerpts:PreviewExcerpt[0..20],truncated:boolean,redaction_summary:RedactionSummary,freshness:DirectoryFreshness,extensions}</code> | none |
+| <code>enrichment-plan</code> | <code>{request:EnrichmentJobRequest,extensions}</code> | <code>{accepted:boolean,expected_input_events:uint53,expected_input_bytes:uint53,expected_model_calls:uint53,disclosure_classes:sorted unique string[0..64],blockers:sorted unique string[0..128],extensions}</code> | none |
+| <code>enrichment-run</code> | <code>{operation_id:UUIDv7,request:EnrichmentJobRequest,extensions}</code> | <code>{job_id:UUIDv7,current_receipt_id:digest,produced_annotation_ids:sorted unique digest[0..16],extensions}</code> | annotation/job records only |
+| <code>enrichment-status</code> | <code>{job_id:UUIDv7,extensions}</code> | <code>{job_id:UUIDv7,current_receipt_id:digest,receipt_chain_ids:digest[1..4096],produced_annotation_ids:sorted unique digest[0..16],extensions}</code> | none |
+| <code>continuation-inspect</code> | <code>{instance_id:digest,expected_observation_id:digest,expected_head_digest:digest,extensions}</code> | <code>{observation_id:digest,head_digest:digest,management_binding:ManagementBinding,safe_boundary_status:proven\|unproven\|not_required,runtime_status:RuntimeExpectation,warnings:sorted unique string[0..256],extensions}</code> | none |
+| <code>runtime-observe</code> | <code>{instance_id:digest,expected_observation_id:digest,extensions}</code> | <code>{runtime:RuntimeExpectation,extensions}</code> | none |
+| <code>doctor</code> | <code>{installation_ids:sorted unique digest[0..256],include_conformance_age:boolean,extensions}</code> | <code>{healthy:boolean,findings:AdapterFinding[0..4096],environment_capabilities:map(digest,map(directory-capability,CapabilityResult))[0..256],cloning_contracts:sorted unique ContractAssertion[0..64],extensions}</code> | none |
+
+Each displayed body is closed; its member types, ordering, and limits are the
+registered Section 10.8 schemas and manifest bounds. The capability registry is
+exactly <code>directory_discovery</code>,
+<code>directory_incremental_scan</code>, <code>directory_head_digest</code>,
+<code>directory_tail_preview</code>, <code>native_title_read</code>,
+<code>native_runtime_observation</code>,
+<code>existing_session_adoption</code>, and <code>native_resume</code>.
+The closed <code>observation-field</code> registry is exactly
+<code>identity</code>, <code>management</code>, <code>head</code>,
+<code>state</code>, <code>workspace</code>, <code>title</code>,
+<code>counts</code>, <code>preview_status</code>, <code>warnings</code>, and
+<code>timestamps</code>. <code>PreviewExcerpt</code> contains exactly
+<code>role:user|assistant</code>, <code>ordinal:uint53</code>,
+<code>text:string[0..4096]</code>, <code>source_event_id:digest</code>,
+<code>truncated:boolean</code>, and <code>extensions</code>.
+<code>ManagementBinding</code> contains exactly
+<code>state:managed|unmanaged|conflicted</code>,
+<code>session_id:UUIDv7|null</code>,
+<code>provider_identity_record_id:digest|null</code>,
+<code>evidence_ids:sorted unique digest[0..256]</code>, and
+<code>extensions</code>; both IDs and non-empty evidence are required exactly
+for managed, both IDs are null for unmanaged, and conflicted retains all
+evidence without choosing a winner. These nested objects are closed except for
+their listed extension maps. <code>DirectoryNodeBuild</code> contains exactly
+<code>node_id:string[1..128]</code>, <code>node_version:semver</code>,
+<code>executable_sha256:digest</code>,
+<code>provider_manifest_digest:digest</code>,
+<code>session_adapter_manifest_digest:digest</code>, and
+<code>extensions</code>; every value equals the current manifest.
+Discovery may degrade for an unknown source tuple only when stable identity and
+bounds remain safe; head/preview/resume/adoption/write/launch fail closed.
+
+<code>scan</code> and <code>enrichment-run</code> use
+<code>(operation,operation_id)</code> idempotency. Repeating the same canonical
+body returns the prior durable result; a changed body is
+<code>idempotency_mismatch</code> without new records. Scan reads only declared
+non-auth roots, publishes observations and its Inventory Batch atomically, and
+never claims that an active prefix is a cloning-safe boundary. Preview requires
+the exact observation/head, defaults to public user/assistant roles, and
+returns bounded redacted terminal-safe text. Raw native IDs and absolute paths
+never leave the source except through an existing AX mutation authority.
 
 ## 8. Provider and platform contracts
 
@@ -5043,6 +5454,785 @@ An acknowledgement of <code>retained_conflict</code> satisfies receipt but does
 not make referenced history unreachable; the live-reference rule still blocks
 garbage collection.
 
+### 10.8 Directory records, lineage, enrichment, query, and continuation
+
+This section defines the directory contract family. Every complete object is
+closed and contains the exact registry <code>schema</code>,
+<code>schema_version = 1.0.0</code>, and required
+<code>extensions</code>. Every immutable record additionally contains its named
+self-ID and calculates it by Section 1.6 with only that self field omitted;
+the request-scoped Directory Query instead carries a caller-created UUIDv7
+<code>query_id</code>. Arrays described as sorted unique use bytewise order.
+No directory record owns a lease, workspace, provider transaction, transfer,
+materialization, terminal, or clone conversion. Those authorities remain in
+Sections 5, 7, 10, 12, and 13.14.
+
+The directory identifier model is:
+
+| Identifier | Exact type and meaning |
+| --- | --- |
+| <code>installation_id</code> | digest of one host/environment/backend-realm installation |
+| <code>instance_id</code> | <code>sha256(JCS({host_id,environment_id,backend_realm_fingerprint,native_session_id}))</code>; the raw native ID remains source-local or in an authorized Provider Identity Record |
+| <code>lineage_anchor_id</code> | root Session UUIDv7 or unmanaged-instance digest |
+| <code>job_id</code>, <code>operation_id</code> | UUIDv7 execution identities |
+| Directory self IDs | <code>observation_id</code>, <code>batch_id</code>, <code>lineage_link_id</code>, <code>annotation_id</code>, <code>profile_id</code>, <code>job_request_id</code>, <code>job_receipt_id</code>, <code>plan_id</code>, or <code>directory_receipt_id</code>, each a digest in its one registered schema |
+
+Directory limits are configurable downward but never above: page 1,000
+entries (default 100), Inventory Batch 65,536 instances (default 10,000), 20
+public excerpts (default 2), 4,096 bytes per excerpt after redaction (default
+512), 64 KiB summary body (default 8 KiB), 64 open-loop items (default 16),
+256 tags (default 32), 64 batched queries (default 16), 5,000 enrichment input
+events (default 200), and 4 MiB enrichment input (default 256 KiB). Every
+truncation is explicit.
+
+#### 10.8.1 Environment and inventory observations
+
+Environment Observation contains exactly:
+
+| Member | Type/constraint |
+| --- | --- |
+| <code>schema</code>, <code>schema_version</code>, <code>observation_id</code> | exact Environment Observation registry values and digest |
+| <code>host_id</code>, <code>installation_id</code> | UUIDv7 source host and digest installation |
+| <code>environment_id</code>, <code>environment_version</code> | environment ID and string[1..128] |
+| <code>provider_id</code> | provider-id; explicit manifest mapping, never string inference |
+| <code>platform</code>, <code>architecture</code> | AX platform and <code>amd64|arm64</code> |
+| <code>backend_realm_fingerprint</code> | non-secret digest |
+| <code>capabilities</code> | map(directory-capability,CapabilityResult)[8] |
+| <code>authentication_status</code> | <code>available|missing|expired|unknown</code>; status only |
+| <code>runtime_status</code> | <code>available|degraded|unavailable</code> |
+| <code>observed_at</code>, <code>extensions</code> | diagnostic timestamp and reverse-DNS object |
+
+The initial mapping is exactly <code>claude-code -> claude</code> and
+<code>codex -> codex</code>. Future mappings are signed manifest/registry data.
+Environment Observation reuses the Section 13.14 Environment Tuple admission
+model and does not create a second capability authority.
+
+Native Session Observation contains exactly:
+
+| Member | Type/constraint |
+| --- | --- |
+| identity | exact schema/version plus <code>observation_id:digest</code> |
+| source | <code>instance_id:digest</code>, <code>host_id:UUIDv7</code>, <code>installation_id:digest</code> |
+| chain | <code>observation_sequence:uint53&gt;0</code>, <code>previous_observation_id:digest|null</code> |
+| management | <code>managed_session_id:UUIDv7|null</code>, <code>provider_identity_record_id:digest|null</code>, <code>lineage_anchor_hint:UUIDv7|digest|null</code> |
+| head | <code>source_generation:string[1..512]|null</code>, <code>head_digest:digest|null</code> |
+| identity/state | <code>identity_confidence:exact|strong|weak</code>, <code>presence:present|missing|unknown</code>, <code>native_state:active|idle|waiting|stopped|failed|unknown</code>, <code>resumability:validated|likely|unavailable|unknown</code> |
+| workspace/title | <code>workspace_identity:WorkspaceIdentity|null</code>, <code>provider_title:string[1..512]|null</code> |
+| diagnostics | <code>created_at:timestamp|null</code>, <code>updated_at:timestamp|null</code>, <code>message_counts:MessageCounts</code>, <code>preview_status:current|stale|unavailable|policy_blocked</code>, <code>warnings:sorted unique string[0..256]</code>, <code>observed_at:timestamp</code>, <code>extensions</code> |
+
+<code>WorkspaceIdentity</code> contains exactly
+<code>logical_workspace_id:UUIDv7|null</code>,
+<code>repository_identity:string[1..256]|null</code>,
+<code>workspace_digest:digest|null</code>, and <code>branch:string[1..256]|null</code>;
+it contains no absolute path. <code>MessageCounts</code> contains exactly
+<code>user:uint53|null</code> and <code>assistant:uint53|null</code>. A managed
+observation requires exact Provider Identity evidence; workspace, title,
+process, timestamp, or text matches are insufficient. Weak identity cannot
+authorize remote continuation or lineage.
+
+Inventory Batch contains exactly <code>schema</code>,
+<code>schema_version</code>, <code>batch_id:digest</code>,
+<code>host_id:UUIDv7</code>, <code>batch_sequence:uint53&gt;0</code>,
+<code>previous_batch_id:digest|null</code>,
+<code>cursor_before:string[0..4096]|null</code>,
+<code>cursor_after:string[0..4096]|null</code>,
+<code>environment_observation_ids:sorted unique digest[1..256]</code>,
+<code>native_observation_ids:sorted unique digest[0..65536]</code>,
+<code>scan_root_authority_ids:sorted unique digest[1..256]</code>,
+<code>adapter_builds:sorted unique AdapterBuild[1..256]</code>,
+<code>started_at:timestamp</code>, <code>completed_at:timestamp</code>,
+<code>partial:boolean</code>, <code>error_codes:sorted unique string[0..256]</code>,
+and <code>extensions</code>. <code>AdapterBuild</code> contains exactly
+<code>environment_id</code>, <code>adapter_version</code>, and
+<code>executable_sha256</code>.
+
+Only a successful non-partial batch for the same root authority and realm may
+publish <code>presence=missing</code>. Failed/offline/partial scans preserve the
+prior presence and change freshness, not existence. For one source instance,
+the current observation is the valid contiguous chain head with greatest
+sequence. A same-sequence branch is <code>observation_conflict</code>; a gap
+quarantines later observations until the missing predecessor or a signed
+source recovery root arrives. Timestamps never order the chain.
+
+A <code>missing</code> instance remains browseable and searchable in Version 1.
+Display policy MAY hide it behind an explicit missing/archive filter, but no
+scan result automatically emits an AX tombstone, deletes an observation or
+annotation, or removes the entry from the catalog. Retention and an explicit
+future deletion contract, not absence inference, own removal.
+
+#### 10.8.2 Conversation Lineage and annotations
+
+Conversation Lineage is a derived graph whose nodes are AX Session IDs and
+unmanaged instance IDs. Authoritative edges are exactly <code>ax_fork</code>,
+<code>session_clone</code>, <code>cross_environment_move</code>,
+<code>native_adoption</code>, <code>managed_instance_binding</code>, and
+<code>operator_link</code>. They require respectively an AX fork event, Clone
+Lineage Receipt, successful move receipt, successful adoption receipt,
+validated Provider Identity binding, or authorized explicit link. Similarity
+produces only a derived <code>suggested_relation</code> excluded from the
+authoritative connected component.
+
+Conversation Lineage Link contains exactly <code>schema</code>,
+<code>schema_version</code>, <code>lineage_link_id:digest</code>,
+<code>link_kind</code> from the authoritative edge registry or
+<code>conflict_resolution</code>, <code>from_kind:ax_session|native_instance</code>,
+<code>from_id:UUIDv7|digest</code>, <code>to_kind:ax_session|native_instance</code>,
+<code>to_id:UUIDv7|digest</code>, <code>canonical_anchor_id:UUIDv7|digest</code>,
+<code>member_root_id:UUIDv7|digest</code>,
+<code>evidence_ids:sorted unique digest[1..1024]</code>,
+<code>supersedes_link_ids:sorted unique digest[0..1024]</code>,
+<code>authorized_by_host_id:UUIDv7</code>, <code>created_at:timestamp</code>, and
+<code>extensions</code>. Kind and ID type MUST agree. An operator link chooses
+one anchor without rewriting history. Incompatible unsuperseded anchors yield
+<code>lineage_ambiguous</code>; a resolution MUST supersede every conflicting
+head. Time and lexical ID order cannot resolve it.
+
+Session Annotation contains exactly:
+
+| Member | Type/constraint |
+| --- | --- |
+| identity | schema/version plus <code>annotation_id:digest</code> |
+| subject | <code>subject_kind:ax_session|native_instance|lineage</code>, matching <code>subject_id:UUIDv7|digest</code> |
+| binding | <code>binding:identity|snapshot</code>, <code>subject_head_digest:digest|null</code>; non-null exactly for snapshot |
+| content | <code>kind:manual_title|provider_title|generated_title|summary|recent_activity|tags|pin|hidden|operator_note</code>, matching closed <code>payload</code> |
+| author | <code>author_kind:operator|provider|deterministic_extractor|model</code>, <code>author_host_id:UUIDv7</code> |
+| generation | <code>profile_id:digest|null</code>, <code>generator:GeneratorIdentity|null</code>; both required for deterministic/model authors and null for operator |
+| evidence/conflict | <code>evidence_ids:sorted unique digest[0..4096]</code>, <code>redaction_summary:RedactionSummary</code>, <code>supersedes_annotation_ids:sorted unique digest[0..1024]</code> |
+| diagnostics | <code>created_at:timestamp</code>, <code>extensions</code> |
+
+Title/note payloads contain exactly <code>text:string[1..8192]</code>; tags
+contain exactly <code>values:sorted unique string[0..256]</code>; pin/hidden
+contain exactly <code>value:boolean</code>; the closed
+<code>SummaryPayload</code> contains exactly
+<code>topic</code>, <code>status</code>, <code>last_user_intent</code>,
+<code>last_agent_action</code>, and <code>suggested_next_step</code> as
+string[1..8192] or null, <code>open_loops</code> and <code>risks</code> as
+string[0..64], <code>recent_activity:string[1..65536]|null</code>,
+<code>language:string[1..32]|null</code>,
+<code>confidence:high|medium|low</code>, and <code>truncated:boolean</code>.
+<code>GeneratorIdentity</code> contains exactly
+<code>kind:deterministic|local_model|remote_model|external_command</code>,
+<code>implementation:string[1..256]</code>,
+<code>implementation_version:semver</code>,
+<code>model_id:string[1..256]|null</code>,
+<code>prompt_digest:digest|null</code>,
+<code>output_schema_version:semver</code>, and <code>extensions</code>.
+<code>model_id</code> is non-null exactly for local/remote model kinds;
+<code>prompt_digest</code> is non-null for either model kind and whenever an
+external command uses a prompt/template. <code>RedactionSummary</code> contains
+exactly <code>policy_digest:digest</code>,
+<code>classes:sorted unique string[0..128]</code>,
+<code>class_counts:object&lt;class,uint53&gt;</code> whose keys equal
+<code>classes</code>, and <code>extensions</code>. These nested objects are
+closed except for their listed reverse-DNS <code>extensions</code> maps.
+
+Manual title/tags/pin/hidden/operator note use identity binding. Generated
+title/summary/recent activity use snapshot binding and non-empty evidence.
+A native head is its exact history digest, not observation ID; an unchanged
+rescan therefore keeps an annotation current. A managed-session head digests
+AX event/checkpoint heads plus its bound native head. A lineage head digests
+sorted authoritative members, member heads, and link heads. Changed semantic
+head makes snapshot metadata stale. Enrichment cannot supersede manual
+metadata. Concurrent manual heads remain visible until one operator annotation
+supersedes every head.
+
+Display title precedence is unique manual, locked imported title represented as
+manual, current sanitized provider title, current generated title,
+deterministic workspace/intent fallback, then provider plus abbreviated stable
+ID. A lineage manual title wins; otherwise the view derives the selected
+member title and exposes <code>title_subject_id</code> without minting new
+authority. No title changes Session Record <code>name</code>.
+
+#### 10.8.3 Enrichment profiles and receipt chains
+
+Session Enrichment Profile contains exactly <code>schema</code>,
+<code>schema_version</code>, <code>profile_id:digest</code>,
+<code>subject_kinds:sorted unique ax_session|native_instance|lineage[1..3]</code>,
+<code>provider_ids:sorted unique provider-id[0..64]</code>,
+<code>input_classes:sorted unique user_public|assistant_public|workspace_metadata|provider_title[1..4]</code>,
+<code>max_events:uint53[1..5000]</code>, <code>max_bytes:uint53[1..4194304]</code>,
+<code>delta_window_events:uint53[0..5000]</code>,
+<code>redaction_policy_id:digest</code>,
+<code>generator_kind:deterministic|local_model|remote_model|external_command</code>,
+<code>generator:GeneratorIdentity</code>,
+<code>network_policy:none|local_only|configured_endpoint</code>,
+<code>endpoint_class:string[1..128]|null</code>,
+<code>title_min_words:uint53[1..32]</code>,
+<code>title_max_words:uint53[1..32]</code>,
+<code>summary_schema_version:semver</code>,
+<code>incremental_policy:disabled|bounded_delta</code>,
+<code>full_rebuild_after_updates:uint53[0..65535]</code>,
+<code>full_rebuild_after_delta_bytes:uint53[0..4194304]</code>,
+<code>minimum_incremental_confidence:high|medium|low|null</code>,
+<code>refresh_debounce_seconds:uint53[0..86400]</code>,
+<code>stale_after_seconds:uint53[1..31536000]</code>, and
+<code>extensions</code>. Remote model requires configured endpoint and explicit
+data policy; the default profile is deterministic/public-user-and-assistant,
+has <code>network_policy=none</code>, and there is no silent remote generator.
+When <code>incremental_policy=disabled</code>,
+<code>delta_window_events</code>, both <code>full_rebuild_after_*</code>
+members are zero, and <code>minimum_incremental_confidence</code> is null. When
+it is <code>bounded_delta</code>, all three numeric incremental bounds are
+greater than zero and minimum confidence is non-null. Thus zero disables only
+the entire incremental mode; it never disables one mandatory bounded-delta
+rebuild trigger independently.
+
+Enrichment Job Request contains exactly <code>schema</code>,
+<code>schema_version</code>, <code>job_request_id:digest</code>,
+<code>job_id:UUIDv7</code>,
+<code>subject_kind:ax_session|native_instance|lineage</code>, matching
+<code>subject_id:UUIDv7|digest</code>, <code>expected_head_digest:digest</code>,
+<code>source_host_id:UUIDv7</code>, <code>source_instance_id:digest|null</code>,
+<code>profile_id:digest</code>,
+<code>requested_kinds:sorted unique generated_title|summary|recent_activity[1..3]</code>,
+<code>prior_annotation_ids:sorted unique digest[0..1024]</code>,
+<code>delta_start_evidence_id:digest|null</code>,
+<code>idempotency_key:digest</code>, <code>requester:string[1..256]</code>,
+<code>priority:uint53[0..100]</code>, <code>deadline:timestamp</code>,
+<code>created_at:timestamp</code>, and <code>extensions</code>. Its idempotency
+key covers subject, expected head, profile, requested kinds, and prior-summary
+basis. Reuse with a different request digest is
+<code>idempotency_mismatch</code>.
+
+Enrichment Job Receipt contains exactly <code>schema</code>,
+<code>schema_version</code>, <code>job_receipt_id:digest</code>,
+<code>previous_job_receipt_id:digest|null</code>,
+<code>job_request_id:digest</code>, <code>job_id:UUIDv7</code>,
+<code>profile_id:digest</code>, <code>subject_head_digest:digest</code>,
+<code>state:queued|claimed|running|succeeded|superseded|failed|canceled</code>,
+<code>claim_host_id:UUIDv7|null</code>,
+<code>claim_lease_id:UUIDv7|null</code>,
+<code>claim_attempt:uint53</code>,
+<code>claim_acquired_at:timestamp|null</code>,
+<code>claim_expires_at:timestamp|null</code>,
+<code>receipt_at:timestamp</code>, <code>input_event_count:uint53</code>,
+<code>input_byte_count:uint53</code>, <code>redaction_summary:RedactionSummary</code>,
+<code>generator:GeneratorIdentity</code>,
+<code>produced_annotation_ids:sorted unique digest[0..16]</code>,
+<code>usage:UsageSummary|null</code>, <code>failure_code:string[1..128]|null</code>,
+<code>started_at:timestamp|null</code>, <code>ended_at:timestamp|null</code>,
+<code>superseded_by_head_digest:digest|null</code>, and <code>extensions</code>.
+Receipt predecessor/state legality is the sole job-state authority. Concurrent
+receipt heads are a visible conflict. If the head changes before publication,
+the terminal state is <code>superseded</code>; any retained annotation is stale.
+
+<code>UsageSummary</code> contains exactly
+<code>input_units:uint53|null</code>, <code>output_units:uint53|null</code>,
+<code>total_units:uint53|null</code>, <code>cost_minor_units:uint53|null</code>,
+<code>currency:string[3]|null</code>, and <code>extensions</code>.
+<code>currency</code> is an uppercase ISO 4217 code and is non-null exactly when
+<code>cost_minor_units</code> is non-null; when all measurements are withheld,
+<code>usage</code> is null rather than an all-null object.
+
+The Enrichment Job Receipt transition oracle is closed:
+
+| Predecessor state | Allowed successor state |
+| --- | --- |
+| no predecessor | <code>queued</code> only |
+| <code>queued</code> | <code>claimed</code> or <code>canceled</code> |
+| <code>claimed</code> | <code>claimed</code>, <code>running</code>, or <code>canceled</code> |
+| <code>running</code> | <code>succeeded</code>, <code>superseded</code>, <code>failed</code>, or <code>canceled</code> |
+| <code>succeeded</code>, <code>superseded</code>, <code>failed</code>, <code>canceled</code> | no successor |
+
+A Job Receipt is accepted only from the <code>source_host_id</code> in its Job
+Request. That source authority assigns the claim lease and evaluates its
+deadline; <code>claim_host_id</code> identifies the worker host and does not
+delegate receipt authority. A <code>claimed -> claimed</code> successor is legal
+only when <code>claim_attempt</code> is exactly predecessor attempt plus one,
+<code>claim_lease_id</code> differs, its <code>claim_acquired_at</code> is at or
+after the predecessor <code>claim_expires_at</code>, and its new expiry is
+later than acquisition. It names the reclaiming host; that host may equal the
+previous host after worker restart. This comparison is immutable lease
+evidence on one predecessor chain, not a rule for selecting between branches.
+Every non-root receipt names the immediately preceding receipt. More than one
+valid successor to one predecessor is a visible
+<code>enrichment_receipt_conflict</code>; no branch wins by time or ID. All
+receipts repeat the request/profile/subject-head identity unchanged.
+
+Conditional fields are exact. <code>queued</code> has null claim host, lease,
+acquisition, expiry, start, and end, <code>claim_attempt=0</code>, zero input
+counts, empty produced annotations, null usage/failure/superseding head, and
+uses the profile's generator/redaction identities. Every
+<code>claimed</code>, <code>running</code>, <code>succeeded</code>,
+<code>superseded</code>, and <code>failed</code> receipt requires a non-null
+claim host, lease, acquisition, and expiry, an attempt greater than zero,
+<code>claim_acquired_at &lt; claim_expires_at</code>, and chain-constant claim
+fields except across the recovery transition above. A
+<code>claimed</code> receipt additionally requires
+<code>claim_acquired_at &lt;= receipt_at &lt; claim_expires_at</code> and keeps
+start/end null, counts zero, outputs empty, and terminal fields null.
+<code>running</code> requires <code>started_at</code> within the same half-open
+claim interval, requires <code>receipt_at &lt; claim_expires_at</code>, permits
+accumulated counts/redaction/usage, and keeps end, outputs, failure, and
+superseding head null. <code>succeeded</code> requires claim/start/end, one or
+more produced annotations of exactly the requested kinds bound to
+<code>subject_head_digest</code>, null failure and superseding head, and optional
+usage. <code>superseded</code> requires claim/start/end and
+<code>superseded_by_head_digest</code> different from the bound head, permits
+stale produced annotations, and has null failure. <code>failed</code> requires
+claim/start/end and <code>failure_code</code>, has empty produced annotations
+and null superseding head. <code>canceled</code> requires <code>ended_at</code>,
+has empty produced annotations, null usage/failure/superseding head, and
+has null claim fields and attempt zero after <code>queued</code>; after
+<code>claimed</code> or <code>running</code> it repeats the predecessor claim
+fields, and requires start exactly after <code>running</code>. In all terminal
+states <code>ended_at &gt;= started_at</code> when start is present and
+<code>ended_at=receipt_at</code>; a terminal receipt with claim fields also
+requires <code>receipt_at &lt;= claim_expires_at</code>. A result published after
+expiry is not terminal success: the source authority must append a legal
+recovery claim before work can resume.
+
+The source node SHOULD schedule enrichment when a new instance appears; an
+observed head remains unchanged for the profile debounce interval; required
+current annotations are absent or stale; an operator requests refresh; or a
+profile, generator, model, prompt, or redaction version changes. An active
+session may be read only through a proven stable prefix; enrichment MUST NOT
+quiesce, stop, fence, or take ownership of it merely to produce metadata.
+
+For incremental summary generation, the request names one prior current
+summary in <code>prior_annotation_ids</code> and the first new canonical/public
+event in <code>delta_start_evidence_id</code>; the resulting annotation names
+both the prior annotation and every delta evidence object. A profile forces a
+full rebuild when the number of incremental successors since the last full
+summary reaches <code>full_rebuild_after_updates</code>, or the sum of canonical
+delta evidence byte lengths over those successors reaches
+<code>full_rebuild_after_delta_bytes</code>. Source compaction, any generator
+implementation/version, model, prompt, redaction policy, or summary-schema
+identity change also forces a full rebuild. Confidence is ordered
+<code>low &lt; medium &lt; high</code>: a prior current summary below
+<code>minimum_incremental_confidence</code> cannot be an incremental basis, and
+an incremental candidate below it is not published as current and is retried
+as a full rebuild. These triggers apply exactly when
+<code>incremental_policy=bounded_delta</code>; disabled profiles always perform
+full generation. Display text without a continuous evidence chain is never
+recursive summary input.
+
+Workers receive only the typed bounded input and return one schema-valid
+candidate. They inherit no credentials, filesystem root, shell, provider,
+session, lease, terminal, workspace-write, or cloning tool. Session/tool text
+is inert data and cannot select schema fields, paths, policies, routes, or
+arguments.
+
+#### 10.8.4 Continuation Plan and Directory Operation Receipt
+
+Continuation routes are the closed registry
+<code>managed_local_attach</code>, <code>managed_remote_attach</code>,
+<code>managed_local_resume</code>, <code>managed_takeover</code>,
+<code>managed_fork</code>, <code>adopt_existing_native</code>,
+<code>same_environment_clone</code>, <code>cross_environment_clone</code>,
+<code>cross_environment_move</code>, <code>open_unmanaged_local</code>, and
+<code>archive_or_context_fallback</code>. Outcomes are separately the closed
+registry <code>attached</code>, <code>resumed_managed</code>,
+<code>taken_over</code>, <code>forked</code>, <code>adopted</code>,
+<code>cloned</code>, <code>moved_cross_environment</code>,
+<code>cloned_source_still_active</code>,
+<code>opened_unmanaged_local</code>, <code>planned_only</code>, and
+<code>archive_or_context_fallback</code>. A route tag is never an outcome.
+
+Continuation Plan contains exactly:
+
+| Member | Type/constraint |
+| --- | --- |
+| identity/time | schema/version, <code>plan_id:digest</code>, <code>operation_id:UUIDv7</code>, <code>created_at</code>, <code>expires_at</code> |
+| selection | <code>entry_id:UUIDv7|digest</code>, <code>lineage_anchor_id:UUIDv7|digest</code>, <code>source_session_id:UUIDv7|null</code>, <code>source_instance_id:digest</code>, <code>source_host_id:UUIDv7</code>, <code>source_observation_id:digest</code>, <code>source_head_digest:digest</code> |
+| expectations | <code>source_lease:LeaseExpectation|null</code>, <code>source_checkpoint_id:digest|null</code>, <code>source_runtime:RuntimeExpectation</code>, <code>target:DirectoryTarget</code>, <code>workspace:WorkspaceRoute</code>, <code>policy_digest:digest</code> |
+| intent/route | <code>intent:attach|resume|takeover|fork|adopt|clone|move|open_unmanaged|archive_context</code>, <code>route</code> from the closed registry |
+| effects | <code>steps:ContinuationStep[1..128]</code>, <code>adoption_plan_id:digest|null</code>, <code>projection_plan_id:digest|null</code>, <code>fidelity_report_id:digest|null</code>, <code>expected_bytes:uint53</code>, <code>expected_model_calls:uint53</code>, <code>expected_processes:uint53</code> |
+| gates | <code>required_capabilities:sorted unique string[0..128]</code>, <code>contract_assertions:sorted unique ContractAssertion[1..64]</code>, <code>confirmations:sorted unique string[0..64]</code>, <code>allowed_fallback_outcomes:sorted unique outcome[0..11]</code> |
+| provenance | <code>request_digest:digest</code>, <code>adapter_digest:digest</code>, <code>controller_digest:digest</code>, <code>extensions</code> |
+
+<code>RuntimeExpectation</code> contains exactly
+<code>native_state:active|idle|waiting|stopped|failed|unknown</code>,
+<code>resumability:validated|likely|unavailable|unknown</code>,
+<code>managed_runtime_ref:string[1..512]|null</code>,
+<code>evidence_kind:provider_probe|runtime_observation|native_observation|none</code>,
+<code>evidence_id:digest|null</code>, <code>observed_at:timestamp</code>, and
+<code>extensions</code>. Evidence ID is null exactly for <code>none</code>.
+<code>DirectoryTarget</code> contains exactly
+<code>host_id:UUIDv7</code>, <code>installation_id:digest</code>,
+<code>environment_tuple:EnvironmentTuple</code>,
+<code>provider_id:provider-id</code>,
+<code>backend_realm_fingerprint:digest</code>,
+<code>authentication_status:available|missing|expired|unknown</code>,
+<code>reachability:local|reachable|unreachable|unknown</code>, and
+<code>extensions</code>. Its provider/environment values MUST equal the
+manifest-declared mapping in the chosen exact tuple; string equality never
+creates that mapping. <code>WorkspaceRoute</code> contains exactly
+<code>workspace_group_id:UUIDv7|null</code>,
+<code>workspace_record_id:digest|null</code>,
+<code>checkpoint_id:digest|null</code>,
+<code>cohort_session_ids:sorted unique UUIDv7[0..4096]</code>,
+<code>conflict_policy:refuse|exact_checkpoint|materialize_copy</code>,
+<code>transfer_manifest_id:digest|null</code>,
+<code>materialization_plan_id:digest|null</code>, and <code>extensions</code>.
+Group and record are either both null or both non-null; checkpoint requires a
+record; transfer/materialization IDs are references to existing AX contracts,
+not directory-owned substitutes. <code>ContractAssertion</code> contains
+exactly <code>contract_id:URI[1..512]</code>,
+<code>exact_version:semver</code>, and <code>extensions</code>.
+<code>ContinuationStep</code> contains exactly
+<code>step_id:string[1..128]</code>,
+<code>subsystem:directory|ax_ownership|ax_workspace|ax_transfer|ax_materialization|ax_terminal|provider|cloning</code>,
+<code>input_digest:digest</code>,
+<code>prerequisite_step_ids:sorted unique string[0..128]</code>,
+<code>retry_policy:never|same_idempotency_key</code>,
+<code>mutation:read_only|directory_record|ax_authority|native_store|process</code>,
+<code>expected_receipt_type:string[1..256]|null</code>, and
+<code>extensions</code>. Every type in this paragraph is closed except for its
+listed reverse-DNS <code>extensions</code> map.
+
+Planning may perform read-only probes but MUST NOT quiesce, capture, transfer,
+materialize, adopt, launch, attach, change ownership, or reserve a mutable
+provider transaction. Execution accepts only the persisted unexpired plan and
+its exact operation ID. Immediately before the first and every step-local
+mutation it revalidates source observation/head, lease, checkpoint, runtime,
+target tuple/realm/auth/reachability, workspace group/cohort/classification,
+policy, capability, and contract assertions. A mismatch is
+<code>continuation_plan_stale</code>; no silent replan, target/intent/route
+substitution, force escalation, fidelity downgrade, or archive fallback exists.
+
+Adoption is source-local and unavailable unless the exact accepted tuple proves
+stable identity, safe native boundary, idempotent Session/Workspace/epoch-1
+lease creation, Provider Identity, first Checkpoint, native resume, and crash
+recovery. It never fabricates pre-adoption AX history. Otherwise the planner
+offers clone. Remote unmanaged open is always
+<code>unmanaged_remote_forbidden</code>.
+
+Cross-environment routes reference the exact v0.3 Clone Capture/Raw Object and
+Bundle manifests, Canonical Session/Event, Projection Plan, Fidelity Report,
+Migration Checkpoint, Read-Back Evidence, Validation Report, target Checkpoint,
+and Clone Lineage Receipt. They never duplicate or reinterpret those contracts.
+A move executes capture, transfer, projection, staged/live validation, target
+Session/Checkpoint finalization, and lineage publication before source
+stop/release. Post-commit source failure retains the valid target and returns
+<code>cloned_source_still_active</code>.
+
+Directory Operation Receipt contains exactly <code>schema</code>,
+<code>schema_version</code>, <code>directory_receipt_id:digest</code>,
+<code>previous_directory_receipt_id:digest|null</code>,
+<code>operation_id:UUIDv7</code>, <code>plan_id:digest</code>,
+<code>request_digest:digest</code>, <code>actor:string[1..256]</code>,
+<code>initiating_host_id:UUIDv7</code>, <code>responsible_host_id:UUIDv7</code>,
+<code>step_index:uint53</code>, <code>step_id:string[1..128]</code>,
+<code>idempotency_key:digest</code>, <code>validated_source:ValidatedSource</code>,
+<code>validated_target:ValidatedTarget</code>,
+<code>effect_receipt_ids:sorted unique digest[0..4096]</code>,
+<code>state:validating|executing|finalizing|succeeded|failed|uncertain|compensated</code>,
+<code>safe_retry:never|status_first|same_request</code>,
+<code>error:StructuredError1.2|null</code>,
+<code>durable_effects:sorted unique string[0..256]</code>,
+<code>compensations:sorted unique string[0..256]</code>,
+<code>outcome:outcome|null</code>, <code>created_at:timestamp</code>, and
+<code>extensions</code>. Validated source/target repeat the exact bound
+identities and heads/tuples from the plan. State derives only from a valid
+contiguous receipt chain. A lost response is recovered by operation ID before
+retry; replay cannot create a second annotation, target Session/native store,
+runtime, or receipt-chain root.
+
+<code>ValidatedSource</code> contains exactly
+<code>session_id:UUIDv7|null</code>, <code>instance_id:digest</code>,
+<code>host_id:UUIDv7</code>, <code>observation_id:digest</code>,
+<code>head_digest:digest</code>, <code>lease_id:UUIDv7|null</code>,
+<code>lease_epoch:uint53|null</code>, <code>checkpoint_id:digest|null</code>,
+<code>runtime:RuntimeExpectation</code>, and <code>extensions</code>. Lease ID
+and epoch are either both null or both non-null and equal the plan's lease
+expectation. <code>ValidatedTarget</code> contains exactly
+<code>target:DirectoryTarget</code>,
+<code>environment_observation_id:digest</code>,
+<code>capability_evidence_ids:sorted unique digest[1..256]</code>,
+<code>workspace:WorkspaceRoute</code>,
+<code>policy_digest:digest</code>,
+<code>contract_assertions:sorted unique ContractAssertion[1..64]</code>,
+<code>validated_at:timestamp</code>, and <code>extensions</code>. These are
+closed snapshots: every member equals the corresponding plan expectation or
+the execution is stale before mutation.
+
+The Directory Operation Receipt transition oracle is closed:
+
+| Predecessor state | Allowed successor state |
+| --- | --- |
+| no predecessor | <code>validating</code> only |
+| <code>validating</code> | <code>executing</code>, <code>failed</code>, or <code>uncertain</code> |
+| <code>executing</code> | <code>executing</code>, <code>finalizing</code>, <code>failed</code>, or <code>uncertain</code> |
+| <code>finalizing</code> | <code>succeeded</code>, <code>failed</code>, or <code>uncertain</code> |
+| <code>failed</code> | <code>compensated</code> only |
+| <code>uncertain</code> | <code>executing</code>, <code>finalizing</code>, <code>failed</code>, <code>succeeded</code>, or <code>compensated</code> after status-first reconciliation |
+| <code>succeeded</code>, <code>compensated</code> | no successor |
+
+The root has null predecessor, <code>step_index=0</code>, and
+<code>step_id="validate"</code>; every successor names the immediately prior
+receipt. <code>step_index</code> never decreases, advances exactly when the
+plan advances to another step, and an <code>executing -> executing</code> retry
+retains both step index and step ID. More than one valid successor is
+<code>directory_receipt_conflict</code>; time and lexical order do not select a
+branch. Plan, request, actor, initiating host, operation, and idempotency key
+are chain-constant. Each successor's effect receipts and durable effects are
+supersets of its predecessor; compensation appends facts and never erases
+history.
+
+Conditional fields are exact. Nonterminal <code>validating</code>,
+<code>executing</code>, and <code>finalizing</code> require null
+<code>error</code> and <code>outcome</code>. <code>succeeded</code> requires
+null error, a non-null outcome allowed by the plan, and
+<code>safe_retry=status_first</code>; its durable effects prove that outcome.
+<code>failed</code> requires a non-null Structured Error, null outcome, and
+<code>safe_retry=never|status_first</code>. <code>uncertain</code> requires a
+non-null <code>operation_uncertain</code> error, null outcome, and
+<code>safe_retry=status_first</code>; no effect may be repeated until
+reconciliation appends a successor. <code>compensated</code> requires a
+non-null error inherited from the failed/uncertain branch, null outcome,
+non-empty compensations, and <code>safe_retry=never</code>. The partial-success
+outcome <code>cloned_source_still_active</code> is a
+<code>succeeded</code> receipt with the valid target retained and source-stop
+failure evidence in durable effects; it is never encoded as failed or
+compensated.
+
+#### 10.8.5 Directory Query Schema and derived catalog
+
+Session Directory Query is a closed request contract containing exactly
+<code>schema</code>, <code>schema_version</code>,
+<code>query_id:UUIDv7</code>, <code>operations:QueryOperation[1..64]</code>,
+<code>caller:CallerContext</code>, and <code>extensions</code>. The parser uses
+no shell evaluation and rejects the whole batch before execution on unknown
+syntax, operation, parameter, field, preset, filter, sort key, or bound.
+
+Read operations are exactly <code>schema</code>, <code>sessions</code>,
+<code>session</code>, <code>lineage</code>, <code>hosts</code>,
+<code>environments</code>, <code>jobs</code>, <code>plans</code>,
+<code>count</code>, <code>distinct</code>, and
+<code>directory_summary</code>. Mutations are exactly
+<code>set_title</code>, <code>set_tags</code>, <code>set_pin</code>,
+<code>enrich</code>, <code>plan_continue</code>, and
+<code>execute_plan</code>; there is no delete. <code>CallerContext</code>
+contains exactly <code>caller_id:string[1..256]</code>,
+<code>authentication_subject:string[1..512]</code>,
+<code>origin_host_id:UUIDv7</code>,
+<code>interaction:interactive|non_interactive</code>,
+<code>scopes:sorted unique directory.read|directory.preview|directory.mutate|directory.execute|directory.admin[1..5]</code>,
+<code>disclosure_policy_digest:digest</code>, and <code>extensions</code>. It is
+authenticated server-side and is never accepted from an unverified body alone.
+
+Each <code>QueryOperation</code> contains exactly
+<code>operation_index:uint53[0..63]</code>, <code>name</code> from the closed
+operation registry, <code>parameters</code> from the name-matched closed union
+below, <code>fields:sorted unique directory-field[0..128]|null</code>,
+<code>preset:minimal|overview|activity|routing|full|null</code>,
+<code>skip:uint53[0..1000000]</code>, <code>take:uint53[1..1000]</code>,
+<code>sort:QuerySort[0..8]</code>, <code>dry_run:boolean</code>,
+<code>confirm:boolean</code>, <code>expectation_digest:digest|null</code>,
+<code>idempotency_key:digest|null</code>, and <code>extensions</code>.
+<code>fields</code> and <code>preset</code> are mutually exclusive; both are
+null for mutations and count. Read operations require
+<code>dry_run=false</code>, <code>confirm=false</code>, and null expectation and
+idempotency. Mutations require <code>dry_run=true</code> or
+<code>confirm=true</code>, never both; <code>execute_plan</code> requires
+confirm, expectation digest, and idempotency key. Annotation mutations require
+an expectation digest and idempotency key when confirmed. Planning is pure and
+uses dry run with no confirmation. There is no untyped parameter bag.
+
+<code>QuerySort</code> contains exactly
+<code>field:display_title|provider|host|workspace|state|updated_at|annotation_freshness|inventory_freshness|reachability|stable_id</code>,
+<code>direction:asc|desc</code>, and <code>extensions</code>. Sort tuples append
+<code>stable_id asc</code> when it is absent. A returned cursor is an opaque
+<code>string[1..1024]</code> integrity-bound to query schema version, caller,
+disclosure policy, operation name, parameters, projection, sort tuple, and last
+stable key. Reuse after any bound value changes is
+<code>query_cursor_mismatch</code>, never a best-effort continuation.
+
+<code>DirectoryFilters</code> contains exactly
+<code>kinds:sorted unique lineage|managed_session|native_instance[0..3]</code>,
+<code>lineage_anchors:sorted unique UUIDv7|digest[0..256]</code>,
+<code>provider_ids:sorted unique provider-id[0..64]</code>,
+<code>host_ids:sorted unique UUIDv7[0..256]</code>,
+<code>workspace_ids:sorted unique UUIDv7[0..256]</code>,
+<code>states:sorted unique string[0..64]</code>,
+<code>management_states:sorted unique managed|unmanaged|conflicted[0..3]</code>,
+<code>reachability:sorted unique local|reachable|unreachable|unknown[0..4]</code>,
+<code>freshness:sorted unique current|aging|stale|offline|partial|conflicted|unknown[0..7]</code>,
+<code>warnings:sorted unique string[0..128]</code>,
+<code>updated_before:timestamp|null</code>,
+<code>updated_after:timestamp|null</code>, and <code>extensions</code>.
+
+The name-matched parameter union is exact:
+
+| Operation | Exact <code>parameters</code> members |
+| --- | --- |
+| <code>schema</code>, <code>directory_summary</code> | <code>extensions</code> only |
+| <code>sessions</code>, <code>count</code> | <code>filters:DirectoryFilters</code>, <code>extensions</code> |
+| <code>session</code> | <code>subject_kind:ax_session|native_instance</code>, <code>subject_id:UUIDv7|digest</code>, <code>extensions</code> |
+| <code>lineage</code> | <code>anchor_id:UUIDv7|digest</code>, <code>include_suggestions:boolean</code>, <code>extensions</code> |
+| <code>hosts</code> | <code>host_ids:sorted unique UUIDv7[0..256]</code>, <code>reachable:boolean|null</code>, <code>extensions</code> |
+| <code>environments</code> | <code>host_ids:sorted unique UUIDv7[0..256]</code>, <code>environment_ids:sorted unique environment-id[0..64]</code>, <code>authentication_status:sorted unique available|missing|expired|unknown[0..4]</code>, <code>extensions</code> |
+| <code>jobs</code> | <code>job_ids:sorted unique UUIDv7[0..256]</code>, <code>profile_ids:sorted unique digest[0..256]</code>, <code>states:sorted unique queued|claimed|running|succeeded|superseded|failed|canceled[0..7]</code>, <code>extensions</code> |
+| <code>plans</code> | <code>plan_ids:sorted unique digest[0..256]</code>, <code>operation_ids:sorted unique UUIDv7[0..256]</code>, <code>include_expired:boolean</code>, <code>extensions</code> |
+| <code>distinct</code> | <code>field:kind|lineage_anchor|provider|host|workspace|state|management_state|reachability|freshness|warning</code>, <code>filters:DirectoryFilters</code>, <code>extensions</code> |
+| <code>set_title</code> | <code>subject_kind:ax_session|native_instance|lineage</code>, <code>subject_id:UUIDv7|digest</code>, <code>title:string[1..512]</code>, <code>supersedes_annotation_ids:sorted unique digest[0..1024]</code>, <code>extensions</code> |
+| <code>set_tags</code> | matching subject kind/ID, <code>tags:sorted unique string[0..256]</code>, <code>supersedes_annotation_ids:sorted unique digest[0..1024]</code>, <code>extensions</code> |
+| <code>set_pin</code> | matching subject kind/ID, <code>value:boolean</code>, <code>supersedes_annotation_ids:sorted unique digest[0..1024]</code>, <code>extensions</code> |
+| <code>enrich</code> | matching subject kind/ID, <code>profile_id:digest</code>, <code>kinds:sorted unique generated_title|summary|recent_activity[1..3]</code>, <code>expected_head_digest:digest</code>, <code>extensions</code> |
+| <code>plan_continue</code> | matching subject kind/ID, <code>source_instance_id:digest</code>, <code>to_host_id:UUIDv7</code>, <code>to_installation_id:digest</code>, <code>intent:attach|resume|takeover|fork|adopt|clone|move|open_unmanaged|archive_context</code>, <code>workspace_policy:refuse|exact_checkpoint|materialize_copy</code>, <code>source_after_success:retain|stop_and_release</code>, <code>extensions</code> |
+| <code>execute_plan</code> | <code>plan_id:digest</code>, <code>operation_id:UUIDv7</code>, <code>confirmations:sorted unique string[0..64]</code>, <code>extensions</code> |
+
+Presets are <code>minimal</code>, <code>overview</code>,
+<code>activity</code>, <code>routing</code>, and <code>full</code>. The schema
+operation publishes the exact field/filter/type/enum/cost/authorization and
+mutation safety/idempotency registry.
+
+The closed <code>directory-field</code> registry is exactly <code>id</code>, <code>kind</code>,
+<code>lineage_anchor</code>, <code>management_state</code>,
+<code>display_title</code>, <code>title_source</code>, <code>provider</code>,
+<code>host</code>, <code>workspace</code>, <code>state</code>,
+<code>owner</code>, <code>local_role</code>, <code>updated_at</code>,
+<code>summary</code>, <code>recent_activity</code>,
+<code>last_user_intent</code>, <code>open_loops</code>,
+<code>annotation_freshness</code>, <code>inventory_freshness</code>,
+<code>reachability</code>, <code>branch_count</code>,
+<code>clone_count</code>, <code>warnings</code>, and
+<code>available_intents</code>, plus the explicitly lazy fields
+<code>lineage_graph</code>, <code>live_runtime</code>, and <code>preview</code>.
+Fields/presets apply only to sessions, session, lineage, hosts, environments,
+jobs, and plans; other operations require both null. Only list operations may
+use nonzero skip or take other than 1. Server-side authorization precedes
+projection. Expensive lineage/runtime/preview fields are lazy. Transcript grep is explicit,
+authorized, bounded, source-local, single-host/single-session, and never a
+default mesh fan-out.
+
+The derived catalog is rebuilt deterministically from AX records, v0.3 cloning
+records, directory records, source-local runtime observations, reachability,
+and policy. Rebuild invokes no model and mutates no native store. Freshness is
+exactly <code>current|aging|stale|offline|partial|conflicted|unknown</code> and
+reports effective threshold and age. Default lexical/structured search indexes
+only authorized sanitized titles, summaries, recent activity, tags, workspace
+labels, and host/environment names. Optional embeddings are local-only,
+replaceable, sensitive, head/policy-bound suggestions and never lineage or
+route authority. Ranking is pin, exact match, actionable state, source activity
+time, freshness, then stable ID.
+
+Directory Entry is a derived CLI/query/TUI view, never authority. It has kind
+<code>lineage|managed_session|native_instance</code>, stable ID/anchor, display
+title/source/subject, selected Session/instance, provider/environment/host,
+workspace, owner/local role, AX/native state, activity, annotation/inventory
+freshness, reachability/auth status, branch/clone counts, warnings, and eligible
+intents. The primary browser row is a lineage; expansion reveals physical
+instances and Sessions, and planning selects an exact source instance.
+
+The exact result projection types are:
+
+- <code>DirectoryFreshness</code>: <code>state:current|aging|stale|offline|partial|conflicted|unknown</code>,
+  <code>age_seconds:uint53|null</code>,
+  <code>effective_threshold_seconds:uint53|null</code>,
+  <code>as_of:timestamp</code>, <code>reason_codes:sorted unique string[0..64]</code>,
+  and <code>extensions</code>. Age and threshold are non-null exactly when an
+  observation exists and policy has a threshold.
+- <code>DirectoryEntry</code>: <code>id:UUIDv7|digest</code>,
+  <code>kind:lineage|managed_session|native_instance</code>,
+  <code>lineage_anchor:UUIDv7|digest</code>,
+  <code>management_state:managed|unmanaged|conflicted</code>,
+  <code>display_title:string[1..512]</code>,
+  <code>title_source:manual|provider|generated|fallback</code>,
+  <code>title_subject_id:UUIDv7|digest</code>,
+  <code>selected_session_id:UUIDv7|null</code>,
+  <code>selected_instance_id:digest|null</code>,
+  <code>provider_id:provider-id</code>, <code>environment_id:environment-id</code>,
+  <code>host_id:UUIDv7</code>, <code>workspace_id:UUIDv7|null</code>,
+  <code>owner_host_id:UUIDv7|null</code>, <code>local_role:owner|replica|none</code>,
+  <code>state:string[1..64]</code>, <code>updated_at:timestamp|null</code>,
+  <code>summary:SummaryPayload|null</code>,
+  <code>recent_activity:string[1..65536]|null</code>,
+  <code>annotation_freshness:DirectoryFreshness</code>,
+  <code>inventory_freshness:DirectoryFreshness</code>,
+  <code>reachability:local|reachable|unreachable|unknown</code>,
+  <code>authentication_status:available|missing|expired|unknown</code>,
+  <code>branch_count:uint53</code>, <code>clone_count:uint53</code>,
+  <code>warnings:sorted unique string[0..256]</code>,
+  <code>available_intents:sorted unique attach|resume|takeover|fork|adopt|clone|move|open_unmanaged|archive_context[0..9]</code>,
+  and <code>extensions</code>. Exactly one selected ID is non-null for physical
+  rows; a lineage row may have both null. <code>SummaryPayload</code> is the
+  exact summary payload defined in Section 10.8.2.
+- <code>LineageNode</code>: <code>node_kind:ax_session|native_instance</code>,
+  matching <code>node_id:UUIDv7|digest</code>,
+  <code>anchor_id:UUIDv7|digest</code>, <code>head_digest:digest</code>,
+  <code>selected:boolean</code>, and <code>extensions</code>.
+- <code>SuggestedRelation</code>: matching
+  <code>from_kind/from_id</code> and <code>to_kind/to_id</code>,
+  <code>method:content_similarity|workspace_similarity|temporal_proximity|provider_hint</code>,
+  <code>score_millionths:uint53[0..1000000]</code>,
+  <code>evidence_ids:sorted unique digest[1..256]</code>,
+  <code>created_at:timestamp</code>, and <code>extensions</code>. It is never an
+  authoritative link or component member.
+- <code>DirectoryHost</code>: <code>host_id:UUIDv7</code>,
+  <code>display_name:string[1..256]</code>,
+  <code>reachability:local|reachable|unreachable|unknown</code>,
+  <code>last_successful_contact_at:timestamp|null</code>,
+  <code>inventory_freshness:DirectoryFreshness</code>,
+  <code>environment_observation_ids:sorted unique digest[0..256]</code>,
+  <code>warnings:sorted unique string[0..128]</code>, and
+  <code>extensions</code>.
+
+Every nested type above is closed except for its listed reverse-DNS
+<code>extensions</code> map; unknown members fail validation.
+
+<code>QuerySchemaRegistry</code> contains exactly
+<code>query_schema_version:semver</code>, <code>registry_digest:digest</code>,
+<code>operations:QueryOperationDescriptor[17]</code>,
+<code>fields:QueryFieldDescriptor[1..128]</code>,
+<code>presets:QueryPresetDescriptor[5]</code>,
+<code>limits:QueryLimits</code>, and <code>extensions</code>.
+<code>QueryOperationDescriptor</code> contains exactly
+<code>name</code>, <code>kind:read|mutation</code>,
+<code>parameters_schema_id:URI[1..512]</code>,
+<code>result_tag:string[1..64]</code>,
+<code>required_scope:directory.read|directory.preview|directory.mutate|directory.execute|directory.admin</code>,
+<code>supports_dry_run:boolean</code>, <code>requires_confirmation:boolean</code>,
+<code>idempotency:none|optional|required</code>, and <code>extensions</code>.
+<code>QueryFieldDescriptor</code> contains exactly
+<code>name:directory-field</code>, <code>type:string[1..128]</code>,
+<code>cost:constant|indexed|source_local|live_probe</code>,
+<code>required_scope</code> from the same scope enum,
+<code>filterable:boolean</code>, <code>sortable:boolean</code>, and
+<code>extensions</code>. <code>QueryPresetDescriptor</code> contains exactly
+<code>name:minimal|overview|activity|routing|full</code>,
+<code>fields:sorted unique directory-field[1..128]</code>, and
+<code>extensions</code>. <code>QueryLimits</code> contains exactly
+<code>max_operations:uint53=64</code>, <code>max_take:uint53=1000</code>,
+<code>max_skip:uint53=1000000</code>, <code>max_sort_keys:uint53=8</code>,
+<code>max_fields:uint53=128</code>, <code>max_cursor_bytes:uint53=1024</code>,
+and <code>extensions</code>. The registry enumerates each exact parameter shape
+from the table above; schema references cannot loosen those shapes.
+
+<code>QueryResult</code> contains exactly
+<code>operation_index:uint53[0..63]</code>, <code>operation_name</code> from the
+closed operation registry, <code>result_tag</code> from the union below,
+<code>body</code> matching that tag, and <code>extensions</code>:
+
+| Result tag | Exact <code>body</code> members |
+| --- | --- |
+| <code>schema_registry</code> | <code>registry:QuerySchemaRegistry</code>, <code>extensions</code> |
+| <code>directory_entries</code> | <code>entries:DirectoryEntry[0..1000]</code>, <code>next_cursor:string[1..1024]|null</code>, <code>partial:boolean</code>, <code>freshness:DirectoryFreshness</code>, <code>extensions</code> |
+| <code>directory_inspection</code> | <code>entry:DirectoryEntry</code>, <code>observations:NativeSessionObservation[0..256]</code>, <code>annotations:SessionAnnotation[0..1024]</code>, <code>provenance_ids:sorted unique digest[0..4096]</code>, <code>extensions</code> |
+| <code>directory_lineage</code> | <code>anchor_id:UUIDv7|digest</code>, <code>nodes:LineageNode[1..4096]</code>, <code>authoritative_links:ConversationLineageLink[0..4096]</code>, <code>suggestions:SuggestedRelation[0..4096]</code>, <code>ambiguous:boolean</code>, <code>extensions</code> |
+| <code>directory_hosts_environments</code> | <code>hosts:DirectoryHost[0..1024]</code>, <code>environments:EnvironmentObservation[0..4096]</code>, <code>extensions</code> |
+| <code>directory_jobs</code> | <code>requests:EnrichmentJobRequest[0..1000]</code>, <code>receipts:EnrichmentJobReceipt[0..4096]</code>, <code>next_cursor:string[1..1024]|null</code>, <code>extensions</code> |
+| <code>directory_plans</code> | <code>plans:ContinuationPlan[0..1000]</code>, <code>next_cursor:string[1..1024]|null</code>, <code>extensions</code> |
+| <code>directory_count</code> | <code>count:uint53</code>, <code>partial:boolean</code>, <code>extensions</code> |
+| <code>directory_distinct</code> | <code>field:kind|lineage_anchor|provider|host|workspace|state|management_state|reachability|freshness|warning</code>, <code>values:sorted unique string[0..1000]</code>, <code>partial:boolean</code>, <code>extensions</code> |
+| <code>directory_summary</code> | <code>total_entries:uint53</code>, <code>managed:uint53</code>, <code>unmanaged:uint53</code>, <code>missing:uint53</code>, <code>offline:uint53</code>, <code>conflicted:uint53</code>, <code>running:uint53</code>, <code>warning_count:uint53</code>, <code>as_of:timestamp</code>, <code>extensions</code> |
+| <code>annotation_mutation</code> | <code>annotation:SessionAnnotation|null</code>, <code>would_write:boolean</code>, <code>extensions</code>; annotation is null exactly for dry run |
+| <code>enrichment_mutation</code> | <code>request:EnrichmentJobRequest</code>, <code>would_enqueue:boolean</code>, <code>extensions</code> |
+| <code>directory_plan</code> | <code>plan:ContinuationPlan</code>, <code>outcome:planned_only</code>, <code>mutated:false</code>, <code>extensions</code> |
+| <code>directory_operation</code> | <code>operation_id:UUIDv7</code>, <code>receipt_chain:DirectoryOperationReceipt[1..4096]</code>, <code>current_state:validating|executing|finalizing|succeeded|failed|uncertain|compensated</code>, <code>outcome:directory-outcome|null</code>, <code>extensions</code> |
+
+The operation/result mapping is one-to-one: <code>schema</code> uses
+<code>schema_registry</code>; sessions uses entries; session uses inspection;
+lineage uses lineage; hosts/environments use hosts-environments; jobs uses
+jobs; plans uses plans; count, distinct, and summary use their like-named tags;
+the three annotation mutations use <code>annotation_mutation</code>; enrich uses
+<code>enrichment_mutation</code>; planning uses <code>directory_plan</code>; and
+execution uses <code>directory_operation</code>. A result tag mismatch rejects
+the entire response. Server-side scope and disclosure authorization occur
+before projection; an unauthorized field is an error, not a silently null
+value.
+
 ## 11. Mesh RPC and replication
 
 ### 11.1 Transport and peer authentication
@@ -5782,6 +6972,87 @@ Tombstone ID and marker predecessor; without this event/Tombstone chain it MUST
 fail before mutation.
 Silent overwrite, timestamp-based overwrite, and broad path deletion are
 forbidden.
+
+### 11.8 Mesh RPC 3.0.0 directory replication
+
+Mesh RPC 3.0.0 is the directory-capable major. RPC 2.0.0 remains the exact
+six-namespace, fourteen-contract core protocol specified above and MUST be
+served in dual-stack mode for at least one stable release. A v3 node negotiating
+v2 performs core sync only and exposes the peer as
+<code>directory_mesh_unsupported</code>, never as zero inventory.
+
+RPC 3 retains v2 framing, operations, Merkle algorithm, and limits and binds
+Structured Error 1.2.0. Its <code>Namespace</code> is exactly
+<code>record</code>, <code>event</code>, <code>manifest</code>,
+<code>tombstone</code>, <code>tombstone_ack</code>, <code>blob</code>, and
+<code>directory_record</code>. Consequently
+<code>inventory.roots.namespaces</code> and success roots are sorted unique
+<code>Namespace[1..7]</code>; a complete request/response uses seven. Every v2
+<code>[1..6]</code> bound remains historical RPC-2 syntax and MUST NOT be used
+inside a v3 frame.
+
+RPC 3 <code>hello</code> request/response bodies retain the v2 exact non-map
+members and replace <code>contracts</code> with an exact 24-key map:
+
+~~~json
+{
+  "rpc": ["3.0.0"],
+  "session_record": ["1.0.0", "2.0.0", "3.0.0"],
+  "session_event": ["1.0.0", "2.0.0", "3.0.0"],
+  "lease": ["1.0.0"],
+  "checkpoint": ["1.0.0"],
+  "workspace_group": ["1.0.0"],
+  "provider_identity": ["1.0.0"],
+  "blob": ["1.0.0"],
+  "transfer_manifest": ["1.0.0"],
+  "chunk": ["1.0.0"],
+  "materialization_plan": ["1.0.0", "2.0.0"],
+  "tombstone": ["1.0.0"],
+  "tombstone_ack": ["1.0.0"],
+  "task_board_bundle": ["1.0.0"],
+  "environment_observation": ["1.0.0"],
+  "native_session_observation": ["1.0.0"],
+  "session_inventory_batch": ["1.0.0"],
+  "conversation_lineage_link": ["1.0.0"],
+  "session_annotation": ["1.0.0"],
+  "session_enrichment_profile": ["1.0.0"],
+  "session_enrichment_job_request": ["1.0.0"],
+  "session_enrichment_job_receipt": ["1.0.0"],
+  "session_continuation_plan": ["1.0.0"],
+  "session_directory_operation_receipt": ["1.0.0"]
+}
+~~~
+
+Keys and arrays are exact, sorted as contract data requires, and appear in both
+hello directions. Directory Node, Query, Config, CLI Result, Observation, and
+Structured Error remain local/other-protocol/static bindings and MUST NOT be
+inserted. Missing or extra keys, wrong versions, or a stale six-namespace v3
+inventory fail <code>incompatible_protocol</code> before exchange.
+
+The <code>directory_record</code> namespace contains only schema-valid
+Environment and Native Session Observations, Inventory Batches, Conversation
+Lineage Links/resolutions, policy-permitted Session Annotations and Enrichment
+Profiles, Enrichment Job Requests/Receipts, Continuation Plans, and Directory
+Operation Receipts. Their schema-defined self ID is inventory identity. Raw
+native/transcript/preview/model payloads, credentials/auth state, terminal
+output, PIDs/PTYs/sockets, absolute native-store paths, runtime observations,
+and SQLite rows are excluded.
+
+Namespace membership is total and disjoint. RPC 3
+<code>objects.get</code> validates each decoded schema and self-ID against the
+requested Merkle namespace before returning or accepting it; caller placement
+cannot relabel an object. Directory objects use the unchanged trie/JCS
+algorithm with <code>namespace="directory_record"</code>, so their roots and
+children are domain-separated from every v2 namespace. A directory object in
+<code>record</code>/<code>manifest</code>, raw preview in
+<code>directory_record</code>, or an ID in two roots is
+<code>integrity_failure</code>.
+
+Source authority is preserved through anti-entropy: only the named source host
+may author its observations/batches; gaps and branches converge as visible
+evidence rather than last-writer-wins. Metadata disclosure is enforced before
+publication and again server-side before object return. Tightening policy stops
+future disclosure but MUST NOT claim remote erasure of bytes already replicated.
 
 ## 12. Workspace replication
 
@@ -7900,6 +9171,113 @@ monotonic sequence all fail closed. Failed/partial reads never mean absence.
 Only AX release authority accepts or globally revokes; local policy may further
 deny but cannot self-approve or override revocation.
 
+### 13.15 Directory continuation planning and execution
+
+The directory planner consumes one exact selected native instance, current AX
+Session/lease/checkpoint/workspace facts when managed, authoritative lineage,
+source/target reachability and Environment Tuples, target authentication
+status, cloning fidelity estimate when applicable, operator intent, and policy.
+It emits only the Section 10.8 Continuation Plan and
+<code>planned_only</code>. Planning is read-only; it cannot quiesce, snapshot,
+capture, transfer, materialize, adopt, allocate a provider transaction, launch,
+attach, or change a lease.
+
+The deterministic route matrix is:
+
+| Source/intent | Target | Eligible route and owner |
+| --- | --- | --- |
+| Managed running owner / attach | same host | <code>managed_local_attach</code>; existing AX terminal |
+| Managed running owner / attach | another operator host, same owner | <code>managed_remote_attach</code>; authenticated AX attach |
+| Managed stopped owner / resume | same host/environment | <code>managed_local_resume</code>; Provider 2 plus winning AX lease |
+| Managed / takeover | different host, same environment | <code>managed_takeover</code>; Sections 13.6/13.7 and workspace cohort |
+| Managed / fork | any eligible AX host | <code>managed_fork</code>; Section 13.8 |
+| Unmanaged exact instance / adopt | owning host only | <code>adopt_existing_native</code>; gated transaction below |
+| Managed or unmanaged / clone | same environment | <code>same_environment_clone</code>; safe native fast path or v0.3 canonical pipeline |
+| Managed or unmanaged / clone | different environment | <code>cross_environment_clone</code>; Section 13.14 plus AX transfer/launch |
+| Managed or unmanaged / move | different environment | <code>cross_environment_move</code>; clone target first, then source release |
+| Unmanaged / open | owning host only | <code>open_unmanaged_local</code>; explicit absence of AX guarantees |
+| Any / unsupported tuple | no native target | <code>archive_or_context_fallback</code>; never reported as clone |
+
+An unmanaged instance on another host can only be adopted by its source node or
+cloned into a managed target. Workspace transfer precedes session
+materialization when required. Shared Workspace Groups obey the existing whole-
+cohort/separate-worktree rules; the directory cannot invent another workspace
+copy mode.
+
+Execution accepts exactly <code>plan_id</code>, the plan's
+<code>operation_id</code>, every named confirmation, and optional exact
+expectation assertions. It verifies plan integrity/expiry, resolves the same
+source and target, revalidates every plan and step-local authority, acquires the
+idempotency slot, persists a <code>validating</code> Directory Operation Receipt,
+and then executes the exact ordered steps. It never interprets an unstructured
+instruction as a plan.
+
+Attach delegates authorization/transport to Section 4/13. Resume, takeover,
+and fork delegate ownership, fencing, checkpoint, workspace, and runtime to AX.
+Cross-environment routes delegate capture, canonicalization, projection,
+Fidelity Report, staged/live read-back, commit/rollback, and lineage receipt to
+Section 13.14. Directory receipts reference those effect receipts and never
+replace them.
+
+Adoption requires an exact accepted tuple and one source-local idempotent
+transaction that resolves a stable unmanaged identity, proves a closed/safe
+native boundary, creates a new Session Record 3 and Workspace binding with an
+epoch-1 lease, validates Provider Identity and resumability, captures the first
+Checkpoint, publishes adoption lineage and receipts, and only then resumes.
+Failure before publication cannot leave a managed claim. Pre-adoption native
+history remains native history, not retroactive AX events.
+
+A cross-environment move is strictly target-first: stable capture, verified AX
+transfer, target projection, staged and live validation, target Session/lease/
+Checkpoint finalization, and lineage publication all precede any source stop or
+lease release. Target finalization is the commit boundary. A later source
+failure returns <code>cloned_source_still_active</code>, records both resumable
+authorities, and cannot delete or invalidate the target.
+
+Launch uses the exact target Environment Observation, argv array, explicit
+workspace-derived cwd, and environment-name/literal allowlists. No title,
+provider/native ID, path, query, or transcript fragment is shell-concatenated.
+Spawn is not success: the target must be discoverable by exact identity,
+readable through the target adapter, natively resumable, consistent with the AX
+lease/runtime, and ready under the configured probe. Attach begins only after
+that state.
+
+Lost responses are reconciled by operation ID and every underlying AX/provider/
+clone transaction status API before retry. A failed, partial, malformed, or
+unreadable status is <code>operation_uncertain</code> or integrity failure, not
+absence. Compensation may remove only uncommitted effects explicitly owned by
+the operation; it never erases immutable history or a committed target.
+
+Session Event 3.0.0 retains every v2 clone event and adds the closed variants
+below. It is the authority event major for Session Record 3. Display metadata,
+inventory, enrichment, and directory operation progress remain Section 10.8
+records or Observation Events and MUST NOT be smuggled into Session Event.
+
+| Event type | Exact payload members beyond the tag |
+| --- | --- |
+| <code>adoption.planned</code> | <code>operation_id:UUIDv7</code>, <code>plan_id:digest</code>, <code>source_instance_id:digest</code>, <code>source_observation_id:digest</code>, <code>source_head_digest:digest</code> |
+| <code>adoption.committed</code> | <code>operation_id:UUIDv7</code>, <code>provider_identity_record_id:digest</code>, <code>initial_checkpoint_id:digest</code>, <code>native_resumable=true</code> |
+| <code>move.planned</code> | <code>operation_id:UUIDv7</code>, <code>plan_id:digest</code>, <code>source_session_id:UUIDv7</code>, <code>target_session_id:UUIDv7</code> |
+| <code>move.target_committed</code> | <code>operation_id:UUIDv7</code>, <code>target_session_id:UUIDv7</code>, <code>target_checkpoint_id:digest</code>, <code>clone_lineage_receipt_id:digest</code> |
+| <code>move.source_release_requested</code> | <code>operation_id:UUIDv7</code>, <code>target_committed_event_id:digest</code>, <code>source_lease_epoch:uint53&gt;0</code>, <code>source_lease_id:UUIDv4</code> |
+| <code>move.source_released</code> | <code>operation_id:UUIDv7</code>, <code>target_session_id:UUIDv7</code>, <code>source_stop_event_id:digest</code>, <code>source_release_receipt_id:digest</code>, <code>outcome=moved_cross_environment</code> |
+| <code>move.source_release_failed</code> | <code>operation_id:UUIDv7</code>, <code>target_session_id:UUIDv7</code>, <code>error_code:string[1..128]</code>, <code>source_still_resumable:boolean</code>, <code>outcome=cloned_source_still_active</code> |
+
+An adoption event chain is valid only for matching Session Record 3 adoption
+provenance, exact accepted tuple, epoch-1 lease, Provider Identity, and first
+Checkpoint. A move event chain is valid only after the target clone is
+committed, read back, natively resumable, checkpointed, and lineage-published.
+<code>move.source_release_requested</code> MUST causally follow
+<code>move.target_committed</code>; no pre-target source stop/release event is
+valid. Release failure does not roll back, tombstone, or invalidate the target.
+Provider IDs and source/target Session IDs remain immutable throughout.
+The ordering is acyclic: the creation record names only prior inputs; Provider
+Identity and Checkpoint name the new Session/record as their existing schemas
+require; a later Session Event names those completed effects; and the next
+Directory Operation Receipt may name the event/effect digests. No creation
+record or Session Event names a Directory Operation Receipt that in turn names
+that same record/event.
+
 ## 14. CLI and operator experience
 
 ### 14.1 Command surface
@@ -8410,6 +9788,150 @@ Text and JSON list/status MUST expose:
 No command MAY display or log credential values, raw transcript text, or opaque
 bundle contents by default.
 
+### 14.5 Session Directory CLI Result 3, query, and TUI
+
+The merged human namespace is <code>ax sessions</code> with exact leaves
+<code>list</code>, <code>inspect</code>, <code>lineage</code>,
+<code>scan</code>, <code>enrich</code>, <code>jobs</code>,
+<code>plan</code>, <code>continue</code>, <code>operation</code>,
+<code>attach</code>, and <code>doctor</code>. Existing <code>ax list</code>,
+<code>ax status</code>, and <code>ax session clone</code> retain their v0.3
+managed/clone semantics. The directory does not widen those older result types.
+
+CLI Result 3.0.0 retains the common top-level success envelope and defines a
+closed <code>command</code> registry <code>sessions.list</code>,
+<code>sessions.inspect</code>, <code>sessions.lineage</code>,
+<code>sessions.scan</code>, <code>sessions.enrich</code>,
+<code>sessions.jobs</code>, <code>sessions.plan</code>,
+<code>sessions.continue</code>, <code>sessions.operation</code>,
+<code>sessions.attach</code>, <code>sessions.doctor</code>,
+<code>sessions.query</code>, <code>sessions.grep</code>, and
+<code>sessions.mutate</code>. Its body is the matching one of:
+
+| Result tag | Exact body members |
+| --- | --- |
+| <code>directory_entries</code> | <code>entries:DirectoryEntry[0..1000]</code>, <code>next_cursor:string[1..1024]|null</code>, <code>partial:boolean</code>, <code>freshness:DirectoryFreshness</code> |
+| <code>directory_inspection</code> | <code>entry:DirectoryEntry</code>, <code>observations:NativeSessionObservation[0..256]</code>, <code>annotations:SessionAnnotation[0..1024]</code>, <code>provenance_ids:sorted unique digest[0..4096]</code> |
+| <code>directory_lineage</code> | <code>anchor_id:UUIDv7|digest</code>, <code>nodes:LineageNode[1..4096]</code>, <code>authoritative_links:ConversationLineageLink[0..4096]</code>, <code>suggestions:SuggestedRelation[0..4096]</code>, <code>ambiguous:boolean</code> |
+| <code>directory_hosts_environments</code> | <code>hosts:DirectoryHost[0..1024]</code>, <code>environments:EnvironmentObservation[0..4096]</code> |
+| <code>directory_jobs</code> | <code>requests:EnrichmentJobRequest[0..1000]</code>, <code>receipts:EnrichmentJobReceipt[0..4096]</code>, <code>next_cursor:string[1..1024]|null</code> |
+| <code>directory_plan</code> | <code>plan:ContinuationPlan</code>, <code>outcome=planned_only</code>, <code>mutated=false</code> |
+| <code>directory_operation</code> | <code>operation_id:UUIDv7</code>, <code>receipt_chain:DirectoryOperationReceipt[1..4096]</code>, <code>current_state:validating|executing|finalizing|succeeded|failed|uncertain|compensated</code>, <code>outcome:directory-outcome|null</code> |
+| <code>directory_attach_continue</code> | <code>plan_id:digest</code>, <code>operation_id:UUIDv7</code>, <code>outcome:directory-outcome</code>, <code>target_session_id:UUIDv7|null</code>, <code>runtime_ref:string[1..512]|null</code>, <code>current_receipt_id:digest</code> |
+| <code>directory_doctor</code> | <code>healthy:boolean</code>, <code>findings:AdapterFinding[0..4096]</code>, <code>contract_versions:ContractAssertion[1..64]</code>, <code>tuple_evidence_age_seconds:uint53|null</code> |
+| <code>directory_query</code> | <code>query_id:UUIDv7</code>, <code>results:QueryResult[1..64]</code> |
+| <code>annotation_mutation</code> | <code>annotation:SessionAnnotation|null</code>, <code>would_write:boolean</code>, <code>extensions</code>; annotation is null exactly for dry run |
+| <code>enrichment_mutation</code> | <code>request:EnrichmentJobRequest</code>, <code>would_enqueue:boolean</code>, <code>extensions</code> |
+
+Every body is closed and uses the Section 10.8 types; <code>DirectoryEntry</code>
+is a result projection, not a new record. CLI Result 1 SessionSummary and CLI
+Result 2 clone bodies do not acquire directory fields. Failures use Structured
+Error 1.2, never <code>ok=false</code> success objects.
+
+The command/result mapping is exact: <code>sessions.list</code> and
+<code>sessions.grep</code> use <code>directory_entries</code>;
+<code>sessions.inspect</code> uses <code>directory_inspection</code>;
+<code>sessions.lineage</code> uses <code>directory_lineage</code>;
+<code>sessions.scan</code> uses <code>directory_hosts_environments</code>;
+<code>sessions.enrich</code> and <code>sessions.jobs</code> use
+<code>directory_jobs</code>; <code>sessions.plan</code> uses
+<code>directory_plan</code>; <code>sessions.continue</code> and
+<code>sessions.operation</code> use <code>directory_operation</code>;
+<code>sessions.attach</code> uses <code>directory_attach_continue</code>;
+<code>sessions.doctor</code> uses <code>directory_doctor</code>;
+<code>sessions.query</code> uses <code>directory_query</code>; and
+<code>sessions.mutate</code> accepts exactly one mutation Query operation and
+uses <code>annotation_mutation</code> for <code>set_title</code>,
+<code>set_tags</code>, and <code>set_pin</code>,
+<code>enrichment_mutation</code> for <code>enrich</code>,
+<code>directory_plan</code> for <code>plan_continue</code>, and
+<code>directory_operation</code> for <code>execute_plan</code>. Any other
+command/body pairing is invalid. <code>sessions.query</code> accepts only read
+operations; a mixed read/mutation batch is rejected rather than obscuring the
+top-level mutation identity.
+
+CLI Result 3 top-level IDs follow this closed oracle. A value described as an
+AX subject is non-null exactly when that subject kind is
+<code>ax_session</code>; native-instance and lineage subjects use null. A
+server-assigned operation ID is stable under replay of the same idempotency
+key.
+
+| Command tag | Top-level <code>operation_id</code> | Top-level <code>session_id</code> |
+| --- | --- | --- |
+| <code>sessions.list</code> | null | null |
+| <code>sessions.inspect</code> | null | inspected AX subject, else null |
+| <code>sessions.lineage</code> | null | null; an AX-shaped anchor is not a Session ID assertion |
+| <code>sessions.scan</code> | non-null server-assigned scan operation | null |
+| <code>sessions.enrich</code> | non-null server-assigned enqueue operation | enriched AX subject, else null |
+| <code>sessions.jobs</code> | null | null |
+| <code>sessions.plan</code> | null because planning is pure | plan source Session ID, else null |
+| <code>sessions.continue</code> | non-null and equal the body/receipt-chain operation | plan source Session ID, else null |
+| <code>sessions.operation</code> | non-null and equal the queried body/receipt-chain operation | validated source Session ID, else null |
+| <code>sessions.attach</code> | non-null and equal the body operation | body <code>target_session_id</code> when non-null, otherwise plan source Session ID or null |
+| <code>sessions.doctor</code> | null | null |
+| <code>sessions.query</code> | null | null |
+| <code>sessions.grep</code> | null | null; grep's source-local physical scope is carried in its request |
+| <code>sessions.mutate</code> | null for every dry run and for pure <code>plan_continue</code>; non-null server-assigned for confirmed annotation/enrichment mutation; for <code>execute_plan</code>, non-null and equal its parameter/body operation | mutation AX subject, or the executed plan's source Session ID; otherwise null |
+
+For <code>annotation_mutation</code>, dry run requires null annotation,
+<code>would_write=true|false</code> as the authorization/expectation preview,
+and null top-level operation ID; confirmed mutation requires a non-null newly
+published or idempotently replayed annotation, <code>would_write=false</code>,
+and non-null operation ID. For <code>enrichment_mutation</code>, dry run has
+<code>would_enqueue=true|false</code> and null top-level operation ID;
+confirmation has <code>would_enqueue=false</code>, a request that was newly
+enqueued or recovered by idempotency key, and a non-null operation ID.
+<code>plan_continue</code> is always a dry-run mutation operation and retains
+null operation ID. <code>execute_plan</code> is never dry-run and uses its
+explicit UUIDv7 throughout.
+
+The <code>sessions.continue</code> partial-success outcome
+<code>cloned_source_still_active</code> does not switch the top-level Session
+ID to the new target: it remains the source Session ID under the table, while
+the valid target identity stays in the receipt chain and durable effects. This
+prevents a partial move from presenting the source-release failure as a
+different operation or authority.
+
+The agent surface is <code>ax sessions q</code>,
+<code>ax sessions grep</code>, and <code>ax sessions m</code>, all using
+Directory Query Schema 1. Query supports field projection, batches up to 64,
+bounded <code>skip</code>/<code>take</code>, deterministic sorting, schema
+discovery, and typed filters. Mutations use the exact dry-run/confirmation/
+expectation semantics in Section 10.8. There is no delete. Agents MUST NOT
+scrape terminal/TUI text.
+
+Default list/query output may include sanitized resolved title, summary, recent
+activity, open loops, freshness, reachability, and conflicts, but no raw
+excerpt. Explicit preview/transcript grep names one source host and instance,
+is redacted and bounded, and cannot fan out. Machine clients branch on result
+tag, structured error code, and receipt state rather than messages or process
+exit alone.
+
+The Session Browser TUI is another client of the same engine. It has four
+bounded regions: filter/status bar; lineage/session table; detail/preview/
+provenance pane; and semantic action/help bar. The default row is Conversation
+Lineage. Expansion shows AX Sessions and native instances. Selection survives
+refresh by stable ID, never row number.
+
+Minimum keys are <code>j/k</code> or arrows, <code>Enter</code>,
+<code>/</code> search, <code>f</code> filter, <code>s</code> sort,
+<code>r</code> refresh, <code>e</code> enrich, <code>c</code> plan,
+<code>a</code> attach, <code>o</code> open/resume, <code>J</code> jobs/
+receipts, <code>?</code> help, and <code>q</code> leave. Navigation, filtering,
+preview-mode changes, and plan inspection are read-only. Every mutation calls
+the same planner/executor; no TUI-only path exists. Disabled actions remain
+visible with structured reasons.
+
+The continuation wizard selects semantic intent, exact source instance, target
+host, exact installed Environment Tuple, workspace/cohort policy, fidelity and
+source-after-success policy, then displays every plan expectation/effect/
+confirmation before execution. Offline/stale/conflicted rows remain visible.
+Narrow layouts drop prose before identity, owner, freshness, or warnings.
+Provider/transcript strings are rendered as data: ANSI, OSC, bidi overrides,
+controls, invalid width, and hostile grapheme sequences are removed or visibly
+escaped. Terminal transport, resize, reconnect, and process supervision remain
+Section 4 authority.
+
 ## 15. Errors and exit semantics
 
 ### 15.1 Structured Error
@@ -8572,6 +10094,38 @@ New error codes MAY be added in a compatible minor contract version, but an
 unknown code retains the envelope's exit class and MUST NOT be interpreted as
 success.
 
+Structured Error 1.2.0 retains the exact 1.1 shape and all prior codes. It is
+bound by Directory Node 1, Mesh RPC 3, CLI Result 3, and Directory Query 1 and
+adds the exact mappings below:
+
+| Exit | Directory codes |
+| ---: | --- |
+| 2 | <code>directory_instance_not_found</code>, <code>directory_instance_ambiguous</code>, <code>query_invalid</code> |
+| 3 | <code>inventory_stale</code>, <code>idempotency_mismatch</code> |
+| 4 | <code>host_offline</code> |
+| 6 | <code>directory_mesh_unsupported</code>, <code>continuation_route_unavailable</code>, <code>adoption_unavailable</code>, <code>terminal_attach_unavailable</code> |
+| 7 | <code>field_forbidden</code>, <code>target_auth_missing</code> |
+| 9 | <code>observation_gap</code>, <code>observation_conflict</code>, <code>adapter_protocol_violation</code> |
+| 10 | <code>lineage_ambiguous</code>, <code>annotation_conflict</code> |
+| 12 | <code>operation_uncertain</code> |
+| 13 | <code>enrichment_model_unavailable</code> |
+| 15 | <code>cloned_source_still_active</code> |
+| 16 | <code>instance_identity_weak</code>, <code>preview_policy_blocked</code>, <code>enrichment_policy_blocked</code>, <code>enrichment_head_changed</code>, <code>continuation_plan_stale</code>, <code>unmanaged_remote_forbidden</code>, <code>workspace_route_conflict</code>, <code>cloning_fidelity_unacceptable</code>, <code>operation_in_progress</code> |
+
+Directory codes reuse an earlier identical core code where listed in both
+registries; their meaning is unchanged. <code>operation_uncertain</code> is not
+retry permission: status/recovery inspection is mandatory. Partial target-first
+move uses the successful/partial outcome and exit 15 without pretending the
+target failed.
+
+For Directory Node 1 and RPC 3, a syntactically valid supported-major request
+receives one failure envelope with Error 1.2. An unsupported major,
+unparseable/oversize first frame, missing framing identity, or response that
+cannot be framed causes close/termination without trusting a peer/child error;
+the caller emits a local 1.2 <code>incompatible_protocol</code> or
+<code>adapter_protocol_violation</code>/<code>transport_failure</code> as
+applicable. Error is a static binding and never a hello-contract key.
+
 ## 16. Security and threat boundary
 
 ### 16.1 Trusted mesh model
@@ -8583,7 +10137,7 @@ provider plugin, or a compromised local user account.
 
 Peers MUST be explicitly allowlisted by stable host ID and SSH endpoint.
 Tailscale discovery MAY propose hosts but MUST NOT authorize them. SSH protects
-authentication, integrity, and confidentiality in transport. v0.3.0 provides no
+authentication, integrity, and confidentiality in transport. v0.4.0 provides no
 default payload encryption at rest and MUST NOT claim otherwise.
 
 Machine-local credentials are a prerequisite at the destination. A successful
@@ -8612,7 +10166,7 @@ MUST NOT be treated as current process, ownership, or routing authority. This
 does not permit copying a live PID/lock control artifact.
 
 Transcripts and tool outputs can themselves contain secrets entered by an
-operator or printed by tools. v0.3.0 does not claim reliable content-level
+operator or printed by tools. v0.4.0 does not claim reliable content-level
 secret scrubbing. Operators MUST therefore treat all payloads as sensitive and
 authorize only trusted project peers. An implementation SHOULD offer a
 best-effort scanner and warning, but scanner success MUST NOT be described as a
@@ -8671,13 +10225,60 @@ Force takeover MUST therefore:
 
 ### 16.6 Out of scope
 
-v0.3.0 does not provide Byzantine consensus, hostile-peer isolation,
+v0.4.0 does not provide Byzantine consensus, hostile-peer isolation,
 multi-tenant access control, end-to-end snapshot encryption, secret
 distribution, provider-account migration, revocation of actions already sent
 to external services, live-process cloning, task-board authority cloning, or
 sandboxing stronger than the provider/OS configuration selected by the
 operator. Clone does not add an N-by-N converter matrix or a second workspace
 replication system.
+
+### 16.7 Directory, enrichment, query, and terminal safety
+
+Directory inputs include hostile transcript/tool text, repository/provider
+names, paths, model output, peer records, query strings, and terminal text. No
+content obtained from a session is an instruction to an adapter, worker,
+planner, shell, terminal, or operator action. Synthetic prompts/checkpoints are
+constructed from typed escaped fields; arbitrary summaries never select tools,
+paths, schema tags, permissions, routes, or argv.
+
+Discovery reads only allowlisted adapter-declared native roots and explicitly
+rejects credential/auth roots. Raw native IDs, transcript/preview bodies,
+system/developer instructions, hidden/opaque reasoning, raw tools, attachments,
+files, credentials, auth databases, environment values, model payloads,
+terminal output, PIDs, PTYs, sockets, and absolute native-store paths are
+excluded from directory replication, default indexing, plans, logs, and
+metrics. Authentication is only the four-value status enum.
+
+Enrichment inputs are immutable, bounded, redacted public user/assistant
+projections by default. The worker has no ambient filesystem, shell, network,
+provider, Session, lease, workspace-write, terminal, or cloning authority.
+Only an explicit Profile may grant one configured model channel; credentials
+remain outside the Profile/request/receipt. Output validates the closed
+annotation payload, size, evidence, head, and redaction policy before
+publication and cannot set identity, ownership, capabilities, routes,
+operator-only metadata, or executable arguments.
+
+Field authorization and redaction occur server-side before query serialization
+or mesh publication; caller projection cannot widen authority. Preview and
+transcript grep are source-local, explicit, and hard-bounded. Metadata policy
+tightening prevents new sends but is not a remote deletion claim. Debug native-
+file logging is off by default, local, bounded, owner-only, and requires a
+redacted export manifest.
+
+All native/process launches use structured argv, explicit workspace-derived cwd,
+minimal environment allowlists, safe-open/no-follow path handling, owner-only
+staging, and existing cloning/provider transaction authorities. Provider IDs,
+titles, paths, queries, and transcript fragments are never evaluated by a
+shell. TUI and CLI rendering strips or visibly escapes ANSI/OSC sequences,
+control characters, bidi overrides, invalid encodings, and hostile-width
+graphemes before terminal output.
+
+Metric labels are bounded and never contain Session/instance IDs, transcript,
+path, prompt, title, summary, or model input. Audit may contain plan/operation/
+record IDs, actor, semantic intent, host/environment identities, policy
+decision, state transition, and redacted error; it contains no content bodies,
+prompts, credentials, terminal output, or raw environment values.
 
 ## 17. Compatibility and migration
 
@@ -8759,6 +10360,31 @@ ownership, materialize, or write lower-version replacements.
 Provider upgrades invalidate prior tuple-specific acceptance until the adapter's
 declared version range and compatibility fixture cover the new version. Muse
 and Antigravity unknowns in Section 8 remain explicit version gates.
+
+### 17.5 Directory release compatibility
+
+AX/spec v0.4.0 adds Directory Node/records/query at 1.0.0, Mesh RPC 3.0.0,
+Configuration 2.0.0, CLI Result 3.0.0, Session Record/Event 3.0.0, and
+Structured Error 1.2.0. Observation Event remains 1.0.0 because its event name
+is an open grammar and its object shape is unchanged. Provider Protocol remains
+2.0.0; Directory Node is its separately negotiated companion. Session Adapter,
+all v0.3 clone schemas, Materialization Plan 1/2, Journal 2/3, Checkpoint,
+Provider Identity, Workspace Group, Blob/Chunk/Transfer, lease, terminal, and
+tombstone contracts are reused unchanged.
+
+RPC 3 and RPC 2 are dual-stack for at least one stable release. Config 2 has
+the explicit backup/atomic migration and read-only downgrade behavior in
+Section 6.4. CLI Result 1/2 and Session Record/Event 1/2 remain readable and
+immutable. A v3 writer never inserts directory/adoption members into those
+closed older objects. Unsupported majors, unknown closed fields/tags, tuple
+revocation, or contradictory façade manifests fail closed.
+
+Environment tuple admission remains the signed v0.3 registry. Directory
+discovery may report a safe degraded source read, but preview/head/adoption/
+native clone/write/launch require the exact separately admitted capability.
+One environment module backs Provider 2, Session Adapter 1, and Directory Node
+1; contradictory parser, identity, mapping, redaction, or tuple claims are an
+integrity failure rather than N-by-N conversion fallback.
 
 ## 18. Observability and operations
 
@@ -8893,6 +10519,30 @@ At minimum, emit:
   <code>target.live_validated</code>, <code>target.committed</code>,
   <code>target.rolled_back</code>, <code>lineage.published</code>,
   <code>target.opened</code>, and <code>clone.failed</code>; and
+- <code>directory.scan.started</code>, <code>directory.scan.completed</code>,
+  <code>directory.scan.failed</code>, <code>directory.observation.published</code>,
+  <code>directory.observation.conflict</code>,
+  <code>directory.lineage.linked</code>,
+  <code>directory.lineage.ambiguous</code>,
+  <code>directory.enrichment.queued</code>,
+  <code>directory.enrichment.started</code>,
+  <code>directory.enrichment.published</code>,
+  <code>directory.enrichment.stale</code>,
+  <code>directory.enrichment.failed</code>,
+  <code>directory.plan.created</code>, <code>directory.plan.rejected</code>,
+  <code>directory.plan.expired</code>,
+  <code>directory.operation.validating</code>,
+  <code>directory.operation.executing</code>,
+  <code>directory.operation.finalizing</code>,
+  <code>directory.operation.succeeded</code>,
+  <code>directory.operation.failed</code>,
+  <code>directory.operation.uncertain</code>,
+  <code>directory.target.launched</code>,
+  <code>directory.target.ready</code>,
+  <code>directory.attach.started</code>,
+  <code>directory.attach.ended</code>,
+  <code>directory.mesh.converged</code>, and
+  <code>directory.mesh.gap_detected</code>; and
 - one <code>takeover.phase</code> or <code>fork.phase</code> event for every
   numbered transition in Section 13.
 
@@ -8907,7 +10557,24 @@ listener. Metric names are:
 <code>ax_sync_seconds</code>, <code>ax_sync_bytes</code>,
 <code>ax_transfer_retries</code>, <code>ax_materialization_conflicts</code>,
 <code>ax_provider_probe_success</code>, and
-<code>ax_checkpoint_age_seconds</code>.
+<code>ax_checkpoint_age_seconds</code>. Directory-capable implementations also
+expose <code>ax_directory_scan_seconds</code>,
+<code>ax_directory_instances_observed</code>,
+<code>ax_directory_observation_age_seconds</code>,
+<code>ax_directory_sequence_gaps</code>,
+<code>ax_directory_conflicts</code>,
+<code>ax_directory_mesh_convergence_seconds</code>,
+<code>ax_directory_entries</code>,
+<code>ax_directory_enrichment_queue_seconds</code>,
+<code>ax_directory_enrichment_seconds</code>,
+<code>ax_directory_enrichment_input_bytes</code>,
+<code>ax_directory_query_seconds</code>,
+<code>ax_directory_query_rows</code>,
+<code>ax_directory_plans</code>,
+<code>ax_directory_operations</code>, and
+<code>ax_directory_recovery_seconds</code>. Status/result labels distinguish
+current/stale/missing/weak identity, rejection/uncertain state, route/outcome,
+and policy failure without embedding subject identity or content.
 
 Labels MUST be bounded: host ID, provider ID, platform, operation kind, result,
 and error code. Session ID/name MUST NOT be a metrics label.
@@ -8922,10 +10589,23 @@ and error code. Session ID/name MUST NOT be a metrics label.
 - required machine-local authentication presence without revealing values;
 - newest checkpoint/materialization health;
 - task-board bridge version/capabilities; and
-- stale processes, retained staging, divergence, and tombstone backlog.
+- stale processes, retained staging, divergence, and tombstone backlog;
+- Directory Node identity and manifest agreement, directory-index integrity and
+  rebuildability, scan-root permissions, Environment Tuple/capability age,
+  Enrichment Profiles/model/disclosure policy, and RPC 3 negotiation; and
+- stale/conflicted observations, receipt-chain gaps, and uncertain directory
+  operations with exact non-mutating remediation.
 
 Doctor exit is non-zero when a requested provider/session operation is
 unavailable. Unknown facts MUST appear as unknown, not as green checks.
+Doctor is read-only unless a separately planned repair command is executed.
+
+The Directory Node may run on demand or through the existing user service. It
+recovers scans, jobs, and operations only from durable requests/receipts, uses
+bounded per-store/model/host concurrency and backpressure, and does not starve
+interactive Sessions. Watcher events are debounced scan hints, never authority.
+Scheduled scan/enrichment failure degrades freshness and never stops or mutates
+a native Session.
 
 ### 18.4 Audit retention
 
@@ -8957,7 +10637,7 @@ Events are not.
 ### 19.1 Implementation phases
 
 These are ordered phases for an implementation that intends to claim
-<code>ax</code> product conformance version 0.3.0. They are not prerequisites
+<code>ax</code> product conformance version 0.4.0. They are not prerequisites
 for publishing this specification and are not permission to ship a required
 core target half-implemented:
 
@@ -8976,9 +10656,17 @@ core target half-implemented:
    read-back, resume smoke, transaction, Checkpoint, and crash gates pass.
 6. <strong>Provider and task-board adapters</strong>: enable only
    tuple-specific accepted capabilities; implement the opaque bridge.
-7. <strong>Native Windows</strong>: implement ConPTY/process supervisor,
+7. <strong>Local directory and enrichment</strong>: implement source-local
+   scans, immutable observation chains, rebuildable catalog/search, exact-head
+   annotations, isolated workers, and shared typed query/TUI surfaces with all
+   continuation mutations disabled.
+8. <strong>Mesh directory and managed continuation</strong>: enable RPC 3
+   dual-stack anti-entropy, Directory Node 1, pure plans, stale revalidation,
+   adoption, managed same-environment routes, and target-first cross-environment
+   move through the existing AX/cloning transactions.
+9. <strong>Native Windows</strong>: implement ConPTY/process supervisor,
    PowerShell-safe SSH, Windows materialization/atomicity, and user service.
-8. <strong>Product release hardening</strong>: run every required acceptance
+10. <strong>Product release hardening</strong>: run every required acceptance
    lane, validate product-facing docs/examples, test migration/downgrade, and
    retain the implementation's conformance evidence.
 
@@ -9045,6 +10733,27 @@ promotion requires same-realm success, different/no-account failure, deleted
 backend UUID failure without blank replacement, cache merge preserving
 unrelated entries, <code>Stop.fullyIdle</code> false/true cases, and closed
 SQLite handles.
+
+Directory Version 1 requires the following for every exact declared Claude
+Code and Codex tuple. Each claimed cell publishes machine-readable environment
+and adapter build/provenance, OS version, fixture results, discovery/read-back
+evidence, warnings, and conformance time. README prose is never capability
+evidence.
+
+| Directory capability | Claude Code | Codex | Cross-host | Offline catalog |
+| --- | --- | --- | --- | --- |
+| Discover managed/unmanaged | Required | Required | Source node authoritative | Last converged view |
+| Stable identity/head | Required | Required | Source node authoritative | Retained with freshness |
+| Preview/redaction | Required | Required | Explicit source fetch | Unavailable unless source-local |
+| Title/summary enrichment | Required | Required | Source-local job | Local subjects only |
+| Same-environment continuation | Required | Required | Existing AX route required | Local-only eligible |
+| Claude Code to Codex | Accepted source reader plus v0.3 clone evidence | Accepted target writer/read-back | Existing AX transfer required | Not remotely executable |
+| Codex to Claude Code | Accepted target writer/read-back | Accepted source reader plus v0.3 clone evidence | Existing AX transfer required | Not remotely executable |
+| TUI/query browsing | Required | Required | Required after RPC 3 negotiation | Required with stale/offline labels |
+
+Discovery does not authorize preview, adoption, native write, clone target, or
+launch. Every such capability remains independently admitted for the exact
+signed Environment Tuple under Section 13.14.5.
 
 ### 19.4 End-to-end acceptance cases
 
@@ -9118,14 +10827,27 @@ SQLite handles.
 | <code>AC-CLI-002</code> | Copy and worktree materialize the same session without lease change; managed replacement requires expected checkpoint, confirmation event, preserved divergence, and refuses unmanaged content. |
 | <code>AC-CLI-003</code> | Goal-bound primary and tracked-prompt task-board launches require and normalize the exact board/mode/goal/binding inputs; local and explicit-peer log reads paginate with host-bound cursors and stable ordering. |
 | <code>AC-CLI-004</code> | Local and SSH-remote log pages carry the actual non-null emitting host ID; cursor pages preserve it, and mismatched or forged remote results return no events. |
+| <code>AC-DIR-INV-001</code> | Every <code>DIR-INV-01..45</code> assertion has a positive production-path fixture and a focused negative or narrowing mutation where rejection is required. |
+| <code>AC-DIR-OBS-001</code> | Environment/Native/Batch self-IDs, source-host authority, exact-head derivation, root/realm absence proof, gap/branch visibility, and unchanged-history rescans obey Sections 2.2 and 10.8. |
+| <code>AC-DIR-CAT-001</code> | Deleting local directory SQLite and rebuilding from immutable AX, cloning, directory records, and configuration reproduces the same entries, current heads, lineage, freshness, title resolution, and search results. |
+| <code>AC-DIR-LIN-001</code> | Only registered authoritative evidence creates lineage; similarity remains a suggestion, weak identity blocks binding, and concurrent manual links remain explicit conflicts until a supersession DAG resolves them. |
+| <code>AC-DIR-ENR-001</code> | Deterministic extraction works without a model; model input/output and worker authority obey the closed Profile/Job/Annotation contracts; exact-head and policy rechecks reject stale or over-authoritative publication. |
+| <code>AC-DIR-QUERY-001</code> | CLI, TUI, and machine requests drive one typed query engine with exact projection, batching, cursor, preset, scoped-grep, authorization, redaction, and guarded-mutation behavior; agents never scrape TUI text. |
+| <code>AC-DIR-PLAN-001</code> | Every route/outcome pair is closed; planning performs no mutation; execution rejects expiry or any changed expectation without silent replanning, route/fidelity substitution, or force escalation. |
+| <code>AC-DIR-EXEC-001</code> | Adoption, managed resume/takeover/fork/clone/move, local unmanaged open, launch, attach, lost-response replay, and uncertain recovery enter through the real planner/executor and reuse AX/cloning authority without duplicate workspace, Provider, blob, or transaction state. |
+| <code>AC-DIR-MOVE-001</code> | Cross-environment move validates and commits the target before source release; release failure preserves the target and reports <code>cloned_source_still_active</code>. |
+| <code>AC-DIR-MESH-001</code> | RPC 2 and 3 interoperate only through dual-stack selection; RPC 3 advertises the exact 24 contract keys, has one disjoint <code>directory_record</code> namespace, verifies Merkle cardinality, and rejects unsupported peers without reinterpretation. |
+| <code>AC-DIR-FACADE-001</code> | One environment implementation backs Provider 2, Session Adapter 1, and Directory Node 1; contradictory tuple/parser/identity/redaction/capability claims fail closed and no façade becomes a second authority. |
+| <code>AC-DIR-SEC-001</code> | Credential/auth roots, absolute native paths, raw transcripts/previews/tools/reasoning/attachments, terminal/process state, and secret canaries are absent from records, plans, bundles, indexes, logs, metrics, and peer results. |
+| <code>AC-DIR-TERM-001</code> | Hostile ANSI/OSC/bidi/control/width strings render inertly, structured argv/cwd/environment launch admits no shell injection, and spawn alone never satisfies readiness. |
 | <code>AC-OBS-001</code> | Required events/metrics exist and a secret/transcript canary never appears in logs. |
 | <code>AC-DOC-001</code> | All internal section references, local links, JSON/TOML examples, tables, and traceability rows validate. |
 | <code>AC-REF-001</code> | A schema-aware reference walker resolves every normative simple/dotted field expression and enum token against the containing closed registry (including MaterializationCohort fields), rejects aliases absent from that schema, and separately validates every extension key against Section 1.6. |
-| <code>AC-DIAG-001</code> | Structurizr and PlantUML sources render; committed SVGs are visually inspected and match Sections 3 and 13. |
+| <code>AC-DIAG-001</code> | Structurizr and all eight focused PlantUML sources render to twelve committed SVGs; the fresh artifacts are visually inspected for clipping, width, contrast, readable labels, and arrow direction and match Sections 3, 10.8, 13, and 16.7. |
 
 ### 19.5 <code>ax</code> implementation release acceptance rule
 
-An implementation MAY claim <code>ax</code> product conformance 0.3.0 only when:
+An implementation MAY claim <code>ax</code> product conformance 0.4.0 only when:
 
 1. all product-release-blocking core platform lanes pass;
 2. every A provider cell passes its suites;
@@ -9133,7 +10855,10 @@ An implementation MAY claim <code>ax</code> product conformance 0.3.0 only when:
 4. all Section 19.4 cases pass;
 5. no credential/excluded-state fixture enters an artifact;
 6. its product documentation and generated examples validate from a clean
-   implementation checkout.
+   implementation checkout; and
+7. every Directory Node, record, query, planner/executor, RPC 3, CLI Result 3,
+   Session Record/Event 3, Error 1.2, security, and all
+   <code>DIR-INV-01..45</code> acceptance fixture passes.
 
 Unknown provider facts do not block an implementation release when, and only
 when, their cells remain disabled and truthful.
@@ -9150,9 +10875,11 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
 the default branch, and carry the MIT License. The current specification
-release is <code>v0.3.0</code>. The existing <code>v0.1.0</code>,
-<code>v0.2.0</code>, and <code>v0.2.1</code> tags are immutable history and MUST NOT be moved or
-rewritten.
+release is <code>v0.4.0</code>. Existing release tags are immutable history and
+MUST NOT be moved or rewritten. The v0.3.0 specification baseline remains the
+normative cloning authority whether consumed from its release package or the
+accepted baseline commit; this sentence does not claim that a particular tag
+already exists.
 
 The release commit and annotated tag MUST both be signed using Ivan Oparin's
 SSH signing key <code>~/.ssh/ivanopcode</code>. The commit author is:
@@ -9175,7 +10902,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-specification release <code>v0.3.0</code>, not an <code>ax</code> executable
+specification release <code>v0.4.0</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -9187,8 +10914,8 @@ release. The publication task MUST:
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
 4. verify <code>VERSION</code>, current document metadata, changelog, release
-   notes, and the proposed tag all say <code>v0.3.0</code>, while the existing
-   <code>v0.1.0</code>, <code>v0.2.0</code>, and <code>v0.2.1</code> tags remain unchanged;
+   notes, and the proposed tag all say <code>v0.4.0</code>, while every existing
+   historical tag remains unchanged;
 5. run the semantic crash/restart gate and its focused expected-red mutations;
    validation MUST emit an actionable diagnostic when the three-outcome
    exclusivity/exhaustiveness rule, boundary registry, evidence requirements,
@@ -9198,14 +10925,14 @@ release. The publication task MUST:
    <code>Ivan Oparin &lt;oparin@me.com&gt;</code> and no AI trailer, and hand it
    to the user for explicit review; automation MUST NOT stage or commit before
    human approval;
-7. prepare the exact signed annotated <code>v0.3.0</code> tag command and hand it
+7. prepare the exact signed annotated <code>v0.4.0</code> tag command and hand it
    to the user for explicit review; automation MUST NOT create the tag before
    human approval;
 8. after the human creates the commit and tag, verify both signatures locally
    with <code>git log --show-signature -1</code> and
-   <code>git tag --verify v0.3.0</code>;
+   <code>git tag --verify v0.4.0</code>;
 9. hand the exact <code>git push</code> commands for <code>main</code> and the
-   <code>v0.3.0</code> tag to the user; automation MUST NOT push before explicit
+   <code>v0.4.0</code> tag to the user; automation MUST NOT push before explicit
    human approval and only after accepted validation/review;
 10. verify the public repository, default branch, license, commit signature, tag
    signature, and release URL; and
@@ -9257,7 +10984,7 @@ requirement rather than only reporting a generic document digest mismatch.
 | All settled decisions are traceable | Appendix A.1 |
 | Independent reviewer accepts the artifact | Required board reviewer route after this task's <code>to-review</code> handoff |
 
-The Epic criterion for a signed public <code>v0.3.0</code> specification release
+The Epic criterion for a signed public <code>v0.4.0</code> specification release
 maps only to Section 20 and remains owned by the downstream validation and
 publication tasks. Section 19 governs a future product implementation and is
 not a prerequisite for that publication.
@@ -9336,7 +11063,7 @@ not a prerequisite for that publication.
 | No duplicate owner or silent fresh native session | Section 13.13 rejects two live/authoritative owners, unfenced continuation presented as safe recovery, new-session launch, fresh native handles/manager references, blank relabeling, and realm substitution. |
 | Runtime conformance acceptance | Section 19.4 <code>AC-CRASH-001</code> executes every applicable boundary with exact classification and evidence. |
 | Specification publication acceptance and mutation gate | Section 20.2 <code>SPEC-PUB-CRASH-001</code> requires semantic validation plus an actionable focused expected-red mutation. |
-| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version and its immutable history; Section 20.1 identifies <code>v0.3.0</code> and preserves existing <code>v0.1.0</code>/<code>v0.2.0</code>/<code>v0.2.1</code> tags. |
+| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version and its immutable history; Section 20.1 identifies <code>v0.4.0</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
 
 ### A.9 Cross-environment cloning traceability
 
@@ -9350,6 +11077,52 @@ not a prerequisite for that publication.
 | Exact signed tuple admission, revocation, and force refusal | Sections 7.8, 13.14.5, and <code>AC-CLONE-002</code> |
 | AX Checkpoint before stopped/open | Sections 13.14.4–13.14.5 and <code>AC-CLONE-007</code> |
 | Closed CLI/errors/examples and conformance | Sections 14–15, 19.4, and Appendix D |
+
+### A.10 Session directory normative-merge traceability
+
+The accepted merge input is *AX Session Directory and Orchestration
+Specification v0.1.0*, SHA-256
+<code>486612e4c1a10dcfc6e75cf17c60beb974c6989b82c333a9350fa1befd1a448f</code>.
+The accepted audit is
+<code>.research/260827_session-directory-merge-audit.md</code> and board outcome
+<code>TASK-260827-32hife_session-directory-merge-audit.md</code>. Each row below
+includes every subsection of the named standalone section; no standalone
+section remains a normative runtime dependency.
+
+| Standalone directory section | Normative AX v0.4.0 destination and disposition |
+| --- | --- |
+| 1. Conformance, scope, and product boundary | Sections 1–2 and 19: integrated; all 45 accepted merge invariants are individually fixed as <code>DIR-INV-01..45</code>. |
+| 2. Architecture and responsibility boundaries | Sections 3.1, 7.9, 10.8, and 11.8: integrated; Directory Node remains a companion façade backed by the same environment implementation, not new authority. |
+| 3. Contract registry and common data rules | Sections 1.5–1.6: integrated with exact independent versions, closed shapes, bounds, extensions, and self-ID rules. |
+| 4. Directory domain model | Sections 2.1, 5.1, 10.8, and 17.5: integrated; Session Record 3 provenance extends identity without replacing AX Session authority. |
+| 5. Directory node and adapter contracts | Sections 7.9 and 15: integrated as Directory Node 1 with exact operations/capabilities and Error 1.2; Provider 2 and Session Adapter 1 remain unchanged. |
+| 6. Catalog convergence, freshness, and search indexing | Sections 10.8, 11.8, and 12: integrated as rebuildable derived state plus immutable directory anti-entropy. |
+| 7. Enrichment profiles, jobs, and annotations | Sections 10.8 and 16.7: integrated with immutable exact-head records, manual supersession conflicts, isolated workers, and title precedence. |
+| 8. Human and agent query interfaces | Sections 10.8 and 14.5: integrated as Directory Query 1 and one typed query engine; standalone textual syntax is superseded by the closed AX request and CLI registries. |
+| 9. Continuation planning and routing | Sections 10.8 and 13.15: integrated as pure content-addressed plans with the exact route/outcome registries and stale-plan revalidation. |
+| 10. Continuation execution | Sections 5.2, 10.8, 13.15, and 15: integrated through immutable receipts and existing AX/cloning transactions; standalone mutable execution state is superseded. |
+| 11. Human TUI and CLI | Section 14.5: integrated into <code>ax sessions</code>, query commands, CLI Result 3, and the four-region TUI. |
+| 12. Mesh catalog and convergence | Sections 11.4, 11.8, and 17.5: integrated through RPC 3 dual stack and the disjoint <code>directory_record</code> namespace; transcript/index centralization is rejected. |
+| 13. Security and privacy | Sections 16.1–16.7: integrated with metadata exclusions, source-local preview, worker isolation, server-side field authorization, and hardened terminal/launch boundaries. |
+| 14. Errors and exit semantics | Section 15: integrated as Structured Error 1.2 with exact directory code mappings and bootstrap behavior. |
+| 15. Compatibility and versioning | Sections 1.5 and 17.5: integrated with the accepted v0.4.0 SemVer matrix and unchanged v0.3 cloning authority. |
+| 16. Observability and operation | Sections 18.1–18.4: integrated into the open Observation Event 1 grammar, metrics, doctor, and immutable audit evidence. |
+| 17. Conformance and test requirements | Sections 19.1–19.5 and Appendix D: integrated with production-path, focused-negative, rebuild, mesh, plan, execution, security, and terminal gates. |
+| 18. AX integration and merge contract | Sections 1.5, 5, 7.9, 10.8, 11.8, 13.15, and 17.5: resolved; duplicated Provider/workspace/blob/transfer/materialization/lease/terminal/cloning authority is explicitly forbidden. |
+| 19. Delivery phases | Section 19.1: superseded by AX's ordered implementation phases. |
+| Appendix A. Prior-art audit | Appendix C: evidence-only; it establishes no wire or runtime authority. |
+| Appendix B. Example directory and continuation flow | Sections 10.8, 13.15, and 14.5 plus Appendix D: superseded by registered AX fixtures and command results. |
+| Appendix C. Schema publication layout | Sections 1.5, 3.2, 17.5, and Appendix D: superseded by AX's registry/layout/fixture authorities. |
+| Appendix D. Requirement traceability | This section and <code>AC-DIR-*</code>: integrated; every requirement maps to a normative AX location. |
+
+The publication realization for this merge is owned by
+<code>TASK-260827-3gb6ul</code>: the C4 model and relationships plus
+<code>session_directory_components.puml</code>,
+<code>session_directory_enrichment.puml</code>, and
+<code>session_directory_continuation.puml</code> are the reviewable sources;
+their committed SVGs, public-document metadata, diagram inventories, and
+frozen SHA-256 ledgers are one publication unit. Generated C4 intermediaries
+and SVGs are regenerated from those sources and are never edited by hand.
 
 ## Appendix B. Explicit provider version gates
 
@@ -9438,16 +11211,17 @@ display-language label.
 
 | Section 1.5 contract | Positive fixture anchor | Additional required negative mutation |
 | --- | --- | --- |
-| Configuration | Section 6.2 TOML and Section 3.2 path registry | Add root <code>unknown_root</code>; add secret value; set unsafe SSH host-key bypass; exercise all five flags/environment values plus empty and unknown <code>AX_*</code> cases |
+| Configuration | Sections 6.2 and 6.4 TOML plus Section 3.2 path registry | Add root <code>unknown_root</code>; add secret value; set unsafe SSH host-key bypass; exercise all five flags/environment values plus empty and unknown <code>AX_*</code> cases; reject Config-2 directory bounds, tuple/profile/disclosure violations, silent major rewrite, or downgrade mutation |
 | Provider protocol | Section 7.2 envelopes and every Section 7.5 row | Mismatch request ID; success with both body/error; operation/body tag mismatch; compatible/major/invalid-first-output Error binding fixtures |
 | Provider manifest | Section 7.3 with all fifteen operations | Remove <code>capture</code> or one transaction operation; duplicate provider ID discovery remains fatal |
 | Provider probe | Section 7.4 | Set <code>enabled=true</code> on conditional/unknown/unsupported; omit one requested capability |
 | Session Adapter protocol | Section 7.8 envelopes and every operation-body row | Duplicate or unknown operation; operation/body mismatch; request/context digest mismatch; partial, malformed, over-limit, or escaped output treated as absence |
 | Session Adapter manifest | Section 7.8 exact manifest table with the ordered fourteen-name registry | Duplicate, omit, reorder, or add an operation; mismatch provider/environment/executable binding |
 | Session Adapter probe | Section 7.8 exact probe table with all fifteen capabilities | Omit a capability; report an unrequested tuple; mismatch manifest, executable, provider, candidate kind, or environment version |
-| Mesh RPC | Section 11.2 envelopes and every Section 11.3 row | Send non-hello first; mismatch nonce; advertise an <code>error</code> contract; use legacy state/destination enum; exercise compatible/major/unframed failure behavior |
-| Session Record | Section 5.1 direct and task-board major-1 examples, Section 13.8 fork, and Section 5.1 major-2 clone derivation | Direct with task-board object; task-board creation with non-null manager ref; fork without provenance; clone reusing source Session/provider identity or carrying a final fact at creation; either major admitted at the other's Provider-2 boundary |
-| Session Event | Section 5.2 major-1 envelope instantiated for every payload row plus every Section 13.14.5 major-2 clone payload | Payload/tag mismatch; lease sequence zero/gap; profile/source mismatch; bootstrap null/resumable/state mismatch; clone rollback/Checkpoint/report/receipt mismatch; cross-major payload leakage |
+| Directory Node protocol/request/response/manifest | Section 7.9 envelopes, exact manifest, and every operation row | Omit/reorder/add an operation or capability; request/body or response/body mismatch; changed idempotent mutation; escaped native authority; compatible/major/unframed Error 1.2 behavior |
+| Mesh RPC | Sections 11.2–11.3 v2 and Section 11.8 v3 | Send non-hello first; mismatch nonce; advertise an <code>error</code> key; change the exact 24-key v3 map; duplicate/omit a namespace member; violate cardinality; coerce v2/v3 or embedded record versions |
+| Session Record | Section 5.1 direct/task-board major 1, clone major 2, and unified major 3 provenance | Cross-tag field leakage; reuse source Session/provider identity; carry final facts at creation; admit a major at the wrong Provider/clone/adoption boundary |
+| Session Event | Section 5.2 major-1 envelope, Section 13.14.5 major-2 clone payloads, and Section 13.15 major-3 adoption/move payloads | Payload/tag mismatch; lease sequence gap; profile/source mismatch; bootstrap or receipt nullability mismatch; cross-major payload leakage; source-release event before committed target |
 | Lease Record | Section 5.3 | Epoch 4 with null predecessor; epoch jump; checkpoint from another session |
 | Checkpoint Record | Section 5.4 and <code>CP-N1..N4</code> | Both persistence IDs null/non-null; unsafe boundary published as validated |
 | Workspace Group | Section 5.6 Git record and managed-tree fragment | <code>WG-N1..N4</code>; duplicate/case-colliding group path; conflicting same-group topology record |
@@ -9462,9 +11236,9 @@ display-language label.
 | Clone materialization recovery state (journal variant) | Section 13.14.4 complete clone-only Journal 3 and every phase row | Journal-2 field inheritance; early, missing, or changed immutable clone fact; rollback token omitted before finalize; committed and rolled-back results together; phase/fact/nullability mismatch |
 | Task-board bridge | Section 9.2 launch pair, safe-boundary pair, and every operation row | Internal/new retry operation ID; unsafe proof marked safe; changed lost-response retry; graceful stop without token; force stop with token; compatible/major/invalid-first-output Error binding fixtures |
 | Task-board bundle | Section 9.3 primary, prompt, and profile-changed projections plus exact archive member set | <code>TB-BUNDLE-*</code> goal/binding/projection/profile mutations; full-digest leaf, wrong shard, missing/extra/directory member, noncanonical JSON, or blob mismatch |
-| Structured Error | Section 15.1 major-1 and Session Adapter/clone major-minor bindings | Unknown top-level member; nesting depth 5; secret canary in details; wrong Error version for its statically bound protocol/command; compatible/major/unframed input |
+| Structured Error | Section 15.1 versions 1.0/1.1 and Section 15.3 version 1.2 bindings | Unknown top-level member; nesting depth 5; secret canary in details; wrong Error version for its statically bound protocol/command; compatible/major/unframed input; every directory code-to-exit mismatch |
 | Observation Event | Section 18.1 and its listed negative fixtures | Partial/failure without error; incomplete counts; unsafe integer |
-| CLI Result | Section 14.2 legacy command rows, Section 14.3 examples, and every Section 14.1 clone Result 2 command/plan/run tag | Command/body tag mismatch; wrong null top-level IDs; false success invariant; null/wrong log emitter or mixed event hosts; clone tag under Result 1 or legacy tag under Result 2; archive carrying a target Session |
+| CLI Result | Sections 14.1–14.3 Result 1/2 rows and Section 14.5 Result 3 directory rows | Command/body tag mismatch; wrong null top-level IDs; false success invariant; cross-major tag leakage; archive carrying a target Session; directory mutation without exact plan/operation/receipt; raw content in default list/status |
 | Clone Raw Object Manifest | Section 13.14.1 exact raw-manifest table and entry closure | Add forbidden <code>bundle_id</code> or source generation; mismatch descriptor/blob/byte count; omit or add an included Capture Item |
 | Clone Capture Manifest | Section 13.14.1 exact capture-manifest and source-basis/boundary variants | Source-basis nullability mismatch; raw-manifest closure drift; credential inclusion; size-only stable proof; unstable archive admitted to projection |
 | Clone Bundle Manifest | Section 13.14.3 complete G0, G1, A2, G2, G3, and G4 rows | Skip, fork, or reverse a generation; add a future-stage member; change predecessor bytes; introduce a report/receipt/manifest digest cycle |
@@ -9478,6 +11252,17 @@ display-language label.
 | Clone Validation Report | Section 13.14.2 exact independent staged/live validation report | Report valid with a failed applicable check or error finding; omit staged/live evidence; mismatch projected/live Provider closure or Fidelity Report |
 | Clone Lineage Receipt | Section 13.14.2 exact receipt and prior-hop variants | Name G4 instead of G3; mismatch source/target identity, Checkpoint, reports, commit event, or prior receipt; add a receipt/manifest cycle |
 | Supported Environment Tuple Registry | Section 13.14.5 exact signed registry, entry, capability/version, and fixture-evidence tables | Accept unsigned, stale, rollbacked, revoked, malformed, partially read, environment-only, or digest-drifted evidence; compare only environment ID; let force bypass refusal |
+| Environment Observation | Section 10.8 exact table and self-ID | Wrong source host/installation tuple; absolute path or credential field; sequence regression; unknown top-level member |
+| Native Session Observation | Section 10.8 exact table and identity/head variants | Weak identity admitted remotely; head digest mismatch; forbidden transcript/path/process field; managed binding without validated evidence |
+| Inventory Batch | Section 10.8 exact batch, predecessor, and root/realm coverage | Gap/fork hidden by time; failed/partial batch used as absence; changed retry creates another batch; omitted observed instance |
+| Conversation Lineage Link | Section 10.8 exact subject/evidence/supersession variants | Similarity promoted to authority; unsupported evidence tag; cycle; weak subject; wall-clock conflict winner |
+| Session Annotation | Section 10.8 exact subject/kind/payload/head/supersession variants | Head/profile mismatch; enrichment overwrites manual metadata; concurrent manual head silently selected; payload/tag leakage; forbidden content |
+| Session Enrichment Profile | Section 10.8 exact policy/model/input/output and incremental-rebuild bounds | Ambient credential or authority member; remote model silently enabled; forbidden input class; unbounded output; bounded-delta mode with a zero event/update/byte bound or null minimum confidence; disabled mode with a nonzero incremental bound |
+| Session Enrichment Job Request | Section 10.8 exact request | Mutable source/head/profile reference; duplicate request under same digest; authority-bearing worker input |
+| Session Enrichment Job Receipt | Section 10.8 exact receipt chain, claim lease, attempt, expiry, and lifecycle | Missing predecessor; invalid transition; stale head published current; error/output nullability mismatch; reclaim before predecessor expiry; unchanged lease ID or nonincremented attempt; running/terminal publication after claim expiry; timestamp-selected receipt fork |
+| Session Continuation Plan | Sections 10.8 and 13.15 exact plan/route/outcome/expectation/effect shapes | Expired or changed expectation executes; planning mutates; silent route/fidelity/host/intent substitution; embedded credential or absolute native path |
+| Session Directory Operation Receipt | Sections 10.8 and 13.15 exact immutable chain | Lost-response replay creates another effect; predecessor fork hidden; success before readiness; move release precedes target commit; uncertain treated as absence |
+| Session Directory Query | Sections 10.8 and 14.5 exact operations/presets/projection/cursor/mutation guards | Unknown field/preset; cursor scope widening; raw content by default; remote source-local preview; delete operation; mutation without exact plan/operation |
 
 ### D.3 Embedded tagged-union coverage
 
@@ -9501,6 +11286,7 @@ or the documented normative value, and recompute any containing self-ID.
 | Clone Journal phase | Every Section 13.14.4 phase | Journal-2 field inheritance, early/omitted/changed immutable fact, committed plus rolled-back results |
 | Session Event 2 clone payload | Every Section 13.14.5 type | Pre-target failure event, rollback-retained mismatch, stale checkpoint/report/receipt ID |
 | Clone CLI Result 2 | All eight command tags and both plan/three run variants | UUID/digest confusion, archive target member, run dry-run, blank-open fallback |
+| Directory CLI Result 3 | All fourteen <code>sessions.*</code> command tags, every command/body pairing, and both annotation/enrichment mutation variants | Wrong top-level operation/Session ID nullability or equality; read/mutation batch; mutation tag mismatch; confirmed mutation encoded as dry run; partial move switches top-level authority to its target |
 | Task-board launch mode | <code>primary_owner</code>, <code>tracked_prompt</code> | Goal/binding conditional mismatch |
 | Fork provenance mode | <code>native</code>, <code>supported_import</code>, <code>task_board_clone</code> | Source/checkpoint/operation mismatch |
 | Session Event payload | Every event type in Section 5.2, including task-board launch/adoption and tombstone audit | Payload/tag mismatch and unknown payload member |
@@ -9529,6 +11315,13 @@ or the documented normative value, and recompute any containing self-ID.
 | DestinationClass | All five Section 11.7 values | Legacy aliases rejected; empty not collapsed |
 | CLI Result body | Every command-tag row in Section 14.2 | Command/body tag mismatch; operation/session null-rule mismatch |
 | Observation result | <code>started</code>, <code>success</code>, <code>partial</code>, <code>failure</code>, <code>cancelled</code> | Error/duration conditional mismatch |
+| Session Record 3 creation provenance | <code>origin</code>, <code>same_provider_fork</code>, <code>cross_environment_clone</code>, <code>native_adoption</code> | Cross-tag field leakage; final receipt/native fact at creation; source identity reused as target |
+| Session Event 3 directory lifecycle | Every adoption and cross-environment move payload in Section 13.15 | Receipt/plan/target/source mismatch; source release before committed target; cross-major payload leakage |
+| Directory Node operation body | Every Section 7.9 operation row | Request/success tag mismatch; mutation without operation ID; preview/root escape; authority outside the source host |
+| Directory annotation subject/kind | Every Section 10.8 subject and annotation kind/payload row | Subject/payload leakage; exact-head omission; manual/generated authority inversion |
+| Directory receipt state | Every Job and Directory Operation Receipt state | Missing/wrong predecessor; invalid transition; failure/success output nullability mismatch; fork hidden by timestamp |
+| Continuation route/outcome | Every Section 10.8 route and outcome | Unsupported combination; unmanaged remote open; cross-environment route outside cloning; moved reported before source release |
+| Directory Query operation/preset | Every Section 10.8 operation and preset | Unknown projection; raw default; cursor scope change; delete; guarded mutation without plan/operation |
 
 ### D.4 Cross-contract sequence fixtures
 
@@ -9620,7 +11413,17 @@ MUST also run, without substituting mocks for the relevant state boundary:
   state edge, target Checkpoint recovery, and CLI plan/run/open gates through
   their real production entry points. Gate tests MUST include narrowing mutants
   (environment-ID-only tuple match, relaxed sink purpose, or unrelated manifest
-  kind admission), not only delete-only mutants.
+  kind admission), not only delete-only mutants; and
+- <code>DIR-INV-01..45</code>, every Directory Node request/result/capability,
+  all immutable observation/lineage/annotation/job/plan/operation/query records,
+  Config 2 migration/downgrade, Session Record/Event 3, CLI Result 3, Error 1.2,
+  RPC 3 dual-stack/namespace/cardinality negotiation, rebuild/freshness/gap/
+  conflict behavior, pure planning and stale revalidation, adoption and every
+  route/outcome, target-first move, lost-response idempotency, worker isolation,
+  metadata exclusion, terminal injection, and launch/readiness fixture through
+  the real production entry point. Focused negatives MUST narrow identity,
+  source authority, head equality, field authorization, route eligibility,
+  readiness, or idempotency rather than merely delete the checked clause.
 
 The document-fixture gate MUST also derive the Section 3.2 and 6.1 environment
 names independently and require equal sets; match every normative extension

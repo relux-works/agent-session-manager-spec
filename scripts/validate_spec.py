@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for the normative ax v0.3.0 specification.
+"""Public, repository-only validation for AX v0.4.0.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
-and adds publication/metadata, anchor, matrix, recovery, and cloning closure for v0.3.0.
+and adds publication/metadata, recovery, cloning, and Directory closure for v0.4.0.
 Repository-only: no ax binary, provider CLI, or task-board runtime required.
 """
 
@@ -17,6 +17,8 @@ import sys
 import tomllib
 from collections.abc import Iterator
 
+from validate_directory import validate as validate_directory
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SPEC = ROOT / "SPEC.md"
 README = ROOT / "README.md"
@@ -26,17 +28,19 @@ VERSION_FILE = ROOT / "VERSION"
 LICENSE_FILE = ROOT / "LICENSE"
 CHANGELOG = ROOT / "CHANGELOG.md"
 RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
+TRACEABILITY = ROOT / "STANDALONE_TO_AX_TRACEABILITY.md"
+DIRECTORY_FIXTURE = ROOT / "fixtures" / "session_directory_conformance.json"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen v0.3.0 publication prose. Hashes use UTF-8 text with all line endings
+# Frozen v0.4.0 publication prose. Hashes use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. Future
 # specification releases must deliberately replace this bounded map after the
 # semantic checks and expected-red suite have been reviewed for the new prose.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "86e675c13c4d7caf569a139b5b8376be52cdcff07d63d2745d637fc20cdbf987",
-    "README.md": "1a411f2b08a7150a217e2ff2ad1136227a7cce0b78d82838e1ef2747547eeb75",
-    "CONTRIBUTING.md": "fe9f0f70e5d2104f8275ec07348c58429dd099f1c18a0e2a01e977271b9a151b",
-    "CHANGELOG.md": "b29fa1c18c2196a654459f7d7ee7fb9e2d70c11f80572d812b963fa07d586de2",
-    "RELEASE_NOTES.md": "033f249c93e457b09bd2669671ff8649da33b3abbc30a592b35dd97eaac9364b",
+    "SPEC.md": "a5a8a107aed85cd8b7b90c5110a18a80daa339149711385b8eaf6c1f2245e80a",
+    "README.md": "094cd189b9562e70e51730a234109acad45b5f106cccff9009720d2dbe68d77d",
+    "CONTRIBUTING.md": "6c625f4fb75431dc447e2a1716c5009858ca41246ea0ee48ab042a276b02ccc4",
+    "CHANGELOG.md": "e973bf8313450f9d8e71a7e6a6678a03e63a99bac23af7990939f733bd13f744",
+    "RELEASE_NOTES.md": "bcf51a97090dc80efcf0cf8db3392361eb25659288ad75f47dc464333b30047f",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -51,11 +55,14 @@ EXPECTED_SVG_SHA256 = {
     "cloning_components.svg": "d9521205b83419a37582696699f43f178ed68f57a7846a2328f9aaff11a0bfbc",
     "cloning_transaction.svg": "03ec313c341ff0903ab4aa03e59e3e43c710e293059359510497a84472019d89",
     "mesh_deployment.svg": "0b38e885aac889795b1464ce8227ae6ae858ff2590229a9163a6701d9b99dd8e",
+    "session_directory_components.svg": "1551437d79e2d668dc670611e2ca536896ffb58ffc2b8bb3a1e9ea7891bc973d",
+    "session_directory_continuation.svg": "37fa72309376dde5cbd2c47af37c2bb4ac8fb285f610ef3698e1d768afaa6e27",
+    "session_directory_enrichment.svg": "4b61c7b2508a07e15f1bb3ef87a94f5cb85bda6d4bf4b552333a0c1b403b8813",
     "session_state.svg": "fae377f21fd374a40c2b831c6ced4e9f61c662a993c0b550d1c9ca0f0c0be507",
     "structurizr-ContainerContext-key.svg": "6424ee4d1ffebef9f37f54a8e5afc47358f9522f4a4908bbfe2cb44144b82dbc",
-    "structurizr-ContainerContext.svg": "05eec3faa7f04c8bdc7dc3f70f3c01cc6d99923cc45e502e2828d75ca8fb9e76",
+    "structurizr-ContainerContext.svg": "9e8f00157cb0bdf4bfecf0c9c69a93572f11c55a18c54aa56eabacba9f73992d",
     "structurizr-SystemContext-key.svg": "d2b29e2efb08aa803166c8be5366933359c1b136d97fa01b0eedfce8406b65d1",
-    "structurizr-SystemContext.svg": "4509fea3ea56556862757ae43d113908b150acb3ee67843d8640b21618e2a1e4",
+    "structurizr-SystemContext.svg": "65c9e763d5e16df8eba007583c5a6a972750c3ddb0c69b29a280073ed9b75055",
     "takeover.svg": "b06f3553a7bc09f316c73bc83169f0b637ebfaa6ff86f9fcd576ec82162b3b55",
 }
 
@@ -65,11 +72,14 @@ EXPECTED_HANDWRITTEN_PLANTUML = {
     "mesh_deployment.puml",
     "cloning_components.puml",
     "cloning_transaction.puml",
+    "session_directory_components.puml",
+    "session_directory_enrichment.puml",
+    "session_directory_continuation.puml",
 }
 
 FROZEN_ACCEPTED_INPUT_SHA256 = {
-    "STANDALONE_TO_AX_TRACEABILITY.md": "61d2c036ee358199f8406ab40b9663f91d7b6eeb1dc2ededde902306e93139d5",
-    "diagrams/README.md": "e872fc665106e1c83f604bfa1b56223a68a110d904d6512bd370792548a477ba",
+    "STANDALONE_TO_AX_TRACEABILITY.md": "50d3b9968a650a8ced1bf91fbdf78886325df24f8ac044e7c7a918944b0a08e7",
+    "diagrams/README.md": "d40ddedbeb2dfd3eeb3a51b1ced67f7586d105ebeabc2390142c728d53d5dfbe",
     "diagrams/plantuml/cloning_components.puml": "50e728af2fddbc5f3b161d661068fc33c4fe341884c4c28a8ea541c24577118a",
     "diagrams/plantuml/cloning_transaction.puml": "aadeb780d4cbbe129059dd327bd67b42c1947e13660143f7b91a06c59c99887f",
 }
@@ -266,10 +276,14 @@ def check_required_files(errors: list[str]) -> None:
         ROOT / "diagrams" / "plantuml" / "mesh_deployment.puml",
         ROOT / "diagrams" / "plantuml" / "cloning_components.puml",
         ROOT / "diagrams" / "plantuml" / "cloning_transaction.puml",
+        ROOT / "diagrams" / "plantuml" / "session_directory_components.puml",
+        ROOT / "diagrams" / "plantuml" / "session_directory_enrichment.puml",
+        ROOT / "diagrams" / "plantuml" / "session_directory_continuation.puml",
         ROOT / "STANDALONE_TO_AX_TRACEABILITY.md",
         ROOT / ".github" / "workflows" / "validate.yml",
         ROOT / "scripts" / "validate_spec.py",
         ROOT / "run_validation.sh",
+        DIRECTORY_FIXTURE,
     ]
     for p in required:
         if not p.exists():
@@ -283,7 +297,7 @@ def normalized_release_document_sha256(path: pathlib.Path) -> str:
 
 
 def check_frozen_release_baseline(errors: list[str]) -> None:
-    """Protect the reviewed v0.3.0 claim prose without pretending to parse English."""
+    """Protect the reviewed v0.4.0 claim prose without pretending to parse English."""
     expected_names = {path.name for path in PUBLIC_CLAIM_DOCUMENTS}
     configured_names = set(FROZEN_RELEASE_DOCUMENT_SHA256)
     if configured_names != expected_names:
@@ -300,13 +314,15 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual = normalized_release_document_sha256(document)
         if actual != expected:
             errors.append(
-                f"{document.name}: frozen v0.3.0 release baseline mismatch "
+                f"{document.name}: frozen v0.4.0 release baseline mismatch "
                 f"(expected LF-normalized SHA-256 {expected}, got {actual}); "
                 "review the prose and update FROZEN_RELEASE_DOCUMENT_SHA256 only for an intentional release revision"
             )
     expected_svgs = {
         "takeover.svg", "session_state.svg", "mesh_deployment.svg",
         "cloning_components.svg", "cloning_transaction.svg",
+        "session_directory_components.svg", "session_directory_enrichment.svg",
+        "session_directory_continuation.svg",
         "structurizr-SystemContext.svg", "structurizr-SystemContext-key.svg",
         "structurizr-ContainerContext.svg", "structurizr-ContainerContext-key.svg",
     }
@@ -347,8 +363,8 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
 def check_publication_metadata(errors: list[str]) -> None:
     if VERSION_FILE.exists():
         v = VERSION_FILE.read_text(encoding="utf-8").strip()
-        if v != "0.3.0":
-            errors.append(f"VERSION must be exactly '0.3.0', got {v!r}")
+        if v != "0.4.0":
+            errors.append(f"VERSION must be exactly '0.4.0', got {v!r}")
     if LICENSE_FILE.exists():
         lic = LICENSE_FILE.read_text(encoding="utf-8")
         canonical_mit = """MIT License
@@ -378,6 +394,7 @@ SOFTWARE.
     if CHANGELOG.exists():
         cl = CHANGELOG.read_text(encoding="utf-8")
         for required in (
+            "## [v0.4.0] - 2026-08-27",
             "## [v0.3.0] - 2026-08-27",
             "## [v0.2.1] - 2026-08-23",
             "## [v0.2.0] - 2026-08-23",
@@ -389,8 +406,8 @@ SOFTWARE.
         # CHANGELOG must at least mention qwen prohibition (already checked), but also we check RELEASE_NOTES for full set
     if RELEASE_NOTES.exists():
         rn = RELEASE_NOTES.read_text(encoding="utf-8")
-        if "v0.3.0" not in rn:
-            errors.append("RELEASE_NOTES.md missing v0.3.0")
+        if "v0.4.0" not in rn:
+            errors.append("RELEASE_NOTES.md missing v0.4.0")
         if "specification" not in rn.lower():
             errors.append("RELEASE_NOTES.md missing specification disclosure")
         if "specification artifacts only" not in rn.lower() and "specification only" not in rn.lower():
@@ -403,9 +420,9 @@ SOFTWARE.
 
 
 def check_public_diagram_ledgers(errors: list[str]) -> None:
-    """Keep public diagram inventories aligned with the v0.3.0 release sets."""
-    if len(EXPECTED_HANDWRITTEN_PLANTUML) != 5 or len(EXPECTED_SVG_SHA256) != 9:
-        errors.append("public diagram ledger validator configuration must contain five PlantUML sources and nine SVG artifacts")
+    """Keep public diagram inventories aligned with the v0.4.0 release sets."""
+    if len(EXPECTED_HANDWRITTEN_PLANTUML) != 8 or len(EXPECTED_SVG_SHA256) != 12:
+        errors.append("public diagram ledger validator configuration must contain eight PlantUML sources and twelve SVG artifacts")
         return
 
     for document in (README, CONTRIBUTING):
@@ -414,14 +431,14 @@ def check_public_diagram_ledgers(errors: list[str]) -> None:
         text = document.read_text(encoding="utf-8")
         missing_sources = sorted(name for name in EXPECTED_HANDWRITTEN_PLANTUML if f"`{name}`" not in text)
         missing_svgs = sorted(name for name in EXPECTED_SVG_SHA256 if f"`{name}`" not in text)
-        if "five handwritten PlantUML sources" not in text or missing_sources:
+        if "eight handwritten PlantUML sources" not in text or missing_sources:
             errors.append(
-                f"{document.name}: public diagram ledger must declare five handwritten PlantUML sources; "
+                f"{document.name}: public diagram ledger must declare eight handwritten PlantUML sources; "
                 f"missing {missing_sources}"
             )
-        if "nine committed SVG artifacts" not in text or missing_svgs:
+        if "twelve committed SVG artifacts" not in text or missing_svgs:
             errors.append(
-                f"{document.name}: public diagram ledger must declare nine committed SVG artifacts; "
+                f"{document.name}: public diagram ledger must declare twelve committed SVG artifacts; "
                 f"missing {missing_svgs}"
             )
 
@@ -540,8 +557,8 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         txt = doc.read_text(encoding="utf-8")
         if "relux-works/agent-session-manager-spec" not in txt:
             errors.append(f"{doc.name}: missing repository identity relux-works/agent-session-manager-spec")
-        if "v0.3.0" not in txt and "0.3.0" not in txt:
-            errors.append(f"{doc.name}: missing version v0.3.0/0.3.0")
+        if "v0.4.0" not in txt and "0.4.0" not in txt:
+            errors.append(f"{doc.name}: missing version v0.4.0/0.4.0")
     for doc in [SPEC, README, CONTRIBUTING]:
         if doc.exists():
             txt = doc.read_text(encoding="utf-8")
@@ -578,7 +595,7 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         for marker in stale_publication_markers:
             if marker in content:
                 errors.append(
-                    f"{document.relative_to(ROOT)}: stale/internal v0.3.0 publication marker {marker!r}"
+                    f"{document.relative_to(ROOT)}: stale/internal v0.4.0 publication marker {marker!r}"
                 )
 
 
@@ -615,7 +632,15 @@ def check_ci_workflow(errors: list[str]) -> None:
 
 
 def check_markdown_links_and_anchors(errors: list[str]) -> None:
-    docs = [SPEC, README, CONTRIBUTING, DIAGRAMS_README, CHANGELOG, RELEASE_NOTES]
+    docs = [
+        SPEC,
+        README,
+        CONTRIBUTING,
+        DIAGRAMS_README,
+        CHANGELOG,
+        RELEASE_NOTES,
+        TRACEABILITY,
+    ]
     anchor_map: dict[pathlib.Path, set[str]] = {}
     doc_texts: dict[pathlib.Path, str] = {}
     for doc in docs:
@@ -1131,7 +1156,7 @@ def check_critical_protocol_contracts(text: str, errors: list[str]) -> None:
 
     contract_versions = (
         ("Provider protocol", "urn:ax:protocol:provider", "2.0.0"),
-        ("Mesh RPC", "urn:ax:protocol:rpc", "2.0.0"),
+        ("Mesh RPC", "urn:ax:protocol:rpc", "2.0.0</code>, <code>3.0.0"),
         (
             "Materialization recovery state (journal and managed-replica marker variants)",
             "urn:ax:schema:materialization-journal",
@@ -1139,10 +1164,16 @@ def check_critical_protocol_contracts(text: str, errors: list[str]) -> None:
         ),
     )
     for name, identifier, version in contract_versions:
-        row = f"| {name} | <code>{identifier}</code> | <code>{version}</code> |"
-        if row not in text:
+        if name == "Mesh RPC":
+            row_present = (
+                f"| {name} | <code>{identifier}</code> | "
+                "<code>2.0.0</code>, <code>3.0.0</code> for directory replication |"
+            ) in text
+        else:
+            row_present = f"| {name} | <code>{identifier}</code> | <code>{version}</code> |" in text
+        if not row_present:
             errors.append(
-                f"critical contract version mismatch: {name} must be {version} in v0.3.0"
+                f"critical contract version mismatch: {name} must expose {version} across the v0.3/v0.4 boundary"
             )
     for required in (
         '<code>protocol_version = "2.0.0"</code>',
@@ -2090,6 +2121,12 @@ def main() -> int:
     failed += clone_failures
     passed += clone_checks - clone_failures
     ledger.update(clone_ledger)
+    directory_errors, directory_ledger = validate_directory(ROOT, text, canonical)
+    errors.extend(directory_errors)
+    checks += directory_ledger["directory_gate_classes"]
+    failed += directory_ledger["directory_failed_groups"]
+    passed += directory_ledger["directory_gate_classes"] - directory_ledger["directory_failed_groups"]
+    ledger.update(directory_ledger)
 
     local_link_count = 0
     for doc in [SPEC, README, CONTRIBUTING, DIAGRAMS_README]:
@@ -2120,6 +2157,7 @@ def main() -> int:
     print(f"  Semantic checks: {checks} total, {passed} passed, {failed} failed")
     print(f"  Ledger: provider_operations={ledger.get('provider_operations',0)}, bridge_operations={ledger.get('bridge_operations',0)}, rpc_body_operations={ledger.get('rpc_body_operations',0)}, cli_bodies={ledger.get('cli_bodies',0)}, SessionState={ledger.get('SessionState',0)}, Git_payloads={ledger.get('Git_payloads',0)}")
     print(f"  Clone ledger: contracts={ledger.get('contracts',0)}, adapter_operations={ledger.get('adapter_operations',0)}, adapter_capabilities={ledger.get('adapter_capabilities',0)}, clone_commands={ledger.get('clone_commands',0)}, clone_events={ledger.get('clone_events',0)}, clone_error_classes={ledger.get('clone_error_classes',0)}, traceability_rows={ledger.get('traceability_rows',0)}")
+    print(f"  Directory ledger: gate_classes={ledger.get('directory_gate_classes',0)}, contracts={ledger.get('directory_contracts',0)}, fixture_families={ledger.get('directory_fixture_families',0)}, expected_red_minimum={ledger.get('directory_expected_red_minimum',0)}")
     print("  Registry evidence: parsed provider, bridge, RPC-body, CLI-body, SessionState, Git-payload, cloning contract/adapter/CLI/event/error, and standalone traceability registries; no aggregate parity count is claimed")
     return 0
 

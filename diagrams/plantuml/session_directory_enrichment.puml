@@ -1,0 +1,66 @@
+@startuml session_directory_enrichment
+skinparam BackgroundColor #FFFFFF
+skinparam maxMessageSize 72
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam sequence {
+    ArrowColor #0D47A1
+    LifeLineBorderColor #1565C0
+    LifeLineBackgroundColor #E3F2FD
+    ParticipantBorderColor #1565C0
+    ParticipantBackgroundColor #E3F2FD
+    ParticipantFontColor #000000
+    DatabaseBorderColor #2E7D32
+    DatabaseBackgroundColor #E8F5E9
+    DatabaseFontColor #000000
+}
+hide footbox
+
+title Session Inventory and Enrichment — Source-Local Flow
+
+participant "Directory Service" as Directory
+participant "Environment Adapter" as Adapter
+database "Native Session Store" as Native
+database "Immutable Record Store" as Records
+participant "Enrichment Scheduler" as Scheduler
+participant "Sandboxed Worker" as Worker
+participant "AX Mesh Anti-Entropy" as Mesh
+
+autonumber
+
+== Cheap inventory ==
+
+Directory -> Adapter: inventory scan with prior cursor
+Adapter -> Native: read allowlisted metadata and event tails
+Native --> Adapter: native IDs, generations, bounded tail data
+Adapter --> Directory: inventory observations + next cursor
+Directory -> Directory: sanitize, validate, derive instance keys
+Directory -> Records: publish immutable observation batch
+Directory -> Scheduler: evaluate freshness for changed heads
+
+== Enrichment ==
+
+alt Current annotation matches exact head
+    Scheduler --> Directory: no job required
+else Missing or stale annotation
+    Scheduler -> Adapter: request bounded public-history projection
+    Adapter -> Native: read exact snapshot/head
+    Native --> Adapter: public events or canonical references
+    Adapter --> Scheduler: typed redacted input + evidence IDs
+    Scheduler -> Worker: title/summary job without mutation tools
+    Worker --> Scheduler: schema-validated annotation candidate
+    Scheduler -> Scheduler: verify head, policy, size, and provenance
+    alt Head changed during job
+        Scheduler -> Records: retain superseded job receipt only
+    else Head unchanged
+        Scheduler -> Records: publish annotation and success receipt
+    end
+end
+
+== Mesh visibility ==
+
+Records -> Mesh: inventory/annotation IDs and allowed objects
+Mesh --> Directory: peer records converge by anti-entropy
+Directory -> Directory: rebuild global catalog and stale/offline state
+
+@enduml

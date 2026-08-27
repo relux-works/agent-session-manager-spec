@@ -1,0 +1,2738 @@
+{
+  "fixture": "ax-session-directory-conformance-v1",
+  "sanitized": true,
+  "gate_classes": [
+    "contract_registry",
+    "self_id_jcs",
+    "strict_examples",
+    "closed_shapes",
+    "directory_node",
+    "mesh_namespace",
+    "environment_mapping",
+    "observation_chains",
+    "annotation_dag",
+    "receipt_chains",
+    "lineage",
+    "disclosure_policy",
+    "continuation_plan",
+    "route_outcomes",
+    "target_first_move",
+    "remote_unmanaged",
+    "cloning_fidelity",
+    "interfaces",
+    "tuple_matrix",
+    "security",
+    "traceability",
+    "publication_consistency"
+  ],
+  "contracts": {
+    "urn:ax:protocol:session-directory-node": "1.0.0",
+    "urn:ax:schema:session-directory-node-manifest": "1.0.0",
+    "urn:ax:schema:session-directory-node-request": "1.0.0",
+    "urn:ax:schema:session-directory-node-response": "1.0.0",
+    "urn:ax:schema:environment-observation": "1.0.0",
+    "urn:ax:schema:native-session-observation": "1.0.0",
+    "urn:ax:schema:session-inventory-batch": "1.0.0",
+    "urn:ax:schema:conversation-lineage-link": "1.0.0",
+    "urn:ax:schema:session-annotation": "1.0.0",
+    "urn:ax:schema:session-enrichment-profile": "1.0.0",
+    "urn:ax:schema:session-enrichment-job-request": "1.0.0",
+    "urn:ax:schema:session-enrichment-job-receipt": "1.0.0",
+    "urn:ax:schema:session-continuation-plan": "1.0.0",
+    "urn:ax:schema:session-directory-operation-receipt": "1.0.0",
+    "urn:ax:schema:session-directory-query": "1.0.0",
+    "urn:ax:protocol:rpc": "3.0.0",
+    "urn:ax:schema:config": "2.0.0",
+    "urn:ax:schema:cli-result": "3.0.0",
+    "urn:ax:schema:error": "1.2.0",
+    "urn:ax:schema:session-record": "3.0.0",
+    "urn:ax:schema:session-event": "3.0.0"
+  },
+  "self_id_fields": {
+    "urn:ax:schema:environment-observation": "observation_id",
+    "urn:ax:schema:native-session-observation": "observation_id",
+    "urn:ax:schema:session-inventory-batch": "batch_id",
+    "urn:ax:schema:conversation-lineage-link": "lineage_link_id",
+    "urn:ax:schema:session-annotation": "annotation_id",
+    "urn:ax:schema:session-enrichment-profile": "profile_id",
+    "urn:ax:schema:session-enrichment-job-request": "job_request_id",
+    "urn:ax:schema:session-enrichment-job-receipt": "job_receipt_id",
+    "urn:ax:schema:session-continuation-plan": "plan_id",
+    "urn:ax:schema:session-directory-operation-receipt": "directory_receipt_id"
+  },
+  "identity_vectors": [
+    {
+      "schema": "urn:ax:schema:environment-observation",
+      "canonical_input": {
+        "schema": "urn:ax:schema:environment-observation",
+        "schema_version": "1.0.0",
+        "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "installation_id": "sha256:10",
+        "environment_id": "codex",
+        "environment_version": "synthetic-1",
+        "provider_id": "codex",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "backend_realm_fingerprint": "sha256:11",
+        "capabilities": {},
+        "authentication_status": "available",
+        "runtime_status": "available",
+        "observed_at": "2026-08-27T00:00:00Z",
+        "extensions": {}
+      },
+      "expected_id": "sha256:5c9a0236ff0dd07a96f24c9ab472e403a9c818900358e6aaa21921ea8ebffdd7"
+    },
+    {
+      "schema": "urn:ax:schema:native-session-observation",
+      "canonical_input": {
+        "schema": "urn:ax:schema:native-session-observation",
+        "schema_version": "1.0.0",
+        "instance_id": "sha256:20",
+        "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "installation_id": "sha256:10",
+        "observation_sequence": 1,
+        "previous_observation_id": null,
+        "managed_session_id": null,
+        "provider_identity_record_id": null,
+        "lineage_anchor_hint": null,
+        "source_generation": "synthetic-1",
+        "head_digest": "sha256:21",
+        "identity_confidence": "exact",
+        "presence": "present",
+        "native_state": "idle",
+        "resumability": "validated",
+        "workspace_identity": null,
+        "provider_title": "Synthetic session",
+        "created_at": null,
+        "updated_at": "2026-08-27T00:00:00Z",
+        "message_counts": {
+          "user": 1,
+          "assistant": 1
+        },
+        "preview_status": "current",
+        "warnings": [],
+        "observed_at": "2026-08-27T00:00:00Z",
+        "extensions": {}
+      },
+      "expected_id": "sha256:ec43cb737263ed6241e94584bcadd569216c6a74adb84a92af522d9cf9833174"
+    },
+    {
+      "schema": "urn:ax:schema:session-inventory-batch",
+      "canonical_input": {
+        "schema": "urn:ax:schema:session-inventory-batch",
+        "schema_version": "1.0.0",
+        "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "batch_sequence": 1,
+        "previous_batch_id": null,
+        "cursor_before": null,
+        "cursor_after": null,
+        "environment_observation_ids": [
+          "sha256:30"
+        ],
+        "native_observation_ids": [
+          "sha256:31"
+        ],
+        "scan_root_authority_ids": [
+          "sha256:32"
+        ],
+        "adapter_builds": [
+          {
+            "environment_id": "codex",
+            "adapter_version": "1.0.0",
+            "executable_sha256": "sha256:33"
+          }
+        ],
+        "started_at": "2026-08-27T00:00:00Z",
+        "completed_at": "2026-08-27T00:00:01Z",
+        "partial": false,
+        "error_codes": [],
+        "extensions": {}
+      },
+      "expected_id": "sha256:8d609ff9c0dc120132bcdaedbf3e191321bdc302bfbec9225efde462ec8258b0"
+    },
+    {
+      "schema": "urn:ax:schema:conversation-lineage-link",
+      "canonical_input": {
+        "schema": "urn:ax:schema:conversation-lineage-link",
+        "schema_version": "1.0.0",
+        "link_kind": "session_clone",
+        "from_kind": "ax_session",
+        "from_id": "0198f4c8-1111-7111-8111-1234567890ab",
+        "to_kind": "ax_session",
+        "to_id": "0198f4c8-2222-7222-8222-1234567890ab",
+        "canonical_anchor_id": "0198f4c8-1111-7111-8111-1234567890ab",
+        "member_root_id": "0198f4c8-2222-7222-8222-1234567890ab",
+        "evidence_ids": [
+          "sha256:40"
+        ],
+        "supersedes_link_ids": [],
+        "authorized_by_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "created_at": "2026-08-27T00:00:00Z",
+        "extensions": {}
+      },
+      "expected_id": "sha256:5e2b163bedc82979d80077a1baaa8621da525ded37ee4e3aeae6643618959b3d"
+    },
+    {
+      "schema": "urn:ax:schema:session-annotation",
+      "canonical_input": {
+        "schema": "urn:ax:schema:session-annotation",
+        "schema_version": "1.0.0",
+        "subject_kind": "native_instance",
+        "subject_id": "sha256:20",
+        "binding": "identity",
+        "subject_head_digest": null,
+        "kind": "manual_title",
+        "payload": {
+          "text": "Synthetic title"
+        },
+        "author_kind": "operator",
+        "author_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "profile_id": null,
+        "generator": null,
+        "evidence_ids": [],
+        "redaction_summary": {
+          "policy_digest": "sha256:50",
+          "classes": [],
+          "class_counts": {},
+          "extensions": {}
+        },
+        "supersedes_annotation_ids": [],
+        "created_at": "2026-08-27T00:00:00Z",
+        "extensions": {}
+      },
+      "expected_id": "sha256:4c4be27569dde08f77193d90b705d51f734b519dec71acc395118a55208d84af"
+    },
+    {
+      "schema": "urn:ax:schema:session-enrichment-profile",
+      "canonical_input": {
+        "schema": "urn:ax:schema:session-enrichment-profile",
+        "schema_version": "1.0.0",
+        "subject_kinds": [
+          "native_instance"
+        ],
+        "provider_ids": [
+          "codex"
+        ],
+        "input_classes": [
+          "assistant_public",
+          "user_public"
+        ],
+        "max_events": 200,
+        "max_bytes": 262144,
+        "delta_window_events": 0,
+        "redaction_policy_id": "sha256:60",
+        "generator_kind": "deterministic",
+        "generator": {
+          "kind": "deterministic",
+          "implementation": "synthetic",
+          "implementation_version": "1.0.0",
+          "model_id": null,
+          "prompt_digest": null,
+          "output_schema_version": "1.0.0",
+          "extensions": {}
+        },
+        "network_policy": "none",
+        "endpoint_class": null,
+        "title_min_words": 2,
+        "title_max_words": 8,
+        "summary_schema_version": "1.0.0",
+        "incremental_policy": "disabled",
+        "full_rebuild_after_updates": 0,
+        "full_rebuild_after_delta_bytes": 0,
+        "minimum_incremental_confidence": null,
+        "refresh_debounce_seconds": 30,
+        "stale_after_seconds": 3600,
+        "extensions": {}
+      },
+      "expected_id": "sha256:5b93e72f9940e16af6fc75c322bdb2c2bc564c9a1703bd29e406d8b48ea0a5cb"
+    },
+    {
+      "schema": "urn:ax:schema:session-enrichment-job-request",
+      "canonical_input": {
+        "schema": "urn:ax:schema:session-enrichment-job-request",
+        "schema_version": "1.0.0",
+        "job_id": "0198f4c8-3333-7333-8333-1234567890ab",
+        "subject_kind": "native_instance",
+        "subject_id": "sha256:20",
+        "expected_head_digest": "sha256:21",
+        "source_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "source_instance_id": "sha256:20",
+        "profile_id": "sha256:61",
+        "requested_kinds": [
+          "summary"
+        ],
+        "prior_annotation_ids": [],
+        "delta_start_evidence_id": null,
+        "idempotency_key": "sha256:62",
+        "requester": "synthetic-fixture",
+        "priority": 50,
+        "deadline": "2026-08-27T00:05:00Z",
+        "created_at": "2026-08-27T00:00:00Z",
+        "extensions": {}
+      },
+      "expected_id": "sha256:335680508467560c27e59262a4155047f37451caf6b5ebe0cde153fd2e7cf261"
+    },
+    {
+      "schema": "urn:ax:schema:session-enrichment-job-receipt",
+      "canonical_input": {
+        "schema": "urn:ax:schema:session-enrichment-job-receipt",
+        "schema_version": "1.0.0",
+        "previous_job_receipt_id": null,
+        "job_request_id": "sha256:70",
+        "job_id": "0198f4c8-3333-7333-8333-1234567890ab",
+        "profile_id": "sha256:61",
+        "subject_head_digest": "sha256:21",
+        "state": "queued",
+        "claim_host_id": null,
+        "claim_lease_id": null,
+        "claim_attempt": 0,
+        "claim_acquired_at": null,
+        "claim_expires_at": null,
+        "receipt_at": "2026-08-27T00:00:00Z",
+        "input_event_count": 0,
+        "input_byte_count": 0,
+        "redaction_summary": {
+          "policy_digest": "sha256:50",
+          "classes": [],
+          "class_counts": {},
+          "extensions": {}
+        },
+        "generator": {
+          "kind": "deterministic",
+          "implementation": "synthetic",
+          "implementation_version": "1.0.0",
+          "model_id": null,
+          "prompt_digest": null,
+          "output_schema_version": "1.0.0",
+          "extensions": {}
+        },
+        "produced_annotation_ids": [],
+        "usage": null,
+        "failure_code": null,
+        "started_at": null,
+        "ended_at": null,
+        "superseded_by_head_digest": null,
+        "extensions": {}
+      },
+      "expected_id": "sha256:8b122ae53e004c20be93f3c3f27e1649e90bb52b2b252c755cb3e27f260b3337"
+    },
+    {
+      "schema": "urn:ax:schema:session-continuation-plan",
+      "canonical_input": {
+        "schema": "urn:ax:schema:session-continuation-plan",
+        "schema_version": "1.0.0",
+        "operation_id": "0198f4c8-4444-7444-8444-1234567890ab",
+        "created_at": "2026-08-27T00:00:00Z",
+        "expires_at": "2026-08-27T00:05:00Z",
+        "entry_id": "sha256:80",
+        "lineage_anchor_id": "sha256:81",
+        "source_session_id": null,
+        "source_instance_id": "sha256:20",
+        "source_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "source_observation_id": "sha256:82",
+        "source_head_digest": "sha256:21",
+        "source_lease": null,
+        "source_checkpoint_id": null,
+        "source_runtime": {
+          "native_state": "idle",
+          "resumability": "validated",
+          "managed_runtime_ref": null,
+          "evidence_kind": "native_observation",
+          "evidence_id": "sha256:82",
+          "observed_at": "2026-08-27T00:00:00Z",
+          "extensions": {}
+        },
+        "target": {
+          "host_id": "0198f4c8-5555-7555-8555-1234567890ab",
+          "installation_id": "sha256:83",
+          "environment_tuple": {},
+          "provider_id": "claude",
+          "backend_realm_fingerprint": "sha256:84",
+          "authentication_status": "available",
+          "reachability": "reachable",
+          "extensions": {}
+        },
+        "workspace": {
+          "workspace_group_id": null,
+          "workspace_record_id": null,
+          "checkpoint_id": null,
+          "cohort_session_ids": [],
+          "conflict_policy": "refuse",
+          "transfer_manifest_id": null,
+          "materialization_plan_id": null,
+          "extensions": {}
+        },
+        "policy_digest": "sha256:85",
+        "intent": "clone",
+        "route": "cross_environment_clone",
+        "steps": [
+          {
+            "step_id": "validate",
+            "subsystem": "directory",
+            "input_digest": "sha256:86",
+            "prerequisite_step_ids": [],
+            "retry_policy": "never",
+            "mutation": "read_only",
+            "expected_receipt_type": null,
+            "extensions": {}
+          }
+        ],
+        "adoption_plan_id": null,
+        "projection_plan_id": "sha256:87",
+        "fidelity_report_id": "sha256:88",
+        "expected_bytes": 0,
+        "expected_model_calls": 0,
+        "expected_processes": 1,
+        "required_capabilities": [],
+        "contract_assertions": [
+          {
+            "contract_id": "urn:ax:schema:projection-plan",
+            "exact_version": "1.0.0",
+            "extensions": {}
+          }
+        ],
+        "confirmations": [],
+        "allowed_fallback_outcomes": [],
+        "request_digest": "sha256:89",
+        "adapter_digest": "sha256:8a",
+        "controller_digest": "sha256:8b",
+        "extensions": {}
+      },
+      "expected_id": "sha256:6f02a928420606e1160dc9e1f02fb9267097deeeb0c5bb72ad7c6987eaec2c96"
+    },
+    {
+      "schema": "urn:ax:schema:session-directory-operation-receipt",
+      "canonical_input": {
+        "schema": "urn:ax:schema:session-directory-operation-receipt",
+        "schema_version": "1.0.0",
+        "previous_directory_receipt_id": null,
+        "operation_id": "0198f4c8-4444-7444-8444-1234567890ab",
+        "plan_id": "sha256:90",
+        "request_digest": "sha256:89",
+        "actor": "synthetic-fixture",
+        "initiating_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "responsible_host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+        "step_index": 0,
+        "step_id": "validate",
+        "idempotency_key": "sha256:91",
+        "validated_source": {
+          "session_id": null,
+          "instance_id": "sha256:20",
+          "host_id": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+          "observation_id": "sha256:82",
+          "head_digest": "sha256:21",
+          "lease_id": null,
+          "lease_epoch": null,
+          "checkpoint_id": null,
+          "runtime": {
+            "native_state": "idle",
+            "resumability": "validated",
+            "managed_runtime_ref": null,
+            "evidence_kind": "native_observation",
+            "evidence_id": "sha256:82",
+            "observed_at": "2026-08-27T00:00:00Z",
+            "extensions": {}
+          },
+          "extensions": {}
+        },
+        "validated_target": {
+          "target": {
+            "host_id": "0198f4c8-5555-7555-8555-1234567890ab",
+            "installation_id": "sha256:83",
+            "environment_tuple": {},
+            "provider_id": "claude",
+            "backend_realm_fingerprint": "sha256:84",
+            "authentication_status": "available",
+            "reachability": "reachable",
+            "extensions": {}
+          },
+          "environment_observation_id": "sha256:92",
+          "capability_evidence_ids": [
+            "sha256:93"
+          ],
+          "workspace": {
+            "workspace_group_id": null,
+            "workspace_record_id": null,
+            "checkpoint_id": null,
+            "cohort_session_ids": [],
+            "conflict_policy": "refuse",
+            "transfer_manifest_id": null,
+            "materialization_plan_id": null,
+            "extensions": {}
+          },
+          "policy_digest": "sha256:85",
+          "contract_assertions": [
+            {
+              "contract_id": "urn:ax:schema:projection-plan",
+              "exact_version": "1.0.0",
+              "extensions": {}
+            }
+          ],
+          "validated_at": "2026-08-27T00:00:00Z",
+          "extensions": {}
+        },
+        "effect_receipt_ids": [],
+        "state": "validating",
+        "safe_retry": "status_first",
+        "error": null,
+        "durable_effects": [],
+        "compensations": [],
+        "outcome": null,
+        "created_at": "2026-08-27T00:00:00Z",
+        "extensions": {}
+      },
+      "expected_id": "sha256:cf8f1771bc1b33b93c1e9b0353be000b7caf22d10f8144c2af0c61e7fac6c06c"
+    }
+  ],
+  "sorted_id_fixture": [
+    "sha256:01",
+    "sha256:02",
+    "sha256:03"
+  ],
+  "strict_examples": {
+    "json": true,
+    "toml": true,
+    "jsonc": true,
+    "reject_floats": true,
+    "safe_integer_max": 9007199254740991
+  },
+  "closed_shapes": {
+    "directory_node_manifest": [
+      "schema",
+      "schema_version",
+      "node_id",
+      "node_version",
+      "host_id",
+      "executable_sha256",
+      "provider_manifest_digest",
+      "session_adapter_manifest_digest",
+      "supported_protocol_versions",
+      "operations",
+      "schemas",
+      "environment_tuple_registry_id",
+      "capabilities",
+      "redaction_policy_ids",
+      "enrichment_profile_ids",
+      "limits",
+      "extensions"
+    ],
+    "directory_request": [
+      "schema",
+      "schema_version",
+      "protocol",
+      "protocol_version",
+      "request_id",
+      "operation",
+      "deadline_ms",
+      "body"
+    ],
+    "directory_response": [
+      "schema",
+      "schema_version",
+      "protocol",
+      "protocol_version",
+      "request_id",
+      "operation",
+      "ok",
+      "body",
+      "error"
+    ],
+    "environment_observation": [
+      "schema",
+      "schema_version",
+      "observation_id",
+      "host_id",
+      "installation_id",
+      "environment_id",
+      "environment_version",
+      "provider_id",
+      "platform",
+      "architecture",
+      "backend_realm_fingerprint",
+      "capabilities",
+      "authentication_status",
+      "runtime_status",
+      "observed_at",
+      "extensions"
+    ],
+    "native_session_observation": [
+      "schema",
+      "schema_version",
+      "observation_id",
+      "instance_id",
+      "host_id",
+      "installation_id",
+      "observation_sequence",
+      "previous_observation_id",
+      "managed_session_id",
+      "provider_identity_record_id",
+      "lineage_anchor_hint",
+      "source_generation",
+      "head_digest",
+      "identity_confidence",
+      "presence",
+      "native_state",
+      "resumability",
+      "workspace_identity",
+      "provider_title",
+      "created_at",
+      "updated_at",
+      "message_counts",
+      "preview_status",
+      "warnings",
+      "observed_at",
+      "extensions"
+    ],
+    "inventory_batch": [
+      "schema",
+      "schema_version",
+      "batch_id",
+      "host_id",
+      "batch_sequence",
+      "previous_batch_id",
+      "cursor_before",
+      "cursor_after",
+      "environment_observation_ids",
+      "native_observation_ids",
+      "scan_root_authority_ids",
+      "adapter_builds",
+      "started_at",
+      "completed_at",
+      "partial",
+      "error_codes",
+      "extensions"
+    ],
+    "conversation_lineage_link": [
+      "schema",
+      "schema_version",
+      "lineage_link_id",
+      "link_kind",
+      "from_kind",
+      "from_id",
+      "to_kind",
+      "to_id",
+      "canonical_anchor_id",
+      "member_root_id",
+      "evidence_ids",
+      "supersedes_link_ids",
+      "authorized_by_host_id",
+      "created_at",
+      "extensions"
+    ],
+    "session_annotation": [
+      "schema",
+      "schema_version",
+      "annotation_id",
+      "subject_kind",
+      "subject_id",
+      "binding",
+      "subject_head_digest",
+      "kind",
+      "payload",
+      "author_kind",
+      "author_host_id",
+      "profile_id",
+      "generator",
+      "evidence_ids",
+      "redaction_summary",
+      "supersedes_annotation_ids",
+      "created_at",
+      "extensions"
+    ],
+    "enrichment_profile": [
+      "schema",
+      "schema_version",
+      "profile_id",
+      "subject_kinds",
+      "provider_ids",
+      "input_classes",
+      "max_events",
+      "max_bytes",
+      "delta_window_events",
+      "redaction_policy_id",
+      "generator_kind",
+      "generator",
+      "network_policy",
+      "endpoint_class",
+      "title_min_words",
+      "title_max_words",
+      "summary_schema_version",
+      "incremental_policy",
+      "full_rebuild_after_updates",
+      "full_rebuild_after_delta_bytes",
+      "minimum_incremental_confidence",
+      "refresh_debounce_seconds",
+      "stale_after_seconds",
+      "extensions"
+    ],
+    "enrichment_job_request": [
+      "schema",
+      "schema_version",
+      "job_request_id",
+      "job_id",
+      "subject_kind",
+      "subject_id",
+      "expected_head_digest",
+      "source_host_id",
+      "source_instance_id",
+      "profile_id",
+      "requested_kinds",
+      "prior_annotation_ids",
+      "delta_start_evidence_id",
+      "idempotency_key",
+      "requester",
+      "priority",
+      "deadline",
+      "created_at",
+      "extensions"
+    ],
+    "enrichment_job_receipt": [
+      "schema",
+      "schema_version",
+      "job_receipt_id",
+      "previous_job_receipt_id",
+      "job_request_id",
+      "job_id",
+      "profile_id",
+      "subject_head_digest",
+      "state",
+      "claim_host_id",
+      "claim_lease_id",
+      "claim_attempt",
+      "claim_acquired_at",
+      "claim_expires_at",
+      "receipt_at",
+      "input_event_count",
+      "input_byte_count",
+      "redaction_summary",
+      "generator",
+      "produced_annotation_ids",
+      "usage",
+      "failure_code",
+      "started_at",
+      "ended_at",
+      "superseded_by_head_digest",
+      "extensions"
+    ],
+    "continuation_plan": [
+      "schema",
+      "schema_version",
+      "plan_id",
+      "operation_id",
+      "created_at",
+      "expires_at",
+      "entry_id",
+      "lineage_anchor_id",
+      "source_session_id",
+      "source_instance_id",
+      "source_host_id",
+      "source_observation_id",
+      "source_head_digest",
+      "source_lease",
+      "source_checkpoint_id",
+      "source_runtime",
+      "target",
+      "workspace",
+      "policy_digest",
+      "intent",
+      "route",
+      "steps",
+      "adoption_plan_id",
+      "projection_plan_id",
+      "fidelity_report_id",
+      "expected_bytes",
+      "expected_model_calls",
+      "expected_processes",
+      "required_capabilities",
+      "contract_assertions",
+      "confirmations",
+      "allowed_fallback_outcomes",
+      "request_digest",
+      "adapter_digest",
+      "controller_digest",
+      "extensions"
+    ],
+    "directory_operation_receipt": [
+      "schema",
+      "schema_version",
+      "directory_receipt_id",
+      "previous_directory_receipt_id",
+      "operation_id",
+      "plan_id",
+      "request_digest",
+      "actor",
+      "initiating_host_id",
+      "responsible_host_id",
+      "step_index",
+      "step_id",
+      "idempotency_key",
+      "validated_source",
+      "validated_target",
+      "effect_receipt_ids",
+      "state",
+      "safe_retry",
+      "error",
+      "durable_effects",
+      "compensations",
+      "outcome",
+      "created_at",
+      "extensions"
+    ],
+    "directory_query": [
+      "schema",
+      "schema_version",
+      "query_id",
+      "operations",
+      "caller",
+      "extensions"
+    ],
+    "capability_result": [
+      "status",
+      "reason_code",
+      "evidence_ids",
+      "observed_at",
+      "extensions"
+    ],
+    "directory_node_limits": [
+      "max_frame_bytes",
+      "max_scan_instances",
+      "max_inventory_take",
+      "max_excerpt_count",
+      "max_excerpt_bytes",
+      "max_enrichment_events",
+      "max_enrichment_bytes",
+      "extensions"
+    ],
+    "preview_excerpt": [
+      "role",
+      "ordinal",
+      "text",
+      "source_event_id",
+      "truncated",
+      "extensions"
+    ],
+    "management_binding": [
+      "state",
+      "session_id",
+      "provider_identity_record_id",
+      "evidence_ids",
+      "extensions"
+    ],
+    "directory_node_build": [
+      "node_id",
+      "node_version",
+      "executable_sha256",
+      "provider_manifest_digest",
+      "session_adapter_manifest_digest",
+      "extensions"
+    ],
+    "workspace_identity": [
+      "logical_workspace_id",
+      "repository_identity",
+      "workspace_digest",
+      "branch"
+    ],
+    "message_counts": [
+      "user",
+      "assistant"
+    ],
+    "adapter_build": [
+      "environment_id",
+      "adapter_version",
+      "executable_sha256"
+    ],
+    "generator_identity": [
+      "kind",
+      "implementation",
+      "implementation_version",
+      "model_id",
+      "prompt_digest",
+      "output_schema_version",
+      "extensions"
+    ],
+    "redaction_summary": [
+      "policy_digest",
+      "classes",
+      "class_counts",
+      "extensions"
+    ],
+    "usage_summary": [
+      "input_units",
+      "output_units",
+      "total_units",
+      "cost_minor_units",
+      "currency",
+      "extensions"
+    ],
+    "runtime_expectation": [
+      "native_state",
+      "resumability",
+      "managed_runtime_ref",
+      "evidence_kind",
+      "evidence_id",
+      "observed_at",
+      "extensions"
+    ],
+    "directory_target": [
+      "host_id",
+      "installation_id",
+      "environment_tuple",
+      "provider_id",
+      "backend_realm_fingerprint",
+      "authentication_status",
+      "reachability",
+      "extensions"
+    ],
+    "workspace_route": [
+      "workspace_group_id",
+      "workspace_record_id",
+      "checkpoint_id",
+      "cohort_session_ids",
+      "conflict_policy",
+      "transfer_manifest_id",
+      "materialization_plan_id",
+      "extensions"
+    ],
+    "contract_assertion": [
+      "contract_id",
+      "exact_version",
+      "extensions"
+    ],
+    "continuation_step": [
+      "step_id",
+      "subsystem",
+      "input_digest",
+      "prerequisite_step_ids",
+      "retry_policy",
+      "mutation",
+      "expected_receipt_type",
+      "extensions"
+    ],
+    "validated_source": [
+      "session_id",
+      "instance_id",
+      "host_id",
+      "observation_id",
+      "head_digest",
+      "lease_id",
+      "lease_epoch",
+      "checkpoint_id",
+      "runtime",
+      "extensions"
+    ],
+    "validated_target": [
+      "target",
+      "environment_observation_id",
+      "capability_evidence_ids",
+      "workspace",
+      "policy_digest",
+      "contract_assertions",
+      "validated_at",
+      "extensions"
+    ],
+    "caller_context": [
+      "caller_id",
+      "authentication_subject",
+      "origin_host_id",
+      "interaction",
+      "scopes",
+      "disclosure_policy_digest",
+      "extensions"
+    ],
+    "query_operation": [
+      "operation_index",
+      "name",
+      "parameters",
+      "fields",
+      "preset",
+      "skip",
+      "take",
+      "sort",
+      "dry_run",
+      "confirm",
+      "expectation_digest",
+      "idempotency_key",
+      "extensions"
+    ],
+    "query_sort": [
+      "field",
+      "direction",
+      "extensions"
+    ],
+    "directory_filters": [
+      "kinds",
+      "lineage_anchors",
+      "provider_ids",
+      "host_ids",
+      "workspace_ids",
+      "states",
+      "management_states",
+      "reachability",
+      "freshness",
+      "warnings",
+      "updated_before",
+      "updated_after",
+      "extensions"
+    ],
+    "summary_payload": [
+      "topic",
+      "status",
+      "last_user_intent",
+      "last_agent_action",
+      "suggested_next_step",
+      "open_loops",
+      "risks",
+      "recent_activity",
+      "language",
+      "confidence",
+      "truncated"
+    ],
+    "directory_freshness": [
+      "state",
+      "age_seconds",
+      "effective_threshold_seconds",
+      "as_of",
+      "reason_codes",
+      "extensions"
+    ],
+    "directory_entry": [
+      "id",
+      "kind",
+      "lineage_anchor",
+      "management_state",
+      "display_title",
+      "title_source",
+      "title_subject_id",
+      "selected_session_id",
+      "selected_instance_id",
+      "provider_id",
+      "environment_id",
+      "host_id",
+      "workspace_id",
+      "owner_host_id",
+      "local_role",
+      "state",
+      "updated_at",
+      "summary",
+      "recent_activity",
+      "annotation_freshness",
+      "inventory_freshness",
+      "reachability",
+      "authentication_status",
+      "branch_count",
+      "clone_count",
+      "warnings",
+      "available_intents",
+      "extensions"
+    ],
+    "lineage_node": [
+      "node_kind",
+      "node_id",
+      "anchor_id",
+      "head_digest",
+      "selected",
+      "extensions"
+    ],
+    "suggested_relation": [
+      "from_kind",
+      "from_id",
+      "to_kind",
+      "to_id",
+      "method",
+      "score_millionths",
+      "evidence_ids",
+      "created_at",
+      "extensions"
+    ],
+    "directory_host": [
+      "host_id",
+      "display_name",
+      "reachability",
+      "last_successful_contact_at",
+      "inventory_freshness",
+      "environment_observation_ids",
+      "warnings",
+      "extensions"
+    ],
+    "query_schema_registry": [
+      "query_schema_version",
+      "registry_digest",
+      "operations",
+      "fields",
+      "presets",
+      "limits",
+      "extensions"
+    ],
+    "query_operation_descriptor": [
+      "name",
+      "kind",
+      "parameters_schema_id",
+      "result_tag",
+      "required_scope",
+      "supports_dry_run",
+      "requires_confirmation",
+      "idempotency",
+      "extensions"
+    ],
+    "query_field_descriptor": [
+      "name",
+      "type",
+      "cost",
+      "required_scope",
+      "filterable",
+      "sortable",
+      "extensions"
+    ],
+    "query_preset_descriptor": [
+      "name",
+      "fields",
+      "extensions"
+    ],
+    "query_limits": [
+      "max_operations",
+      "max_take",
+      "max_skip",
+      "max_sort_keys",
+      "max_fields",
+      "max_cursor_bytes",
+      "extensions"
+    ],
+    "query_result": [
+      "operation_index",
+      "operation_name",
+      "result_tag",
+      "body",
+      "extensions"
+    ]
+  },
+  "directory_node": {
+    "operations": [
+      "manifest",
+      "probe",
+      "scan",
+      "inventory",
+      "preview",
+      "enrichment-plan",
+      "enrichment-run",
+      "enrichment-status",
+      "continuation-inspect",
+      "runtime-observe",
+      "doctor"
+    ],
+    "mutations": [
+      "scan",
+      "enrichment-run"
+    ],
+    "idempotency": {
+      "same_mutation_same_input": "same_receipt",
+      "same_mutation_changed_input": "idempotency_mismatch"
+    }
+  },
+  "mesh": {
+    "namespace_count": 7,
+    "namespaces": [
+      "record",
+      "event",
+      "manifest",
+      "tombstone",
+      "tombstone_ack",
+      "blob",
+      "directory_record"
+    ],
+    "directory_namespace": "directory_record",
+    "directory_schemas": [
+      "urn:ax:schema:environment-observation",
+      "urn:ax:schema:native-session-observation",
+      "urn:ax:schema:session-inventory-batch",
+      "urn:ax:schema:conversation-lineage-link",
+      "urn:ax:schema:session-annotation",
+      "urn:ax:schema:session-enrichment-profile",
+      "urn:ax:schema:session-enrichment-job-request",
+      "urn:ax:schema:session-enrichment-job-receipt",
+      "urn:ax:schema:session-continuation-plan",
+      "urn:ax:schema:session-directory-operation-receipt"
+    ],
+    "hello_contracts": {
+      "rpc": [
+        "3.0.0"
+      ],
+      "session_record": [
+        "1.0.0",
+        "2.0.0",
+        "3.0.0"
+      ],
+      "session_event": [
+        "1.0.0",
+        "2.0.0",
+        "3.0.0"
+      ],
+      "lease": [
+        "1.0.0"
+      ],
+      "checkpoint": [
+        "1.0.0"
+      ],
+      "workspace_group": [
+        "1.0.0"
+      ],
+      "provider_identity": [
+        "1.0.0"
+      ],
+      "blob": [
+        "1.0.0"
+      ],
+      "transfer_manifest": [
+        "1.0.0"
+      ],
+      "chunk": [
+        "1.0.0"
+      ],
+      "materialization_plan": [
+        "1.0.0",
+        "2.0.0"
+      ],
+      "tombstone": [
+        "1.0.0"
+      ],
+      "tombstone_ack": [
+        "1.0.0"
+      ],
+      "task_board_bundle": [
+        "1.0.0"
+      ],
+      "environment_observation": [
+        "1.0.0"
+      ],
+      "native_session_observation": [
+        "1.0.0"
+      ],
+      "session_inventory_batch": [
+        "1.0.0"
+      ],
+      "conversation_lineage_link": [
+        "1.0.0"
+      ],
+      "session_annotation": [
+        "1.0.0"
+      ],
+      "session_enrichment_profile": [
+        "1.0.0"
+      ],
+      "session_enrichment_job_request": [
+        "1.0.0"
+      ],
+      "session_enrichment_job_receipt": [
+        "1.0.0"
+      ],
+      "session_continuation_plan": [
+        "1.0.0"
+      ],
+      "session_directory_operation_receipt": [
+        "1.0.0"
+      ]
+    },
+    "merkle_fixture": {
+      "ids": [
+        "sha256:01",
+        "sha256:02",
+        "sha256:03"
+      ],
+      "cardinality": 3
+    },
+    "old_peer_state": "directory_mesh_unsupported"
+  },
+  "environment_mapping": {
+    "claude-code": "claude",
+    "codex": "codex"
+  },
+  "observation_cases": {
+    "current": "present",
+    "stale": "present",
+    "offline": "unknown",
+    "partial": "unknown",
+    "missing": "missing",
+    "conflicted": "unknown",
+    "missing_requires": "successful_non_partial_same_root_realm",
+    "conflict_resolution": "predecessor_chain"
+  },
+  "annotation_cases": {
+    "generated_requires": [
+      "subject_head_digest",
+      "profile_id",
+      "evidence_ids"
+    ],
+    "manual_precedence": true,
+    "conflict_resolution": "supersede_all_concurrent_heads",
+    "clock_is_authority": false
+  },
+  "receipt_cases": {
+    "job_states": [
+      "queued",
+      "claimed",
+      "running",
+      "succeeded",
+      "superseded",
+      "failed",
+      "canceled"
+    ],
+    "operation_states": [
+      "validating",
+      "executing",
+      "finalizing",
+      "succeeded",
+      "failed",
+      "uncertain",
+      "compensated"
+    ],
+    "job_transitions": {
+      "root": [
+        "queued"
+      ],
+      "queued": [
+        "claimed",
+        "canceled"
+      ],
+      "claimed": [
+        "claimed",
+        "running",
+        "canceled"
+      ],
+      "running": [
+        "succeeded",
+        "superseded",
+        "failed",
+        "canceled"
+      ],
+      "succeeded": [],
+      "superseded": [],
+      "failed": [],
+      "canceled": []
+    },
+    "operation_transitions": {
+      "root": [
+        "validating"
+      ],
+      "validating": [
+        "executing",
+        "failed",
+        "uncertain"
+      ],
+      "executing": [
+        "executing",
+        "finalizing",
+        "failed",
+        "uncertain"
+      ],
+      "finalizing": [
+        "succeeded",
+        "failed",
+        "uncertain"
+      ],
+      "failed": [
+        "compensated"
+      ],
+      "uncertain": [
+        "executing",
+        "finalizing",
+        "failed",
+        "succeeded",
+        "compensated"
+      ],
+      "succeeded": [],
+      "compensated": []
+    },
+    "requires_predecessor": true,
+    "lost_response_replay": "same_receipt_chain"
+  },
+  "lineage": {
+    "authoritative_edges": [
+      "ax_fork",
+      "session_clone",
+      "cross_environment_move",
+      "native_adoption",
+      "managed_instance_binding",
+      "operator_link"
+    ],
+    "suggested_relation_authoritative": false,
+    "cycles_allowed": false,
+    "ambiguity": "visible_until_explicit_resolution"
+  },
+  "disclosure": {
+    "modes": [
+      "local_only",
+      "mesh_sanitized",
+      "reference_only"
+    ],
+    "default_excerpt": "local_only",
+    "excluded_from_mesh": [
+      "raw_native_session_id",
+      "absolute_native_store_path",
+      "raw_transcript",
+      "raw_preview",
+      "credentials",
+      "auth_store",
+      "terminal_output",
+      "pid",
+      "pty",
+      "socket",
+      "model_payload",
+      "embedding",
+      "sqlite_index"
+    ]
+  },
+  "continuation_plan": {
+    "pure": true,
+    "requires_operation_id": true,
+    "requires_unexpired_plan": true,
+    "revalidates": [
+      "source_head",
+      "observation",
+      "lease",
+      "checkpoint",
+      "runtime",
+      "target_tuple",
+      "target_auth",
+      "workspace",
+      "policy",
+      "capability"
+    ],
+    "mismatch": "continuation_plan_stale",
+    "silent_replan": false,
+    "route_substitution": false
+  },
+  "route_outcomes": {
+    "managed_local_attach": [
+      "attached",
+      "planned_only"
+    ],
+    "managed_remote_attach": [
+      "attached",
+      "planned_only"
+    ],
+    "managed_local_resume": [
+      "resumed_managed",
+      "planned_only"
+    ],
+    "managed_takeover": [
+      "taken_over",
+      "planned_only"
+    ],
+    "managed_fork": [
+      "forked",
+      "planned_only"
+    ],
+    "adopt_existing_native": [
+      "adopted",
+      "planned_only"
+    ],
+    "same_environment_clone": [
+      "cloned",
+      "planned_only"
+    ],
+    "cross_environment_clone": [
+      "cloned",
+      "planned_only"
+    ],
+    "cross_environment_move": [
+      "moved_cross_environment",
+      "cloned_source_still_active",
+      "planned_only"
+    ],
+    "open_unmanaged_local": [
+      "opened_unmanaged_local",
+      "planned_only"
+    ],
+    "archive_or_context_fallback": [
+      "archive_or_context_fallback",
+      "planned_only"
+    ]
+  },
+  "move_trace": [
+    "capture",
+    "transfer",
+    "project",
+    "validate",
+    "target_commit",
+    "lineage_publish",
+    "source_stop_release"
+  ],
+  "remote_unmanaged": {
+    "open_allowed": false,
+    "alternatives": [
+      "source_local_adoption",
+      "managed_clone"
+    ]
+  },
+  "cloning": {
+    "cross_environment_requires": [
+      "urn:ax:schema:clone-capture-manifest",
+      "urn:ax:schema:canonical-session",
+      "urn:ax:schema:projection-plan",
+      "urn:ax:schema:fidelity-report",
+      "urn:ax:schema:clone-read-back-evidence-manifest",
+      "urn:ax:schema:clone-validation-report",
+      "urn:ax:schema:clone-lineage-receipt"
+    ],
+    "success_requires_fidelity": true,
+    "success_requires_read_back": true,
+    "provider_change_in_place": false
+  },
+  "interfaces": {
+    "query_operations": [
+      "schema",
+      "sessions",
+      "session",
+      "lineage",
+      "hosts",
+      "environments",
+      "jobs",
+      "plans",
+      "count",
+      "distinct",
+      "directory_summary"
+    ],
+    "query_presets": [
+      "minimal",
+      "overview",
+      "activity",
+      "routing",
+      "full"
+    ],
+    "guarded_mutations": [
+      "set_title",
+      "set_tags",
+      "set_pin",
+      "enrich",
+      "plan_continue",
+      "execute_plan"
+    ],
+    "delete_mutation": false,
+    "default_contains_raw_transcript": false,
+    "tui_uses_typed_engine": true
+  },
+  "tuple_matrix": {
+    "claude-code/claude/macos/arm64": "acceptance_required",
+    "claude-code/claude/linux/amd64": "acceptance_required",
+    "codex/codex/macos/arm64": "acceptance_required",
+    "codex/codex/linux/amd64": "acceptance_required",
+    "adoption_default": "disabled_until_fixture_evidence"
+  },
+  "security": {
+    "hostile_inputs": [
+      "ansi",
+      "osc",
+      "bidi",
+      "control",
+      "invalid_width",
+      "hostile_grapheme",
+      "prompt_injection",
+      "path_traversal",
+      "symlink",
+      "special_file"
+    ],
+    "rendering": "remove_or_visibly_escape",
+    "launch": {
+      "structured_argv": true,
+      "explicit_cwd": true,
+      "environment_allowlist": true,
+      "shell_concatenation": false
+    },
+    "secret_canary_absent": true
+  },
+  "synthetic_fixture_families": [
+    "claude_empty",
+    "claude_one_turn",
+    "claude_long",
+    "claude_compacted",
+    "claude_branched",
+    "claude_active",
+    "claude_stopped",
+    "claude_corrupt",
+    "codex_empty",
+    "codex_one_turn",
+    "codex_long",
+    "codex_compacted",
+    "codex_branched",
+    "codex_active",
+    "codex_stopped",
+    "codex_corrupt",
+    "identity",
+    "freshness",
+    "annotation",
+    "enrichment",
+    "lineage",
+    "mesh_convergence",
+    "route",
+    "crash_point",
+    "tui_hostile_string",
+    "disclosure_policy"
+  ],
+  "traceability": [
+    "AC-DIR-INV-001",
+    "AC-DIR-OBS-001",
+    "AC-DIR-LIN-001",
+    "AC-DIR-ENR-001",
+    "AC-DIR-QUERY-001",
+    "AC-DIR-PLAN-001",
+    "AC-DIR-EXEC-001",
+    "AC-DIR-MOVE-001",
+    "AC-DIR-MESH-001",
+    "AC-DIR-SEC-001"
+  ],
+  "publication": {
+    "spec_version": "0.4.0",
+    "frozen_digest_owner": "publication-task",
+    "required_documents": [
+      "SPEC.md",
+      "README.md",
+      "CONTRIBUTING.md",
+      "CHANGELOG.md",
+      "RELEASE_NOTES.md",
+      "VERSION",
+      "STANDALONE_TO_AX_TRACEABILITY.md"
+    ],
+    "claim": "AX v0.4.0 Session Directory is specification-only until conforming implementations publish tuple evidence."
+  },
+  "closed_body_unions": {
+    "directory_node_request": {
+      "manifest": [],
+      "probe": [
+        "platform",
+        "architecture",
+        "requested_environment_ids",
+        "requested_capabilities",
+        "extensions"
+      ],
+      "scan": [
+        "operation_id",
+        "installation_ids",
+        "prior_batch_id",
+        "cursor",
+        "max_instances",
+        "extensions"
+      ],
+      "inventory": [
+        "installation_ids",
+        "fields",
+        "after",
+        "take",
+        "extensions"
+      ],
+      "preview": [
+        "instance_id",
+        "expected_observation_id",
+        "expected_head_digest",
+        "roles",
+        "excerpt_count",
+        "excerpt_bytes",
+        "redaction_policy_id",
+        "extensions"
+      ],
+      "enrichment-plan": [
+        "request",
+        "extensions"
+      ],
+      "enrichment-run": [
+        "operation_id",
+        "request",
+        "extensions"
+      ],
+      "enrichment-status": [
+        "job_id",
+        "extensions"
+      ],
+      "continuation-inspect": [
+        "instance_id",
+        "expected_observation_id",
+        "expected_head_digest",
+        "extensions"
+      ],
+      "runtime-observe": [
+        "instance_id",
+        "expected_observation_id",
+        "extensions"
+      ],
+      "doctor": [
+        "installation_ids",
+        "include_conformance_age",
+        "extensions"
+      ]
+    },
+    "directory_node_success": {
+      "manifest": [
+        "schema",
+        "schema_version",
+        "node_id",
+        "node_version",
+        "host_id",
+        "executable_sha256",
+        "provider_manifest_digest",
+        "session_adapter_manifest_digest",
+        "supported_protocol_versions",
+        "operations",
+        "schemas",
+        "environment_tuple_registry_id",
+        "capabilities",
+        "redaction_policy_ids",
+        "enrichment_profile_ids",
+        "limits",
+        "extensions"
+      ],
+      "probe": [
+        "host_id",
+        "node_build",
+        "policy_digest",
+        "environments",
+        "findings",
+        "extensions"
+      ],
+      "scan": [
+        "batch",
+        "environment_observation_ids",
+        "native_observation_ids",
+        "next_cursor",
+        "extensions"
+      ],
+      "inventory": [
+        "observations",
+        "next_cursor",
+        "partial",
+        "extensions"
+      ],
+      "preview": [
+        "host_id",
+        "instance_id",
+        "observation_id",
+        "head_digest",
+        "excerpts",
+        "truncated",
+        "redaction_summary",
+        "freshness",
+        "extensions"
+      ],
+      "enrichment-plan": [
+        "accepted",
+        "expected_input_events",
+        "expected_input_bytes",
+        "expected_model_calls",
+        "disclosure_classes",
+        "blockers",
+        "extensions"
+      ],
+      "enrichment-run": [
+        "job_id",
+        "current_receipt_id",
+        "produced_annotation_ids",
+        "extensions"
+      ],
+      "enrichment-status": [
+        "job_id",
+        "current_receipt_id",
+        "receipt_chain_ids",
+        "produced_annotation_ids",
+        "extensions"
+      ],
+      "continuation-inspect": [
+        "observation_id",
+        "head_digest",
+        "management_binding",
+        "safe_boundary_status",
+        "runtime_status",
+        "warnings",
+        "extensions"
+      ],
+      "runtime-observe": [
+        "runtime",
+        "extensions"
+      ],
+      "doctor": [
+        "healthy",
+        "findings",
+        "environment_capabilities",
+        "cloning_contracts",
+        "extensions"
+      ]
+    },
+    "query_parameters": {
+      "schema": [
+        "extensions"
+      ],
+      "directory_summary": [
+        "extensions"
+      ],
+      "sessions": [
+        "filters",
+        "extensions"
+      ],
+      "count": [
+        "filters",
+        "extensions"
+      ],
+      "session": [
+        "subject_kind",
+        "subject_id",
+        "extensions"
+      ],
+      "lineage": [
+        "anchor_id",
+        "include_suggestions",
+        "extensions"
+      ],
+      "hosts": [
+        "host_ids",
+        "reachable",
+        "extensions"
+      ],
+      "environments": [
+        "host_ids",
+        "environment_ids",
+        "authentication_status",
+        "extensions"
+      ],
+      "jobs": [
+        "job_ids",
+        "profile_ids",
+        "states",
+        "extensions"
+      ],
+      "plans": [
+        "plan_ids",
+        "operation_ids",
+        "include_expired",
+        "extensions"
+      ],
+      "distinct": [
+        "field",
+        "filters",
+        "extensions"
+      ],
+      "set_title": [
+        "subject_kind",
+        "subject_id",
+        "title",
+        "supersedes_annotation_ids",
+        "extensions"
+      ],
+      "set_tags": [
+        "subject_kind",
+        "subject_id",
+        "tags",
+        "supersedes_annotation_ids",
+        "extensions"
+      ],
+      "set_pin": [
+        "subject_kind",
+        "subject_id",
+        "value",
+        "supersedes_annotation_ids",
+        "extensions"
+      ],
+      "enrich": [
+        "subject_kind",
+        "subject_id",
+        "profile_id",
+        "kinds",
+        "expected_head_digest",
+        "extensions"
+      ],
+      "plan_continue": [
+        "subject_kind",
+        "subject_id",
+        "source_instance_id",
+        "to_host_id",
+        "to_installation_id",
+        "intent",
+        "workspace_policy",
+        "source_after_success",
+        "extensions"
+      ],
+      "execute_plan": [
+        "plan_id",
+        "operation_id",
+        "confirmations",
+        "extensions"
+      ]
+    },
+    "annotation_payloads": {
+      "text": [
+        "text"
+      ],
+      "tags": [
+        "values"
+      ],
+      "boolean": [
+        "value"
+      ],
+      "summary": [
+        "topic",
+        "status",
+        "last_user_intent",
+        "last_agent_action",
+        "suggested_next_step",
+        "open_loops",
+        "risks",
+        "recent_activity",
+        "language",
+        "confidence",
+        "truncated"
+      ]
+    },
+    "cli_result_bodies": {
+      "directory_entries": [
+        "entries",
+        "next_cursor",
+        "partial",
+        "freshness"
+      ],
+      "directory_inspection": [
+        "entry",
+        "observations",
+        "annotations",
+        "provenance_ids"
+      ],
+      "directory_lineage": [
+        "anchor_id",
+        "nodes",
+        "authoritative_links",
+        "suggestions",
+        "ambiguous"
+      ],
+      "directory_hosts_environments": [
+        "hosts",
+        "environments"
+      ],
+      "directory_jobs": [
+        "requests",
+        "receipts",
+        "next_cursor"
+      ],
+      "directory_plan": [
+        "plan",
+        "outcome",
+        "mutated"
+      ],
+      "directory_operation": [
+        "operation_id",
+        "receipt_chain",
+        "current_state",
+        "outcome"
+      ],
+      "directory_attach_continue": [
+        "plan_id",
+        "operation_id",
+        "outcome",
+        "target_session_id",
+        "runtime_ref",
+        "current_receipt_id"
+      ],
+      "directory_doctor": [
+        "healthy",
+        "findings",
+        "contract_versions",
+        "tuple_evidence_age_seconds"
+      ],
+      "directory_query": [
+        "query_id",
+        "results"
+      ],
+      "annotation_mutation": [
+        "annotation",
+        "would_write",
+        "extensions"
+      ],
+      "enrichment_mutation": [
+        "request",
+        "would_enqueue",
+        "extensions"
+      ]
+    },
+    "query_results": {
+      "schema_registry": [
+        "registry",
+        "extensions"
+      ],
+      "directory_entries": [
+        "entries",
+        "next_cursor",
+        "partial",
+        "freshness",
+        "extensions"
+      ],
+      "directory_inspection": [
+        "entry",
+        "observations",
+        "annotations",
+        "provenance_ids",
+        "extensions"
+      ],
+      "directory_lineage": [
+        "anchor_id",
+        "nodes",
+        "authoritative_links",
+        "suggestions",
+        "ambiguous",
+        "extensions"
+      ],
+      "directory_hosts_environments": [
+        "hosts",
+        "environments",
+        "extensions"
+      ],
+      "directory_jobs": [
+        "requests",
+        "receipts",
+        "next_cursor",
+        "extensions"
+      ],
+      "directory_plans": [
+        "plans",
+        "next_cursor",
+        "extensions"
+      ],
+      "directory_count": [
+        "count",
+        "partial",
+        "extensions"
+      ],
+      "directory_distinct": [
+        "field",
+        "values",
+        "partial",
+        "extensions"
+      ],
+      "directory_summary": [
+        "total_entries",
+        "managed",
+        "unmanaged",
+        "missing",
+        "offline",
+        "conflicted",
+        "running",
+        "warning_count",
+        "as_of",
+        "extensions"
+      ],
+      "annotation_mutation": [
+        "annotation",
+        "would_write",
+        "extensions"
+      ],
+      "enrichment_mutation": [
+        "request",
+        "would_enqueue",
+        "extensions"
+      ],
+      "directory_plan": [
+        "plan",
+        "outcome",
+        "mutated",
+        "extensions"
+      ],
+      "directory_operation": [
+        "operation_id",
+        "receipt_chain",
+        "current_state",
+        "outcome",
+        "extensions"
+      ]
+    }
+  },
+  "synthetic_cases": {
+    "provider_sessions": [
+      {
+        "case_id": "claude-empty",
+        "provider": "claude",
+        "shape": "empty",
+        "input": {
+          "sanitized_event_count": 0,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "claude-one_turn",
+        "provider": "claude",
+        "shape": "one_turn",
+        "input": {
+          "sanitized_event_count": 2,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "claude-long",
+        "provider": "claude",
+        "shape": "long",
+        "input": {
+          "sanitized_event_count": 5000,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "claude-compacted",
+        "provider": "claude",
+        "shape": "compacted",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "claude-branched",
+        "provider": "claude",
+        "shape": "branched",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "claude-active",
+        "provider": "claude",
+        "shape": "active",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "claude-stopped",
+        "provider": "claude",
+        "shape": "stopped",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "claude-corrupt",
+        "provider": "claude",
+        "shape": "corrupt",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": false,
+          "diagnostic": "adapter_protocol_violation"
+        }
+      },
+      {
+        "case_id": "codex-empty",
+        "provider": "codex",
+        "shape": "empty",
+        "input": {
+          "sanitized_event_count": 0,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "codex-one_turn",
+        "provider": "codex",
+        "shape": "one_turn",
+        "input": {
+          "sanitized_event_count": 2,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "codex-long",
+        "provider": "codex",
+        "shape": "long",
+        "input": {
+          "sanitized_event_count": 5000,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "codex-compacted",
+        "provider": "codex",
+        "shape": "compacted",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "codex-branched",
+        "provider": "codex",
+        "shape": "branched",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "codex-active",
+        "provider": "codex",
+        "shape": "active",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "codex-stopped",
+        "provider": "codex",
+        "shape": "stopped",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": true,
+          "diagnostic": "accepted"
+        }
+      },
+      {
+        "case_id": "codex-corrupt",
+        "provider": "codex",
+        "shape": "corrupt",
+        "input": {
+          "sanitized_event_count": 8,
+          "synthetic": true
+        },
+        "expected": {
+          "discoverable": false,
+          "diagnostic": "adapter_protocol_violation"
+        }
+      }
+    ],
+    "identity": [
+      {
+        "case": "managed_exact",
+        "identity_confidence": "exact",
+        "management": "managed",
+        "binding_valid": true,
+        "remote_continuation": true
+      },
+      {
+        "case": "unmanaged_exact",
+        "identity_confidence": "exact",
+        "management": "unmanaged",
+        "binding_valid": true,
+        "remote_continuation": false
+      },
+      {
+        "case": "unmanaged_strong",
+        "identity_confidence": "strong",
+        "management": "unmanaged",
+        "binding_valid": true,
+        "remote_continuation": false
+      },
+      {
+        "case": "unmanaged_weak",
+        "identity_confidence": "weak",
+        "management": "unmanaged",
+        "binding_valid": true,
+        "remote_continuation": false
+      },
+      {
+        "case": "invalid_binding",
+        "identity_confidence": "exact",
+        "management": "conflicted",
+        "binding_valid": false,
+        "remote_continuation": false
+      },
+      {
+        "case": "multiple_realms",
+        "identity_confidence": "exact",
+        "management": "unmanaged",
+        "binding_valid": true,
+        "installation_count": 2,
+        "realm_count": 2,
+        "instances_distinct": true
+      }
+    ],
+    "freshness": [
+      {
+        "case": "current",
+        "scan": "successful",
+        "partial": false,
+        "same_root_realm": true,
+        "expected_presence": "present",
+        "expected_freshness": "current"
+      },
+      {
+        "case": "stale",
+        "scan": "successful",
+        "partial": false,
+        "same_root_realm": true,
+        "expected_presence": "present",
+        "expected_freshness": "stale"
+      },
+      {
+        "case": "offline",
+        "scan": "offline",
+        "partial": false,
+        "same_root_realm": true,
+        "expected_presence": "unknown",
+        "expected_freshness": "offline"
+      },
+      {
+        "case": "partial",
+        "scan": "successful",
+        "partial": true,
+        "same_root_realm": true,
+        "expected_presence": "unknown",
+        "expected_freshness": "partial"
+      },
+      {
+        "case": "missing",
+        "scan": "successful",
+        "partial": false,
+        "same_root_realm": true,
+        "expected_presence": "missing",
+        "expected_freshness": "stale"
+      },
+      {
+        "case": "conflicted",
+        "scan": "successful",
+        "partial": false,
+        "same_root_realm": true,
+        "expected_presence": "unknown",
+        "expected_freshness": "conflicted"
+      }
+    ],
+    "annotation": [
+      {
+        "case": "manual_title",
+        "heads": [
+          "sha256:a1"
+        ],
+        "expected_source": "manual",
+        "conflict": false
+      },
+      {
+        "case": "provider_title",
+        "heads": [
+          "sha256:a2"
+        ],
+        "expected_source": "provider",
+        "conflict": false
+      },
+      {
+        "case": "generated_title",
+        "heads": [
+          "sha256:a3"
+        ],
+        "expected_source": "generated",
+        "conflict": false
+      },
+      {
+        "case": "fallback_title",
+        "heads": [],
+        "expected_source": "fallback",
+        "conflict": false
+      },
+      {
+        "case": "concurrent_manual_heads",
+        "heads": [
+          "sha256:a4",
+          "sha256:a5"
+        ],
+        "expected_source": "manual",
+        "conflict": true
+      }
+    ],
+    "enrichment": [
+      {
+        "case": "deterministic",
+        "generator": "deterministic",
+        "network": "none",
+        "expected_state": "succeeded"
+      },
+      {
+        "case": "model",
+        "generator": "local_model",
+        "network": "local_only",
+        "expected_state": "succeeded"
+      },
+      {
+        "case": "stale_head_race",
+        "head_changed": true,
+        "expected_state": "superseded"
+      },
+      {
+        "case": "model_failure",
+        "generator": "local_model",
+        "expected_state": "failed"
+      },
+      {
+        "case": "prompt_injection",
+        "content_is_control": false,
+        "expected_state": "succeeded"
+      }
+    ],
+    "lineage": [
+      {
+        "case": "fork",
+        "evidence": "ax_fork_event",
+        "authoritative": true
+      },
+      {
+        "case": "clone",
+        "evidence": "clone_lineage_receipt",
+        "authoritative": true
+      },
+      {
+        "case": "move",
+        "evidence": "directory_operation_receipt",
+        "authoritative": true
+      },
+      {
+        "case": "adoption",
+        "evidence": "adoption_receipt",
+        "authoritative": true
+      },
+      {
+        "case": "similar_unrelated",
+        "evidence": "similar_text_and_path",
+        "authoritative": false
+      }
+    ],
+    "mesh_convergence": [
+      {
+        "case": "reorder",
+        "input_ids": [
+          "sha256:b2",
+          "sha256:b1"
+        ],
+        "expected": "bytewise_sorted"
+      },
+      {
+        "case": "duplicate",
+        "input_ids": [
+          "sha256:b1",
+          "sha256:b1"
+        ],
+        "expected": "deduplicated"
+      },
+      {
+        "case": "gap",
+        "sequences": [
+          1,
+          3
+        ],
+        "expected": "quarantined_gap"
+      },
+      {
+        "case": "conflict",
+        "sequences": [
+          1,
+          2,
+          2
+        ],
+        "expected": "visible_conflict"
+      },
+      {
+        "case": "clock_skew",
+        "timestamps": [
+          "2026-08-27T01:00:00Z",
+          "2026-08-27T00:00:00Z"
+        ],
+        "expected": "predecessor_chain_wins"
+      }
+    ],
+    "routes": [
+      {
+        "route": "managed_local_attach",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "attached",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "managed_remote_attach",
+        "scope": "remote",
+        "expected_outcomes": [
+          "attached",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "managed_local_resume",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "resumed_managed",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "managed_takeover",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "taken_over",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "managed_fork",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "forked",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "adopt_existing_native",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "adopted",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "same_environment_clone",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "cloned",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "cross_environment_clone",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "cloned",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "cross_environment_move",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "moved_cross_environment",
+          "cloned_source_still_active",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "open_unmanaged_local",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "opened_unmanaged_local",
+          "planned_only"
+        ]
+      },
+      {
+        "route": "archive_or_context_fallback",
+        "scope": "local_or_planned",
+        "expected_outcomes": [
+          "archive_or_context_fallback",
+          "planned_only"
+        ]
+      }
+    ],
+    "crash_points": [
+      {
+        "step": "capture",
+        "position": "before",
+        "recovery": "no_effect_retry",
+        "duplicate_effects": false
+      },
+      {
+        "step": "capture",
+        "position": "after",
+        "recovery": "status_first_same_chain",
+        "duplicate_effects": false
+      },
+      {
+        "step": "transfer",
+        "position": "before",
+        "recovery": "no_effect_retry",
+        "duplicate_effects": false
+      },
+      {
+        "step": "transfer",
+        "position": "after",
+        "recovery": "status_first_same_chain",
+        "duplicate_effects": false
+      },
+      {
+        "step": "project",
+        "position": "before",
+        "recovery": "no_effect_retry",
+        "duplicate_effects": false
+      },
+      {
+        "step": "project",
+        "position": "after",
+        "recovery": "status_first_same_chain",
+        "duplicate_effects": false
+      },
+      {
+        "step": "validate",
+        "position": "before",
+        "recovery": "no_effect_retry",
+        "duplicate_effects": false
+      },
+      {
+        "step": "validate",
+        "position": "after",
+        "recovery": "status_first_same_chain",
+        "duplicate_effects": false
+      },
+      {
+        "step": "target_commit",
+        "position": "before",
+        "recovery": "no_effect_retry",
+        "duplicate_effects": false
+      },
+      {
+        "step": "target_commit",
+        "position": "after",
+        "recovery": "status_first_same_chain",
+        "duplicate_effects": false
+      },
+      {
+        "step": "lineage_publish",
+        "position": "before",
+        "recovery": "no_effect_retry",
+        "duplicate_effects": false
+      },
+      {
+        "step": "lineage_publish",
+        "position": "after",
+        "recovery": "status_first_same_chain",
+        "duplicate_effects": false
+      },
+      {
+        "step": "source_stop_release",
+        "position": "before",
+        "recovery": "no_effect_retry",
+        "duplicate_effects": false
+      },
+      {
+        "step": "source_stop_release",
+        "position": "after",
+        "recovery": "status_first_same_chain",
+        "duplicate_effects": false
+      }
+    ],
+    "tui": [
+      {
+        "case": "narrow",
+        "columns": 40,
+        "text": "synthetic title",
+        "expected": "bounded_layout"
+      },
+      {
+        "case": "wide",
+        "columns": 160,
+        "text": "synthetic title",
+        "expected": "bounded_layout"
+      },
+      {
+        "case": "ansi",
+        "columns": 80,
+        "text": "<ESC>[31m",
+        "expected": "remove_or_visibly_escape"
+      },
+      {
+        "case": "osc",
+        "columns": 80,
+        "text": "<ESC>]8;;link<BEL>",
+        "expected": "remove_or_visibly_escape"
+      },
+      {
+        "case": "bidi",
+        "columns": 80,
+        "text": "<RLO>abc",
+        "expected": "remove_or_visibly_escape"
+      },
+      {
+        "case": "control",
+        "columns": 80,
+        "text": "<NUL>",
+        "expected": "remove_or_visibly_escape"
+      },
+      {
+        "case": "invalid_width",
+        "columns": 80,
+        "text": "<UNASSIGNED-WIDTH>",
+        "expected": "remove_or_visibly_escape"
+      },
+      {
+        "case": "hostile_grapheme",
+        "columns": 80,
+        "text": "synthetic-combining-sequence",
+        "expected": "remove_or_visibly_escape"
+      }
+    ],
+    "disclosure_policy": [
+      {
+        "mode": "local_only",
+        "replicated_fields": [],
+        "contains_private_content": false
+      },
+      {
+        "mode": "mesh_sanitized",
+        "replicated_fields": [
+          "display_title",
+          "summary"
+        ],
+        "contains_private_content": false
+      },
+      {
+        "mode": "reference_only",
+        "replicated_fields": [
+          "record_id",
+          "policy_digest"
+        ],
+        "contains_private_content": false
+      }
+    ]
+  }
+}

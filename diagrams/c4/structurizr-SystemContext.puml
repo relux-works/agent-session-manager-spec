@@ -47,15 +47,17 @@ hide stereotype
 </style>
 
 person "==Operator\n<size:16>[Person]</size>\n\nSoftware developer running AI agents." <<Element-RWxlbWVudCxQZXJzb24=>> as Operator
-rectangle "==Mesh Network\n<size:16>[Software System]</size>\n\nTailscale / OpenSSH trusted mesh transport." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as MeshNetwork
-rectangle "==Native Provider Stores\n<size:16>[Software System]</size>\n\ne.g., ~/.claude/projects, ~/.codex/sessions." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as NativeProviderStores
-rectangle "==Agent Session Manager (ax)\n<size:16>[Software System]</size>\n\nManages durable terminal sessions and AI agent task-boards across a mesh." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as AgentSessionManagerax
 rectangle "==Task-Board / Session Manager\n<size:16>[Software System]</size>\n\nDistinct persistence and ownership boundary for AI agents." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as TaskBoardSessionManager
+person "==Automation / Agent\n<size:16>[Person]</size>\n\nUses typed directory queries and guarded mutations." <<Element-RWxlbWVudCxQZXJzb24=>> as AutomationAgent
+rectangle "==Mesh Network\n<size:16>[Software System]</size>\n\nTailscale / OpenSSH trusted mesh transport." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as MeshNetwork
+rectangle "==Native Provider Stores\n<size:16>[Software System]</size>\n\nSource-local Claude, Codex, and future environment stores; transcripts and credentials are not directory records." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as NativeProviderStores
+rectangle "==Agent Session Manager (ax)\n<size:16>[Software System]</size>\n\nManages durable terminal sessions and AI agent task-boards across a mesh." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0=>> as AgentSessionManagerax
 
-Operator --> AgentSessionManagerax <<Relationship-UmVsYXRpb25zaGlw>> : "Runs commands (launch, attach, takeover, fork, sync)"
+Operator --> AgentSessionManagerax <<Relationship-UmVsYXRpb25zaGlw>> : "Browses, selects, confirms, launches, and attaches"
+AutomationAgent --> AgentSessionManagerax <<Relationship-UmVsYXRpb25zaGlw>> : "Submits typed projected reads and guarded mutations"
+AgentSessionManagerax --> NativeProviderStores <<Relationship-UmVsYXRpb25zaGlw>> : "Reads allowlisted source-local metadata and exact heads"
 TaskBoardSessionManager --> AgentSessionManagerax <<Relationship-UmVsYXRpb25zaGlw>> : "Provides task-board abstraction inside terminal"
 AgentSessionManagerax --> TaskBoardSessionManager <<Relationship-UmVsYXRpb25zaGlw>> : "Imports/exports opaque session bundles (Bridge Contract)"
-AgentSessionManagerax --> NativeProviderStores <<Relationship-UmVsYXRpb25zaGlw>> : "Materializes native state as directed by ax"
 AgentSessionManagerax --> MeshNetwork <<Relationship-UmVsYXRpb25zaGlw>> : "Executes RPC (ax rpc serve --stdio) via SSH"
 
 @enduml
