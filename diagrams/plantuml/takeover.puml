@@ -20,11 +20,14 @@ skinparam note {
 title Graceful and Force Takeover Sequence
 
 participant "Destination Host\n(New Owner)" as Dest
+participant "Destination Broker\n& Provider Auth" as Broker
 participant "Mesh Network\n(Tailscale/SSH)" as Mesh
 participant "Source Host\n(Old Owner)" as Src
 database "Immutable\nRecords & Blobs" as Store
 
 == Graceful Takeover ==
+Dest -> Broker: Prove broker + provider-auth readiness
+Broker --> Dest: tmux generation / provider build / macOS bound evidence
 Dest -> Src: Request graceful takeover
 Src -> Src: Wait for provider safe-turn boundary
 Src -> Src: Quiesce input
@@ -36,19 +39,22 @@ Src -> Store: Closure-delta sync (optional)
 Dest -> Store: materialize.prepare / commit
 Dest -> Store: Advance lease epoch (acquire exactly one destination lease)
 Dest -> Store: Winning-lease verification
-Dest -> Dest: Resume / finalize
+Dest -> Broker: Revalidate realm/auth after ownership commit
+Dest -> Dest: Create destination runtime / finalize
 Dest -> Store: Source replica and event publication
 note right of Src: Old host becomes a replica
 
 == Force Takeover (Recovery) ==
+Dest -> Broker: Prove destination realm/auth readiness
 Dest -> Store: Inert stage & validation
 Dest -> Store: Capability / auth / profile checks
 Dest -> Dest: Explicit split-brain confirmation
-Dest -> Store: Advance lease epoch (acquire force)
-Dest -> Store: Mark previous owner stale
+note over Dest,Src: Source stop is not claimed; old process may still exist.
+Dest -> Store: Commit force lease / recompute winner
+Store --> Dest: Winning lease authorizes activation
 Dest -> Store: materialize.prepare / commit
 note left of Dest: Warn split-brain risk.\nPreserve divergent history\nfor reconciliation.
-Dest -> Dest: Exact resume / finalize
+Dest -> Dest: Create exact runtime / finalize
 Dest -> Store: Fencing / preservation
 Src -> Store: Attempt sync/resume
 Store -->> Src: Fenced! (Stale lease)

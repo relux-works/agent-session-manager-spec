@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Expected-red mutation suite for v0.4.2 ==="
+echo "=== Expected-red mutation suite for v0.4.3 ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -56,6 +56,45 @@ fixture_copy() {
     exit 1
   fi
   echo "$dir"
+}
+
+mutate_v043_fixture() {
+  local fixture_dir="$1"
+  local mutation="$2"
+  python3 - "$fixture_dir" "$mutation" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+path = Path(sys.argv[1]) / "fixtures" / "v0_4_3_roadmap_terminal_realm.json"
+mutation = sys.argv[2]
+data = json.loads(path.read_text(encoding="utf-8"))
+positive = {row["id"]: row for row in data["positive_cases"]}
+roadmap = {row["phase"]: row for row in data["roadmap"]}
+
+if mutation == "unsafe-server-create":
+    positive["REALM-EXISTING-BROKER-POS"]["facts"]["credential_dependent_server_action"] = "create"
+elif mutation == "sentinel-only":
+    positive["REALM-FUNCTIONAL-EVIDENCE-POS"]["facts"]["provider_auth_smoke"] = False
+elif mutation == "implicit-mutating-route":
+    positive["ROUTE-UNIQUE-NONMUTATING-POS"]["facts"]["mutates_ownership"] = True
+elif mutation == "ownership-changing-sync":
+    positive["SYNC-IMMUTABLE-POS"]["facts"]["changes_ownership"] = True
+elif mutation == "incomplete-git-closure":
+    positive["GIT-CLOSURE-POS"]["facts"]["closure"].remove("submodules")
+elif mutation == "unsafe-preflight-order":
+    positive["TAKEOVER-PREFLIGHT-POS"]["facts"]["graceful_ordering"] = [
+        "ownership-commit", "destination-broker-auth-ready", "fenced-source-stop", "destination-runtime-create"
+    ]
+elif mutation == "socket-replication":
+    data["terminal_realm"]["socket_replication"] = "allowed"
+elif mutation == "premature-sdk":
+    roadmap["M0"]["public_stable_plugin_sdk"] = True
+else:
+    raise SystemExit(f"unknown v0.4.3 mutation {mutation}")
+
+path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+PY
 }
 
 # Semantic mutations intentionally advance the frozen SPEC digest inside their
@@ -564,25 +603,25 @@ echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.4.2 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.4.3 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.4.2 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.4.3 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
 printf '\nQwen sessions do not need task-board in v0.2.1.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.4.2 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.4.3 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.4.2 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.4.3 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
@@ -1312,13 +1351,13 @@ echo ""
 echo "Mutation 105: Internal v0.3.0 task ownership ID leaks into public docs"
 FIX=$(fixture_copy "clone-public-internal-task-id")
 printf '\nGate owner: TASK-260826-example.\n' >> "$FIX/README.md"
-expect_fail "public package must not expose active internal task ownership" "stale/internal v0.4.2 publication marker" "$FIX"
+expect_fail "public package must not expose active internal task ownership" "stale/internal v0.4.3 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 106: Stale v0.2.1 diagram-ledger wording returns"
 FIX=$(fixture_copy "clone-stale-diagram-ledger")
 printf '\nUses the unchanged v0.2.1 SHA-256 ledger.\n' >> "$FIX/diagrams/README.md"
-expect_fail "diagram docs must describe the v0.4.2 ledger" "stale/internal v0.4.2 publication marker" "$FIX"
+expect_fail "diagram docs must describe the v0.4.3 ledger" "stale/internal v0.4.3 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 107: Target derivation mutates the source provider identity after digest refresh"
@@ -1655,7 +1694,7 @@ expect_fail "raw transcript in default output" "default output must exclude raw 
 echo ""
 echo "Mutation 139: Unsupported v0.4 implementation claim in README"
 FIX=$(fixture_copy "directory-unsupported-readme-claim")
-printf '\nAX v0.4.2 directory implementation is shipped and available.\n' >> "$FIX/README.md"
+printf '\nAX v0.4.3 directory implementation is shipped and available.\n' >> "$FIX/README.md"
 refresh_frozen_document_digest "$FIX" "README.md"
 expect_fail "unsupported README implementation claim" "README/release claim is not supported by SPEC and fixtures" "$FIX"
 
@@ -2265,6 +2304,144 @@ echo "Mutation 233: Conditional source lease carries a null holder host leaf"
 FIX=$(fixture_copy "directory-source-lease-null-holder-host-id")
 mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["source_lease"]={"epoch":1,"lease_id":"aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee","holder_host_id":None}'
 expect_fail "LeaseExpectation non-null holder_host_id leaf" "null is forbidden by schema-directed common type" "$FIX"
+
+echo ""
+echo "Mutation 234: Background caller creates a credential-dependent tmux server"
+FIX=$(fixture_copy "v043-unsafe-server-create")
+mutate_v043_fixture "$FIX" "unsafe-server-create"
+expect_fail "v0.4.3 unsafe server creation" "background caller may contact only an existing broker" "$FIX"
+
+echo ""
+echo "Mutation 235: Functional sentinel is treated as sufficient without provider auth"
+FIX=$(fixture_copy "v043-sentinel-only")
+mutate_v043_fixture "$FIX" "sentinel-only"
+expect_fail "v0.4.3 sentinel-only attestation" "sentinel and separate provider-auth smoke are both required" "$FIX"
+
+echo ""
+echo "Mutation 236: Unique route is allowed to mutate ownership implicitly"
+FIX=$(fixture_copy "v043-implicit-mutating-route")
+mutate_v043_fixture "$FIX" "implicit-mutating-route"
+expect_fail "v0.4.3 implicit mutating route" "automatic route must be unique and non-mutating" "$FIX"
+
+echo ""
+echo "Mutation 237: ax sync --all changes ownership"
+FIX=$(fixture_copy "v043-ownership-changing-sync")
+mutate_v043_fixture "$FIX" "ownership-changing-sync"
+expect_fail "v0.4.3 ownership-changing sync" "sync must not change ownership or launch a runtime" "$FIX"
+
+echo ""
+echo "Mutation 238: Git closure omits submodules"
+FIX=$(fixture_copy "v043-incomplete-git-closure")
+mutate_v043_fixture "$FIX" "incomplete-git-closure"
+expect_fail "v0.4.3 incomplete Git closure" "complete Git closure registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 239: Ownership commits before destination broker/auth readiness"
+FIX=$(fixture_copy "v043-unsafe-preflight-order")
+mutate_v043_fixture "$FIX" "unsafe-preflight-order"
+expect_fail "v0.4.3 unsafe preflight ordering" "graceful destination readiness/stop/commit/runtime ordering mismatch" "$FIX"
+
+echo ""
+echo "Mutation 240: Dedicated tmux socket becomes replicable"
+FIX=$(fixture_copy "v043-socket-replication")
+mutate_v043_fixture "$FIX" "socket-replication"
+expect_fail "v0.4.3 socket replication" "socket replication must be forbidden" "$FIX"
+
+echo ""
+echo "Mutation 241: M0 advertises a public stable plugin SDK"
+FIX=$(fixture_copy "v043-premature-sdk")
+mutate_v043_fixture "$FIX" "premature-sdk"
+expect_fail "v0.4.3 premature SDK stability" "M0 MUST NOT advertise a public stable plugin SDK" "$FIX"
+
+echo ""
+echo "Mutation 242: Force takeover falsely claims a verified source-process stop"
+FIX=$(fixture_copy "v043-force-source-stop-claim")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = "Force takeover MUST NOT claim or require a verified source-process stop."
+new = "Force takeover MAY claim or require a verified source-process stop."
+if text.count(old) != 1:
+    raise SystemExit("force source-stop marker cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "v0.4.3 force source-stop exception" "Section 13.7 must retain the no-source-stop force exception" "$FIX"
+
+echo ""
+echo "Mutation 243: Remote attach loses its terminating production-diagram boundary"
+FIX=$(fixture_copy "v043-remote-attach-fallthrough")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "diagrams" / "plantuml" / "session_directory_continuation.puml"
+text = path.read_text(encoding="utf-8")
+old = "break Remote attach terminates without target finalization"
+new = "group Remote attach continues into target finalization"
+if text.count(old) != 1:
+    raise SystemExit("remote-attach termination marker cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+expect_fail "v0.4.3 remote attach finalization isolation" "remote attach must terminate before mutating target finalization" "$FIX"
+
+echo ""
+echo "Mutation 244: Unique automatic attach/resume bypasses execution-time revalidation"
+FIX=$(fixture_copy "v043-auto-route-revalidation-bypass")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "diagrams" / "plantuml" / "session_directory_continuation.puml"
+text = path.read_text(encoding="utf-8")
+old = "TUI -> Planner: execute unique non-mutating route"
+new = """TUI -> Planner: execute unique non-mutating route
+    Planner -> AX: attach/resume before execution-time revalidation
+    break Unique automatic route bypasses execution-time revalidation
+        AX --> Operator: attached/resumed without fresh facts
+    end"""
+if text.count(old) != 1:
+    raise SystemExit("unique-route execution marker cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+expect_fail "v0.4.3 automatic-route execution revalidation" "unique automatic attach/resume must pass through execution-time revalidation" "$FIX"
+
+echo ""
+echo "Mutation 245: Local current-owner resume falls through ownership finalization"
+FIX=$(fixture_copy "v043-local-resume-finalization-fallthrough")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "diagrams" / "plantuml" / "session_directory_continuation.puml"
+text = path.read_text(encoding="utf-8")
+old = "break Current-owner resume terminates without ownership finalization"
+new = "group Current-owner resume continues into ownership finalization"
+if text.count(old) != 1:
+    raise SystemExit("local-resume termination marker cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+expect_fail "v0.4.3 local-resume finalization isolation" "local current-owner resume must terminate without ownership transfer/finalization" "$FIX"
+
+echo ""
+echo "Mutation 246: Non-macOS ownership target is forced through Aqua broker"
+FIX=$(fixture_copy "v043-aqua-broker-unconditional")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "diagrams" / "plantuml" / "session_directory_continuation.puml"
+text = path.read_text(encoding="utf-8")
+old = "opt Ownership-creating target is macOS"
+new = "group Every ownership-creating target, including non-macOS"
+if text.count(old) != 1:
+    raise SystemExit("ownership-route macOS condition marker cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+expect_fail "v0.4.3 platform-scoped Aqua broker" "Aqua broker readiness must be conditional on a macOS target" "$FIX"
 
 echo ""
 echo "=========================================="

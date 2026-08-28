@@ -1,8 +1,8 @@
-# Agent Session Manager (<code>ax</code>) v0.4.2 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.4.3 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.4.2</code> |
+| Specification release | <code>v0.4.3</code> |
 | Document status | Review candidate and implementation contract |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.4.2. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.4.3. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -56,7 +56,7 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
     AX ownership, workspace, transfer, materialization, cloning, and terminal
     authority.
 
-The v0.4.2 product is a Go CLI, optional per-user background service, provider
+The v0.4.3 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -113,7 +113,7 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following versions are active in v0.4.2. Historical Session Record/Event
+The following versions are active in v0.4.3. Historical Session Record/Event
 1.0.0, Materialization Plan 1.0.0, Materialization Journal 2.0.0, CLI Result
 1.0.0, and Structured Error 1.0.0 objects remain readable and immutable.
 
@@ -397,6 +397,22 @@ The following invariants are unconditional:
     be conditional, unsupported, or unknown and MUST be disabled.
 12. A task-board session MUST use the official opaque bridge. <code>ax</code>
     MUST NOT read or mutate private <code>tb-sessiond</code> state.
+13. <code>ax sync --all</code> MUST NOT change ownership or launch a runtime. It
+    converges only immutable objects and policy-allowed derived projections.
+14. Automatic continuation is permitted only for one uniquely safe,
+    non-mutating route. Takeover, fork, move, and every ambiguous route MUST
+    remain a pure plan until explicit confirmation; a non-interactive caller
+    that has not selected the action receives
+    <code>interactive_choice_required</code>.
+15. Destination broker and provider-auth readiness MUST be proved before any
+    takeover ownership commit. Remote attach always targets the current owner
+    and creates no runtime. Graceful takeover creates a destination runtime only
+    after verified source stop and ownership commit. Force takeover is the
+    explicit recovery exception when source stop cannot be proved: its winning
+    lease fences the prior owner logically, and only that committed winning
+    lease may authorize destination runtime creation.
+16. The tmux socket and provider authentication state are machine-local
+    exclusions and MUST NOT be replicated.
 The directory merge additionally fixes the following individually testable
 invariants. Their identifiers are stable traceability keys; a conforming
 implementation MUST satisfy every one rather than treating a group summary as
@@ -553,9 +569,12 @@ Ambiguous or case-fold-colliding names MUST fail with
 uniqueness MUST use Unicode-independent ASCII case folding because the allowed
 alphabet is ASCII.
 
-When the resolved owner is local, <code>ax NAME</code> MUST attach locally or
-resume a stopped owner after validating its lease. When the owner is remote,
-interactive mode MUST offer exactly:
+When exactly one route is safe, non-mutating, and applicable,
+<code>ax NAME</code> MAY auto-attach to the current owner or resume the stopped
+current owner after validating its lease and execution-realm readiness. It MUST
+NOT rank a mutating route into an implicit action. When the owner is remote and
+more than the uniquely safe remote-attach route is requested, interactive mode
+MUST present a pure plan and offer exactly:
 
 1. remote attach;
 2. graceful takeover here;
@@ -563,8 +582,11 @@ interactive mode MUST offer exactly:
 4. cancel.
 
 Force takeover MUST NOT appear as the default choice. It is exposed by the
-explicit <code>ax takeover NAME --to HOST --force</code> command. Non-interactive commands
-MUST select the same actions explicitly; they MUST NOT prompt or infer one.
+explicit <code>ax takeover NAME --to HOST --force</code> command. Non-interactive
+commands MUST select the same actions explicitly; they MUST NOT prompt or infer
+one. Takeover, fork, move, and ambiguity return
+<code>interactive_choice_required</code> unless an exact plan and confirmation
+or equivalent explicit action flags are supplied.
 
 ### 2.4 Execution profiles
 
@@ -635,6 +657,9 @@ The implementation is logically divided into:
   state into SQLite;
 - <strong>terminal backend</strong>: tmux/PTTY on Unix-family systems or
   process/ConPTY on native Windows;
+- <strong>macOS Aqua terminal broker</strong>: a minimal per-user GUI-realm
+  process that alone may create or attest credential-dependent tmux servers;
+  it is distinct from the background control plane;
 - <strong>provider host</strong>: discovers and invokes built-in or executable
   provider adapters;
 - <strong>workspace engine</strong>: captures, transfers, compares, stages, and
@@ -669,7 +694,7 @@ specification permits them, but cross-platform file transfer/chunking MUST be
 Go-native and MUST NOT depend on <code>rsync</code> or
 <code>robocopy</code>.
 
-The v0.4.2 diagram deliverable MUST render this model as C4 System Context and
+The v0.4.3 diagram deliverable MUST render this model as C4 System Context and
 Container views, including the Directory Control Plane, source-local Directory
 Node, isolated enrichment worker, cloning boundary, and their relationships to
 existing AX authority. Runtime takeover, state, mesh, cloning, directory
@@ -720,6 +745,15 @@ Ax-owned config, durable-data, state, cache, staging, and runtime directories
 MUST be accessible only to the current user: mode 0700 directories and 0600
 files on Unix, or a user-only DACL on Windows. Materialized workspace entries
 use their manifest modes, but their staging root remains user-only until commit.
+
+On macOS the tmux backend MUST use a dedicated AX server selected by
+<code>tmux -S &lt;runtime&gt;/tmux/ax.sock</code>. The
+<code>&lt;runtime&gt;/tmux</code> parent MUST be AX-created, owned by the current
+user, mode 0700, and verified component-by-component without following a
+symlink. Before bind, connect, rename, or unlink, AX MUST reject a socket path,
+parent, or ancestor whose resolved identity changed or whose file kind,
+ownership, or permissions are unsafe. The socket is runtime IPC, never durable
+identity.
 
 The durable data layout is:
 
@@ -847,6 +881,23 @@ It MUST NOT run the raw provider command as the pane's stable command.
 tmux layout and invoke the wrapper after reboot. They MUST NOT be described or
 used as cross-host migration.
 
+AX MUST use its dedicated <code>-S</code> server and MUST NOT discover or reuse
+the operator's default tmux server by ambient socket name. On macOS, server
+creation is credential-sensitive. A Background caller MUST NOT create a
+credential-dependent tmux server. A background CLI, SSH RPC process, daemon,
+or restore worker MAY contact an already-running authenticated Aqua broker and
+its attested AX tmux server; if neither exists it MUST return
+<code>capability_unavailable</code> with typed realm/readiness details and MUST
+NOT fall back to direct server creation.
+
+<code>launchctl managername</code> is a diagnostic hint only. Conformance
+requires a functional AX sentinel inside the exact tmux server plus a separate
+provider-auth smoke using the selected provider. Evidence MUST bind the exact
+tmux server generation, provider build, and macOS version. Aqua alone and
+sentinel-only evidence are insufficient. Any provider flow requiring GUI
+interaction, Keychain UI, a permission prompt, or other human action fails
+closed until that interaction succeeds in the verified GUI realm.
+
 After restore, the wrapper MUST:
 
 1. read the latest locally known lease;
@@ -856,6 +907,12 @@ After restore, the wrapper MUST:
 4. offer remote attach/takeover when another host owns the session in an
    interactive terminal; or
 5. enter <code>parked</code> without launching the provider in all other cases.
+
+Logout or reboot invalidates unrenewed realm evidence. Without a verified GUI
+realm, recovery MUST remain parked until GUI login re-establishes the broker,
+functional sentinel, provider-auth smoke, and their generation/build/version
+binding. A cached sentinel or prior <code>managername</code> observation MUST
+NOT authorize resume.
 
 ### 4.3 Native Windows backend
 
@@ -888,6 +945,13 @@ The service MAY run periodic sync, peer health checks, tombstone
 acknowledgement, stale-process detection, and wrapper restoration. Core commands
 MUST work without it. Service absence MUST degrade freshness, not corrupt
 ownership.
+
+The macOS launchd background control plane and Aqua terminal broker are separate
+roles. The control plane MUST NOT acquire GUI/Keychain authority by proxy and
+MUST NOT create a credential-dependent tmux server. The Aqua broker exposes
+only authenticated, same-user, generation-bound terminal readiness and server
+operations; it does not gain lease, workspace, provider, or replication
+authority.
 
 ## 5. Domain records and state machine
 
@@ -1368,7 +1432,7 @@ An owner process MUST revalidate its fencing token before:
 - resuming after any transport or sleep interruption longer than the configured
   lease refresh interval.
 
-There is no time-expiring ownership lease in v0.4.2. Liveness is not authority.
+There is no time-expiring ownership lease in v0.4.3. Liveness is not authority.
 A host being offline does not make a replica owner; only a takeover or fork
 does.
 
@@ -1995,6 +2059,12 @@ Candidate discovery order is:
 1. configured <code>providers.plugin_dirs</code> in listed order;
 2. built-in adapters; then
 3. <code>PATH</code>, only when <code>allow_path_plugins</code> is true.
+
+M0 establishes the versioned plugin wire contracts, internal implementation
+interfaces, and a conformance harness. M0 MUST NOT advertise a public stable
+plugin SDK. A stable public SDK remains deferred until both Codex and Claude
+implementations validate that the boundary is sufficient without provider-
+specific authority leakage or compatibility shims.
 
 The order does not establish precedence. If two candidates—including a built-in
 and an executable—declare the same provider ID, discovery MUST fail with
@@ -7189,6 +7259,10 @@ resume:
 
 Ignored build outputs are excluded by default. An ignored file is included only
 when named by a project/provider include rule and classified as non-secret.
+M1 Git closure is complete only when tracked, dirty-index, staged, unstaged,
+untracked, ignored-policy, symlink, and submodule state is represented and
+validated. Omitting any one class is <code>workspace_conflict</code>; a clean
+HEAD or object pack is not a proxy for working-copy closure.
 
 ### 12.2 Git workspace schema
 
@@ -7534,6 +7608,12 @@ immutable objects synchronized while workspace materialization remains
 blocked; the result is partial and MUST use exit 15. A transport failure leaves
 verified staging resumable.
 
+The <code>--all</code> selector widens only which eligible immutable namespaces
+and policy-allowed projections are converged. ax sync --all MUST NOT change
+ownership or launch a runtime. It MUST NOT select takeover, adopt, resume,
+provider launch, task-board open/adopt, or another mutating continuation as an
+implicit consequence of synchronization.
+
 ### 13.4 Local attach
 
 <code>ax attach NAME --local</code> requires the local host to be the winning
@@ -7547,6 +7627,11 @@ diagnostics, and return <code>stale_owner</code>. Attach never changes
 ownership.
 
 ### 13.5 Remote attach
+
+Remote attach targets the current winning owner and never creates a destination
+runtime, changes a lease, or converts itself into takeover. A stale destination
+hint is re-resolved to the current owner or fails; it is not authority to attach
+to a replica.
 
 Preconditions:
 
@@ -7581,6 +7666,9 @@ Preconditions:
 - destination is allowlisted, is not the source, and has compatible contracts;
 - destination provider/platform capabilities required by the session are
   available;
+- on macOS, the destination Aqua broker, dedicated AX tmux server generation,
+  functional sentinel, and separate provider-auth smoke are current for the
+  selected provider build and macOS version;
 - workspace-group members can all be quiesced or separated into worktrees;
 - one exact WorkspaceGroupExpectation and Section 12.6 workspace mode have
   been selected;
@@ -7612,7 +7700,9 @@ Transitions:
 5. Source performs the final bulk record/blob/workspace/board sync to
    destination.
 6. Destination stages, validates, and conflict-checks every referenced object.
-   It does not resume.
+   It does not resume. Destination broker and provider-auth readiness MUST be
+   proved before ownership commit; a diagnostic Aqua manager name or sentinel
+   alone is not proof.
 7. Destination calls <code>handoff.stop</code>. Source requests graceful
    provider/task-board stop, verifies process exit and durable-store closure,
    and records <code>session.stopped</code>. A task-board source consumes the
@@ -7686,6 +7776,16 @@ ax takeover NAME --to HOST --force --expect-owner HOST_ID --expect-epoch EPOCH
 Interactive use MUST display that the old process can still exist, split-brain
 history can result, and both histories will be preserved. Non-interactive use
 MUST include destination, both expected values, and <code>--yes</code>.
+
+Force takeover MUST NOT claim or require a verified source-process stop. It is
+the explicit exception to the graceful stop-before-commit sequence because the
+source may be unreachable and its old process may still exist. Destination
+realm and provider-auth readiness MUST be proved before the force lease is
+persisted. Only the winning committed force lease authorizes destination
+runtime creation; its fencing token rejects the prior owner from authoritative
+sync or resume, and the old process MAY continue until it observes that losing
+lease and parks or stops. This exception does not weaken the readiness-before-
+ownership or runtime-after-ownership requirements.
 
 Preconditions:
 
@@ -8239,6 +8339,11 @@ Otherwise the wrapper parks and requires <code>ax resume</code>. On macOS,
 Linux, and WSL2, tmux-resurrect/continuum MAY recreate panes but the wrapper
 still performs these checks. Native Windows creates a new ConPTY and provider
 process; it does not resurrect process memory.
+
+On macOS, logout or reboot without a newly verified GUI realm parks recovery
+until GUI login. Background restore MAY contact an existing broker but MUST NOT
+create the credential-dependent AX tmux server or infer provider authentication
+from <code>launchctl managername</code> or a cached sentinel.
 
 ### 13.12 Failure and recovery matrix
 
@@ -9293,6 +9398,13 @@ It emits only the Section 10.8 Continuation Plan and
 capture, transfer, materialize, adopt, allocate a provider transaction, launch,
 attach, or change a lease.
 
+The shorthand <code>ax NAME</code> may execute without a separate confirmation
+only when resolution yields exactly one safe non-mutating attach/resume route.
+Takeover, fork, move, and every ambiguous route MUST remain a pure plan plus
+confirmation; absent an interactive choice or exact non-interactive action the
+result is <code>interactive_choice_required</code>. Route ranking MUST NOT turn
+a mutating candidate into an implicit choice.
+
 The deterministic route matrix is:
 
 | Source/intent | Target | Eligible route and owner |
@@ -9368,6 +9480,11 @@ Spawn is not success: the target must be discoverable by exact identity,
 readable through the target adapter, natively resumable, consistent with the AX
 lease/runtime, and ready under the configured probe. Attach begins only after
 that state.
+
+For macOS targets, readiness includes the exact destination Aqua broker/tmux
+generation and separate provider-auth smoke described in Section 4.2. These
+checks precede an ownership commit. A Background caller cannot create the
+credential-dependent server while evaluating or executing the plan.
 
 Lost responses are reconciled by operation ID and every underlying AX/provider/
 clone transaction status API before retry. A failed, partial, malformed, or
@@ -9450,6 +9567,13 @@ fork MUST include <code>--to</code>; <code>local</code> is the explicit local-ho
 token. Interactive takeover/fork MAY default <code>--to</code> to local only
 after displaying the resolved destination. <code>attach</code> always targets
 the resolved owner and accepts neither action-specific flag.
+
+The umbrella form auto-executes only one uniquely safe non-mutating route.
+Every takeover, fork, move, or ambiguous result is displayed or serialized as
+a pure plan with its ownership/runtime effects and required confirmation. It
+MUST NOT mutate while presenting the choice. Structured non-interactive mode
+returns <code>interactive_choice_required</code> when the exact action was not
+selected.
 
 Internal commands <code>pane</code> and <code>rpc serve</code> MAY be hidden
 from short help but MUST have documented <code>--help</code>.
@@ -10222,6 +10346,18 @@ New error codes MAY be added in a compatible minor contract version, but an
 unknown code retains the envelope's exit class and MUST NOT be interpreted as
 success.
 
+The v0.4.3 realm and route constraints add no error code. Missing or unsafe
+broker/server-generation/functional-sentinel evidence uses
+<code>capability_unavailable</code> with typed details containing
+<code>capability</code>, <code>caller_realm</code>,
+<code>broker_state</code>, <code>tmux_server_generation</code>, and
+<code>remediation</code>. A missing or failed provider-auth smoke uses
+<code>target_auth_missing</code> with typed <code>provider_id</code>,
+<code>provider_build</code>, <code>macos_version</code>,
+<code>tmux_server_generation</code>, and <code>remediation</code>. Route choice
+continues to use <code>interactive_choice_required</code>. Implementations MUST
+NOT mint a realm-specific code while these existing codes remain truthful.
+
 Structured Error 1.2.0 retains the exact 1.1 shape and all prior codes. It is
 bound by Directory Node 1 and 2, Mesh RPC 3, CLI Result 3, and Directory Query 1 and
 adds the exact mappings below:
@@ -10268,7 +10404,7 @@ provider plugin, or a compromised local user account.
 
 Peers MUST be explicitly allowlisted by stable host ID and SSH endpoint.
 Tailscale discovery MAY propose hosts but MUST NOT authorize them. SSH protects
-authentication, integrity, and confidentiality in transport. v0.4.2 provides no
+authentication, integrity, and confidentiality in transport. v0.4.3 provides no
 default payload encryption at rest and MUST NOT claim otherwise.
 
 Machine-local credentials are a prerequisite at the destination. A successful
@@ -10296,8 +10432,14 @@ sensitive history when required for native resume, but MUST remain inert and
 MUST NOT be treated as current process, ownership, or routing authority. This
 does not permit copying a live PID/lock control artifact.
 
+The tmux socket and provider authentication state are machine-local exclusions
+and MUST NOT be replicated. This applies even when a socket path is stable, an
+Aqua-started server survives a terminal disconnect, or authentication works in
+the source server realm; none of those facts makes socket or Keychain state a
+transfer member.
+
 Transcripts and tool outputs can themselves contain secrets entered by an
-operator or printed by tools. v0.4.2 does not claim reliable content-level
+operator or printed by tools. v0.4.3 does not claim reliable content-level
 secret scrubbing. Operators MUST therefore treat all payloads as sensitive and
 authorize only trusted project peers. An implementation SHOULD offer a
 best-effort scanner and warning, but scanner success MUST NOT be described as a
@@ -10356,7 +10498,7 @@ Force takeover MUST therefore:
 
 ### 16.6 Out of scope
 
-v0.4.2 does not provide Byzantine consensus, hostile-peer isolation,
+v0.4.3 does not provide Byzantine consensus, hostile-peer isolation,
 multi-tenant access control, end-to-end snapshot encryption, secret
 distribution, provider-account migration, revocation of actions already sent
 to external services, live-process cloning, task-board authority cloning, or
@@ -10423,6 +10565,13 @@ Each contract in Section 1.5 versions independently:
   extension fields but MUST preserve all prior semantics;
 - a patch increment MAY clarify constraints or fix a validator defect without
   adding a field or changing behavior.
+
+Specification package v0.4.3 is a patch release over v0.4.2. It reconciles the
+already approved roadmap, ownership/continuation semantics, complete Git
+closure, and macOS execution-realm safety without adding or changing any
+independently consumed wire member. Every Section 1.5 contract version remains
+unchanged, including Structured Error 1.2.0; the release uses existing codes
+with typed details. Existing v0.4.2 and earlier tags remain immutable.
 
 Within any negotiated major version, new object data MUST live under a namespaced
 <code>extensions</code> entry unless the consumer negotiated a newer minor
@@ -10794,38 +10943,35 @@ Events are not.
 ### 19.1 Implementation phases
 
 These are ordered phases for an implementation that intends to claim
-<code>ax</code> product conformance version 0.4.2. They are not prerequisites
+<code>ax</code> product conformance version 0.4.3. They are not prerequisites
 for publishing this specification and are not permission to ship a required
 core target half-implemented:
 
-1. <strong>Contract fixtures</strong>: implement parsers/validators, canonical
-   identities, compatibility negotiation, error schema, and golden examples.
-2. <strong>Local lifecycle</strong>: implement state/lease engine, derived
-   index, direct plugin host, tmux wrapper, stop/resume, and daemonless use.
-3. <strong>Mesh and workspace</strong>: implement SSH RPC, Merkle union,
-   resumable chunks, staging, Git/non-Git materialization, tombstones, and
-   conflicts.
-4. <strong>Session cloning read/archive</strong>: implement schemas, canonical
-   fixtures, raw capture, normalization, archive A2, and fail-closed tuple
-   registry with every target writer disabled.
-5. <strong>Clone target writers</strong>: enable Claude Code to Codex and Codex
-   to Claude Code separately only after exact signed tuple, staged/live
-   read-back, resume smoke, transaction, Checkpoint, and crash gates pass.
-6. <strong>Provider and task-board adapters</strong>: enable only
-   tuple-specific accepted capabilities; implement the opaque bridge.
-7. <strong>Local directory and enrichment</strong>: implement source-local
-   scans, immutable observation chains, rebuildable catalog/search, exact-head
-   annotations, isolated workers, and shared typed query/TUI surfaces with all
-   continuation mutations disabled.
-8. <strong>Mesh directory and managed continuation</strong>: enable RPC 3
-   dual-stack anti-entropy, Directory Node 1/2, pure plans, stale revalidation,
-   adoption, managed same-environment routes, and target-first cross-environment
-   move through the existing AX/cloning transactions.
-9. <strong>Native Windows</strong>: implement ConPTY/process supervisor,
-   PowerShell-safe SSH, Windows materialization/atomicity, and user service.
-10. <strong>Product release hardening</strong>: run every required acceptance
-   lane, validate product-facing docs/examples, test migration/downgrade, and
-   retain the implementation's conformance evidence.
+1. <strong>M0 — contract foundation</strong>: implement parsers, canonical
+   identities, compatibility/error schemas, plugin wire contracts, internal
+   plugin interfaces, and the plugin conformance harness. M0 MUST NOT advertise
+   a public stable plugin SDK; that decision waits for Codex and Claude to
+   validate the boundary in real implementations.
+2. <strong>M1 — single-host durability</strong>: implement the derived index,
+   direct plugin host, daemonless lifecycle, dedicated terminal backend,
+   stop/resume, workspace engine, and complete Git closure across tracked,
+   dirty-index, staged, unstaged, untracked, ignored-policy, symlink, and
+   submodule state.
+3. <strong>M2 — multi-host MVP preview</strong>: implement SSH/RPC, immutable
+   anti-entropy, resumable staging, workspace/provider/task-board transfer, and
+   the minimum safety kernel: lease fencing, durable journal, idempotency,
+   status-first recovery, and exhaustive crash-boundary classification. M2 is
+   preview quality and is not the daily-driver gate.
+4. <strong>M3 — first daily-driver gate</strong>: pass the required macOS and
+   Linux daily-driver lanes, including dedicated tmux/Aqua-broker functional
+   evidence, complete graceful/force takeover recovery, destination readiness
+   before ownership commit, and operator continuation UX with no implicit
+   mutating route.
+5. <strong>M4 — cloning, Directory, broader platforms, and release
+   hardening</strong>: admit target writers only by exact tuple evidence; add
+   local/mesh Directory and enrichment, managed continuation, and native
+   Windows only behind their existing conformance lanes; then run the complete
+   product-release acceptance matrix and migration/downgrade gates.
 
 Each phase MUST leave prior accepted fixtures green. Experimental provider cells
 remain disabled and visible in doctor.
@@ -10836,7 +10982,7 @@ The automated suite MUST provide these lanes:
 
 | Lane | Environment | Required coverage |
 | --- | --- | --- |
-| <code>PF-MAC-ARM64</code> | Current supported macOS on arm64 | Core CLI, launchd, tmux, SSH loopback, Git/non-Git, local provider probes |
+| <code>PF-MAC-ARM64</code> | Current supported macOS on arm64 | Core CLI, split launchd/Aqua broker, dedicated <code>-S</code> tmux server, symlink/path-substitution refusal, sentinel plus provider-auth smoke bound to server generation/provider build/macOS version, logout/reboot parking, SSH loopback, Git/non-Git, local provider probes |
 | <code>PF-MAC-AMD64</code> | Supported macOS on amd64 or reproducible hosted runner | Core CLI and providers that publish amd64 support |
 | <code>PF-LINUX-AMD64</code> | Ubuntu 20.04+ baseline | Core CLI, systemd user, tmux, OpenSSH, filesystems, providers |
 | <code>PF-LINUX-ARM64</code> | arm64 Linux | Core/storage/RPC and providers that publish arm64 support |
@@ -10948,6 +11094,15 @@ signed Environment Tuple under Section 13.14.5.
 | <code>AC-RESUME-001</code> | No-materialization, workspace-only, provider-only, task-board-only, and both composite owner-resume paths execute their exact prepare/commit/activation/finalize or rollback/status recovery and emit one profile-consistent resumed event. |
 | <code>AC-RESTORE-001</code> | tmux restore invokes wrapper and parks remote/stale owners; it does not migrate a session. |
 | <code>AC-RESTORE-002</code> | Native Windows recreates ConPTY after reboot and resumes only after lease/checkpoint validation. |
+| <code>AC-V043-REALM-001</code> | A background CLI/SSH/daemon may contact an existing attested Aqua broker but cannot create a credential-dependent tmux server; a narrowing mutant that permits Background creation fails through <code>terminal.ensure</code>. |
+| <code>AC-V043-REALM-002</code> | <code>terminal.attest</code> rejects Aqua-only and sentinel-only evidence, requires a separate provider-auth smoke, and binds evidence to exact tmux server generation, provider build, and macOS version. |
+| <code>AC-V043-ROUTE-001</code> | <code>ax NAME</code> auto-executes only one uniquely safe non-mutating attach/resume route; takeover, fork, move, and ambiguity remain pure plans requiring confirmation or return <code>interactive_choice_required</code>. |
+| <code>AC-V043-SYNC-001</code> | <code>ax sync --all</code> converges immutable objects and policy-allowed projections without ownership change or runtime launch; an ownership-changing sync mutant is rejected. |
+| <code>AC-V043-GIT-001</code> | <code>workspace.capture</code> proves tracked, dirty-index, staged, unstaged, untracked, ignored-policy, symlink, and submodule closure; independently omitting any class fails. |
+| <code>AC-V043-TAKE-001</code> | Graceful <code>takeover.execute</code> proves destination broker/auth readiness, then verified source stop, ownership commit, and only then destination runtime creation; unsafe reordering fails. |
+| <code>AC-V043-TAKE-002</code> | Force <code>takeover.execute</code> proves destination broker/auth readiness before persisting the force lease, never claims a verified source-process stop, creates a runtime only under the committed winning lease, and fences the prior owner from authoritative sync/resume. |
+| <code>AC-V043-SEC-001</code> | <code>replication.select</code> excludes the dedicated tmux socket and provider auth state even when they are usable on the source; a socket/auth transfer member fails. |
+| <code>AC-V043-SDK-001</code> | <code>release.admit</code> accepts M0 internal wire/interface/harness evidence and rejects a public stable SDK claim before Codex and Claude boundary validation. |
 | <code>AC-CRASH-001</code> | Every applicable <code>CR-LAUNCH-*</code>, <code>CR-SYNC-*</code>, <code>CR-MAT-*</code>, <code>CR-GRACE-*</code>, <code>CR-FORCE-*</code>, <code>CR-FORK-*</code>, <code>CR-STOP-*</code>, <code>CR-RESUME-*</code>, and <code>CR-RESTORE-*</code> injection classifies into exactly one of <code>safe_retry</code>, <code>explicit_rollback</code>, or <code>recoverable_parked_state</code> with the Section 13.13 evidence record; no run produces duplicate live/authoritative owners, treats an unfenced external continuation as safe, or substitutes a fresh native provider/manager session for the persisted identity. |
 | <code>AC-CLONE-001</code> | Every Capture Manifest candidate reconciles to included raw evidence or stable exclusion; every raw item reconciles to canonical evidence/disposition; every canonical item reconciles to staged/live target evidence or stable target disposition, including opaque events/reasoning, inert tools, stripped authority, and excluded credentials/live state. |
 | <code>AC-CLONE-002</code> | Production <code>ax session clone run</code> rejects forged/self-minted, absent, stale, revoked, malformed, partially read, environment-only, or digest-drifted tuple evidence and rejects force bypass; a narrowing mutant that compares only environment ID fails. |
@@ -11004,7 +11159,7 @@ signed Environment Tuple under Section 13.14.5.
 
 ### 19.5 <code>ax</code> implementation release acceptance rule
 
-An implementation MAY claim <code>ax</code> product conformance 0.4.2 only when:
+An implementation MAY claim <code>ax</code> product conformance 0.4.3 only when:
 
 1. all product-release-blocking core platform lanes pass;
 2. every A provider cell passes its suites;
@@ -11032,7 +11187,7 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
 the default branch, and carry the MIT License. The current specification
-release is <code>v0.4.2</code>. Existing release tags are immutable history and
+release is <code>v0.4.3</code>. Existing release tags are immutable history and
 MUST NOT be moved or rewritten. The v0.3.0 specification baseline remains the
 normative cloning authority whether consumed from its release package or the
 accepted baseline commit; this sentence does not claim that a particular tag
@@ -11059,7 +11214,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-specification release <code>v0.4.2</code>, not an <code>ax</code> executable
+specification release <code>v0.4.3</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -11071,7 +11226,7 @@ release. The publication task MUST:
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
 4. verify <code>VERSION</code>, current document metadata, changelog, release
-   notes, and the proposed tag all say <code>v0.4.2</code>, while every existing
+   notes, and the proposed tag all say <code>v0.4.3</code>, while every existing
    historical tag remains unchanged;
 5. run the semantic crash/restart gate and its focused expected-red mutations;
    validation MUST emit an actionable diagnostic when the three-outcome
@@ -11082,14 +11237,14 @@ release. The publication task MUST:
    <code>Ivan Oparin &lt;oparin@me.com&gt;</code> and no AI trailer, and hand it
    to the user for explicit review; automation MUST NOT stage or commit before
    human approval;
-7. prepare the exact signed annotated <code>v0.4.2</code> tag command and hand it
+7. prepare the exact signed annotated <code>v0.4.3</code> tag command and hand it
    to the user for explicit review; automation MUST NOT create the tag before
    human approval;
 8. after the human creates the commit and tag, verify both signatures locally
    with <code>git log --show-signature -1</code> and
-   <code>git tag --verify v0.4.2</code>;
+   <code>git tag --verify v0.4.3</code>;
 9. hand the exact <code>git push</code> commands for <code>main</code> and the
-   <code>v0.4.2</code> tag to the user; automation MUST NOT push before explicit
+   <code>v0.4.3</code> tag to the user; automation MUST NOT push before explicit
    human approval and only after accepted validation/review;
 10. verify the public repository, default branch, license, commit signature, tag
    signature, and release URL; and
@@ -11141,7 +11296,7 @@ requirement rather than only reporting a generic document digest mismatch.
 | All settled decisions are traceable | Appendix A.1 |
 | Independent reviewer accepts the artifact | Required board reviewer route after this task's <code>to-review</code> handoff |
 
-The Epic criterion for a signed public <code>v0.4.2</code> specification release
+The Epic criterion for a signed public <code>v0.4.3</code> specification release
 maps only to Section 20 and remains owned by the downstream validation and
 publication tasks. Section 19 governs a future product implementation and is
 not a prerequisite for that publication.
@@ -11161,6 +11316,7 @@ not a prerequisite for that publication.
 | CLI, exit codes, observability, implementation rollout/acceptance, specification publication | Sections 14, 15, 18, 19, and the independent Section 20 gate |
 | No unresolved implementation question except provider version gates | Appendix B |
 | Crash/restart classification has one exhaustive outcome and preserves owner/native identity | Sections 13.13, 19.4 <code>AC-CRASH-001</code>, 20.2 <code>SPEC-PUB-CRASH-001</code>, and Appendix A.8 |
+| Approved v0.4.3 roadmap and macOS terminal-realm boundaries | Sections 2.2–2.3, 3.1–3.2, 4.2/4.4, 7.1, 12.1–12.3, 13.3/13.5–13.6/13.11/13.15, 14.1, 15.3, 16.2, 17.1, 19.1–19.4, and Appendix D |
 
 ### A.4 Second-review closure traceability
 
@@ -11220,7 +11376,7 @@ not a prerequisite for that publication.
 | No duplicate owner or silent fresh native session | Section 13.13 rejects two live/authoritative owners, unfenced continuation presented as safe recovery, new-session launch, fresh native handles/manager references, blank relabeling, and realm substitution. |
 | Runtime conformance acceptance | Section 19.4 <code>AC-CRASH-001</code> executes every applicable boundary with exact classification and evidence. |
 | Specification publication acceptance and mutation gate | Section 20.2 <code>SPEC-PUB-CRASH-001</code> requires semantic validation plus an actionable focused expected-red mutation. |
-| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version and its immutable history; Section 20.1 identifies <code>v0.4.2</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
+| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version and its immutable history; Section 20.1 identifies <code>v0.4.3</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
 
 ### A.9 Cross-environment cloning traceability
 
@@ -11246,7 +11402,7 @@ The accepted audit is
 includes every subsection of the named standalone section; no standalone
 section remains a normative runtime dependency.
 
-| Standalone directory section | Normative AX v0.4.2 destination and disposition |
+| Standalone directory section | Normative AX v0.4.3 destination and disposition |
 | --- | --- |
 | 1. Conformance, scope, and product boundary | Sections 1–2 and 19: integrated; all 45 accepted merge invariants are individually fixed as <code>DIR-INV-01..45</code>. |
 | 2. Architecture and responsibility boundaries | Sections 3.1, 7.9, 10.8, and 11.8: integrated; Directory Node remains a companion façade backed by the same environment implementation, not new authority. |
@@ -11262,7 +11418,7 @@ section remains a normative runtime dependency.
 | 12. Mesh catalog and convergence | Sections 11.4, 11.8, and 17.5: integrated through RPC 3 dual stack and the disjoint <code>directory_record</code> namespace; transcript/index centralization is rejected. |
 | 13. Security and privacy | Sections 16.1–16.7: integrated with metadata exclusions, source-local preview, worker isolation, server-side field authorization, and hardened terminal/launch boundaries. |
 | 14. Errors and exit semantics | Section 15: integrated as Structured Error 1.2 with exact directory code mappings and bootstrap behavior. |
-| 15. Compatibility and versioning | Sections 1.5 and 17.5: integrated with the corrected v0.4.2 SemVer matrix, immutable v1 wire history, and unchanged v0.3 cloning authority. |
+| 15. Compatibility and versioning | Sections 1.5 and 17.5: integrated with the corrected v0.4.3 SemVer matrix, immutable v1 wire history, and unchanged v0.3 cloning authority. |
 | 16. Observability and operation | Sections 18.1–18.4: integrated into the open Observation Event 1 grammar, metrics, doctor, and immutable audit evidence. |
 | 17. Conformance and test requirements | Sections 19.1–19.5 and Appendix D: integrated with production-path, focused-negative, rebuild, mesh, plan, execution, security, and terminal gates. |
 | 18. AX integration and merge contract | Sections 1.5, 5, 7.9, 10.8, 11.8, 13.15, and 17.5: resolved; duplicated Provider/workspace/blob/transfer/materialization/lease/terminal/cloning authority is explicitly forbidden. |
@@ -11420,6 +11576,7 @@ display-language label.
 | Session Continuation Plan | Sections 10.8 and 13.15 exact plan/route/outcome/expectation/effect shapes | Expired or changed expectation executes; planning mutates; silent route/fidelity/host/intent substitution; embedded credential or absolute native path |
 | Session Directory Operation Receipt | Sections 10.8 and 13.15 exact immutable chain | Lost-response replay creates another effect; predecessor fork hidden; success before readiness; move release precedes target commit; uncertain treated as absence |
 | Session Directory Query | Sections 10.8 and 14.5 exact operations/presets/projection/cursor/mutation guards | Unknown field/preset; cursor scope widening; raw content by default; remote source-local preview; delete operation; mutation without exact plan/operation |
+| v0.4.3 roadmap and terminal realm | <code>fixtures/v0_4_3_roadmap_terminal_realm.json</code>: exact M0–M3 gates, eight production-entrypoint positive cases, terminal-realm evidence, unchanged contract SemVer, and existing error-code bindings | Unsafe background server creation; sentinel-only claim; implicit mutating route; ownership-changing sync; incomplete Git closure; ownership commit before destination readiness; socket/auth replication; premature public stable SDK |
 
 ### D.3 Embedded tagged-union coverage
 
@@ -11581,6 +11738,13 @@ MUST also run, without substituting mocks for the relevant state boundary:
   the real production entry point. Focused negatives MUST narrow identity,
   source authority, head equality, field authorization, route eligibility,
   readiness, or idempotency rather than merely delete the checked clause.
+- every <code>AC-V043-*</code> case from
+  <code>fixtures/v0_4_3_roadmap_terminal_realm.json</code> through its named
+  production entry point. Independent narrowing mutations MUST reject unsafe
+  background server creation, sentinel-only attestation, implicit mutating
+  route choice, ownership-changing sync, incomplete Git closure, unsafe
+  destination preflight ordering, socket/auth replication, and premature SDK
+  stability.
 
 The document-fixture gate MUST also derive the Section 3.2 and 6.1 environment
 names independently and require equal sets; match every normative extension

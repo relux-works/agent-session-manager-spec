@@ -1,12 +1,46 @@
-# Agent Session Manager (`ax`) Specification v0.4.2
+# Agent Session Manager (`ax`) Specification v0.4.3
 
-This patch specification release corrects two post-publication blockers in
-v0.4.1. Existing tags remain immutable. Directory Node Protocol and Request
-advance to `2.0.0`; all AX ownership, cloning, mesh namespace, Directory record,
-workspace, lease, and terminal contracts retain their prior versions. v0.4.2 is
-the first safe Session Directory implementation baseline.
+This patch specification release preserves the v0.4.2 wire registry and
+reconciles the owner-approved implementation roadmap with macOS tmux/Keychain
+execution-realm safety. Existing tags remain immutable. No independently
+consumed contract changes version or shape; v0.4.3 is the current implementation
+baseline and retains v0.4.2's corrected Directory Node dual-stack contract.
 
 **Status caveat:** this release publishes specification artifacts only. It contains no executable `ax` product binary, and publication does not imply that any provider/platform product-conformance lane has passed.
+
+## Roadmap and ownership boundary
+
+- M0 establishes plugin wire contracts, internal interfaces, and a conformance
+  harness without advertising a public stable SDK. M1 closes local durability
+  and complete Git state. M2 is the multi-host MVP preview and already contains
+  lease fencing, durable journaling, idempotency, status-first recovery, and the
+  crash-boundary kernel. M3 is the first daily-driver gate.
+- `ax NAME` auto-executes only one uniquely safe non-mutating attach/resume
+  route. Takeover, fork, move, and ambiguity remain pure plans requiring
+  confirmation or return `interactive_choice_required`.
+- `ax sync --all` converges immutable objects and policy-allowed projections;
+  it never changes ownership or launches a runtime. Remote attach targets the
+  current owner. Graceful takeover creates the destination runtime only after a
+  verified source stop and ownership commit. Force takeover cannot claim that
+  an unreachable source stopped: it proves destination broker/auth readiness
+  before committing the force lease and creates a runtime only under the
+  winning lease, which fences the prior owner logically.
+- M1 Git closure covers tracked, dirty-index, staged, unstaged, untracked,
+  ignored-policy, symlink, and submodule state.
+
+## macOS terminal execution realm
+
+- AX uses a dedicated `tmux -S` server below an AX-owned 0700 runtime parent and
+  rejects symlink or path substitution before socket operations.
+- The background control plane is separate from the minimal Aqua terminal
+  broker. Background CLI/SSH/daemon processes may contact an existing broker
+  but may not create a credential-dependent tmux server.
+- `launchctl managername` is diagnostic only. Functional acceptance requires
+  an AX sentinel plus a separate provider-auth smoke bound to the tmux server
+  generation, provider build, and macOS version. Aqua alone and sentinel-only
+  evidence fail closed.
+- tmux sockets and provider authentication state are machine-local exclusions.
+  Logout/reboot without a verified GUI realm parks recovery until GUI login.
 
 ## Errata resolved
 
@@ -59,7 +93,7 @@ Managed attach/resume/takeover/fork routes delegate to existing AX ownership, tr
 
 ## Contract and compatibility boundary
 
-| Contract | v0.4.2 version / disposition |
+| Contract | v0.4.3 version / disposition |
 | --- | --- |
 | Directory Node protocol / request | `2.0.0`; immutable `1.0.0` remains dual-stack |
 | Directory Node manifest / response | `1.0.0`, explicitly bound by both protocol majors |
@@ -91,4 +125,7 @@ The public repository validator remains specification-only. It validates contrac
 
 ## Traceability
 
-`STANDALONE_TO_AX_TRACEABILITY.md` maps every cloning and Session Directory standalone section to the resulting AX v0.4.2 section and records reuse, addition, or supersession without becoming normative. Appendix A of `SPEC.md` maps accepted decisions, task criteria, and Directory publication artifacts; Appendix D defines the exhaustive contract and fixture catalog. `SPEC.md` remains the only normative source.
+`STANDALONE_TO_AX_TRACEABILITY.md` maps every cloning and Session Directory standalone section to the resulting AX v0.4.3 section and records reuse, addition, or supersession without becoming normative. Appendix A of `SPEC.md` maps accepted decisions, task criteria, and Directory publication artifacts; Appendix D defines the exhaustive contract and fixture catalog. `SPEC.md` remains the only normative source.
+The v0.4.3 roadmap and terminal-realm decisions map directly to SPEC Sections
+2–4, 7.1, 12–17, 19, and Appendix D; no public summary becomes a second
+normative authority.

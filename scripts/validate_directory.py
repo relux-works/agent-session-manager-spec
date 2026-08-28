@@ -34,7 +34,7 @@ NORMATIVE_SCHEMA_SECTIONS = {
     ),
     "directory continuation planning and execution": (
         "### 13.15 Directory continuation planning and execution", "## 14.",
-        "ef152b32402559322bf866e0a59a852cb65f10094b8dc9029cab985b818d3650",
+        "cb0b953e2290473b6fe51da7c251bae4a7ba21ca2be1da6970b0f31bf509be5e",
     ),
     "CLI Result 3 and Directory Query": (
         "### 14.5 Session Directory CLI Result 3, query, and TUI", "## 15.",
@@ -1182,16 +1182,16 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
 
     publication = data.get("publication", {})
     docs = ["SPEC.md", "README.md", "CONTRIBUTING.md", "CHANGELOG.md", "RELEASE_NOTES.md", "VERSION", "STANDALONE_TO_AX_TRACEABILITY.md"]
-    need("publication_consistency", publication.get("spec_version") == "0.4.2" and publication.get("frozen_digest_owner") == "publication-task" and publication.get("required_documents") == docs, "v0.4.2 candidate/release ownership or document registry mismatch")
-    claim = "AX v0.4.2 Session Directory is specification-only until conforming implementations publish tuple evidence."
+    need("publication_consistency", publication.get("spec_version") == "0.4.3" and publication.get("frozen_digest_owner") == "publication-task" and publication.get("required_documents") == docs, "v0.4.3 candidate/release ownership or document registry mismatch")
+    claim = "AX v0.4.3 Session Directory is specification-only until conforming implementations publish tuple evidence."
     need("publication_consistency", publication.get("claim") == claim, "README/release claim is not supported by SPEC and fixtures")
-    need("publication_consistency", "The following versions are active in v0.4.2." in spec and "implementation release acceptance rule" in spec, "SPEC does not support v0.4.2 specification-only claim")
+    need("publication_consistency", "The following versions are active in v0.4.3." in spec and "implementation release acceptance rule" in spec, "SPEC does not support v0.4.3 specification-only claim")
     public_prose = "\n".join(
         (root / name).read_text(encoding="utf-8")
         for name in ("README.md", "RELEASE_NOTES.md")
         if (root / name).is_file()
     )
-    need("publication_consistency", "AX v0.4.2 directory implementation is shipped and available." not in public_prose, "README/release claim is not supported by SPEC and fixtures")
+    need("publication_consistency", "AX v0.4.3 directory implementation is shipped and available." not in public_prose, "README/release claim is not supported by SPEC and fixtures")
     changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
     current_baseline_claim = "current first safe Session Directory implementation baseline"
     superseded_v041_claim = "v0.4.2 now supersedes that historical claim"
@@ -1225,7 +1225,7 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         "tuple_matrix": ["The initial mapping is exactly", "Adoption is source-local and unavailable unless the exact accepted tuple proves"],
         "security": ["ANSI, OSC, bidi overrides,\ncontrols, invalid width, and hostile grapheme sequences are removed or visibly\nescaped", "All native/process launches use structured argv, explicit workspace-derived cwd,\nminimal environment allowlists"],
         "traceability": ["Appendix D. Requirement traceability", "<code>AC-DIR-INV-001</code>"],
-        "publication_consistency": ["The following versions are active in v0.4.2.", "implementation release acceptance rule"],
+        "publication_consistency": ["The following versions are active in v0.4.3.", "implementation release acceptance rule"],
     }
     for group, literals in spec_requirements.items():
         for literal in literals:

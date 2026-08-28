@@ -24,6 +24,7 @@ participant "Target Node" as Target
 participant "AX Data Plane" as AX
 participant "Session Cloning" as Clone
 participant "Target Terminal" as Terminal
+participant "macOS Aqua Broker" as Broker
 
 autonumber
 
@@ -42,34 +43,61 @@ Planner -> Planner: select route and build content-addressed plan
 Planner --> TUI: steps, fidelity, bytes, risks, expiry, confirmations
 
 alt Plan unavailable or policy rejected
-    TUI --> Operator: explain blocker; no mutation
+    break Refused plan terminates without execution
+        TUI --> Operator: explain blocker; no mutation
+    end
+else Exactly one safe non-mutating attach/resume route
+    TUI -> Planner: execute unique non-mutating route
 else Operator confirms exact plan
     Operator -> TUI: execute PLAN_ID
     TUI -> Planner: execute with expected source/target facts
-
-    == Revalidation and execution ==
-
-    Planner -> Source: verify head/lease/runtime still match
-    Planner -> Target: verify tuple/workspace/auth still match
-
-    alt Same managed owner and environment
-        Planner -> AX: native resume or remote attach
-    else Ownership takeover without conversion
-        Planner -> AX: checkpoint, transfer, materialize, lease handoff
-    else Fork or same-environment clone
-        Planner -> AX: fork/materialize new managed session
-    else Cross-environment continuation
-        Planner -> Clone: capture, canonicalize, project, validate target
-        Clone -> AX: transfer artifacts and publish lineage
-    end
-
-    AX -> Target: finalize managed target and winning ownership
-    Target -> Terminal: launch exact resume plan under fencing token
-    Terminal --> Target: runtime/attach evidence
-    Target --> Planner: committed target and attach plan
-    Planner --> TUI: target identity, fidelity, lineage, attach command
-    TUI -> Terminal: local attach or authenticated remote attach
-    Terminal --> Operator: interactive native agent terminal
 end
+
+== Revalidation and execution ==
+
+Planner -> Source: verify head/lease/runtime still match
+Planner -> Target: verify tuple/workspace/auth still match
+
+alt Remote attach to current owner
+    Planner -> AX: authenticate attach to current winning owner
+    AX --> Planner: existing owner endpoint; no lease/runtime mutation
+    break Remote attach terminates without target finalization
+        Planner --> TUI: authenticated current-owner attach command
+        TUI -> Terminal: remote attach to existing owner terminal
+        Terminal --> Operator: interactive native agent terminal
+    end
+else Same managed owner and environment
+    Planner -> AX: revalidate existing winning lease and execution realm
+    opt Current-owner resume target is macOS
+        AX -> Broker: attest existing broker/server + provider auth
+        Broker --> AX: generation/build/macOS-bound evidence
+    end
+    AX -> Terminal: create/resume under existing winning lease
+    break Current-owner resume terminates without ownership finalization
+        Terminal --> Planner: current-owner runtime/attach evidence
+        Planner --> TUI: resumed current-owner identity and attach command
+        TUI -> Terminal: local attach to current-owner runtime
+        Terminal --> Operator: interactive native agent terminal
+    end
+else Ownership takeover without conversion
+    Planner -> AX: checkpoint, transfer, materialize, lease handoff
+else Fork or same-environment clone
+    Planner -> AX: fork/materialize new managed session
+else Cross-environment continuation
+    Planner -> Clone: capture, canonicalize, project, validate target
+    Clone -> AX: transfer artifacts and publish lineage
+end
+
+opt Ownership-creating target is macOS
+    Target -> Broker: prove broker + separate provider-auth readiness
+    Broker --> Target: generation/build/macOS-bound evidence
+end
+AX -> Target: finalize managed target and winning ownership
+Target -> Terminal: create runtime after ownership commit
+Terminal --> Target: runtime/attach evidence
+Target --> Planner: committed target and attach plan
+Planner --> TUI: target identity, fidelity, lineage, attach command
+TUI -> Terminal: local attach to created target runtime
+Terminal --> Operator: interactive native agent terminal
 
 @enduml

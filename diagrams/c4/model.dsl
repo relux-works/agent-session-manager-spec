@@ -14,9 +14,10 @@ model {
             enrichment_worker = component "Sandboxed Enrichment Worker" "Produces bounded typed annotation candidates without AX, provider, shell, or mutation authority."
         }
         cloning = container "Session Cloning Core" "Captures, canonicalizes, projects, validates, and publishes cross-environment continuation lineage." "Go + Session Adapter 1.0"
-        daemon = container "ax Daemon" "Optional user service for periodic sync, health, inventory, and enrichment scheduling." "Go"
+        daemon = container "Background Control Plane" "Optional service for sync, health, inventory, and enrichment; cannot create a credential-dependent macOS tmux server." "Go"
+        aqua_broker = container "macOS Aqua Terminal Broker" "Minimal same-user GUI-realm broker that creates and attests the dedicated AX tmux server and provider-auth readiness." "Go + launchd agent"
         providers = container "Provider Plugins" "Executable plugins (ax-provider-<id>) via JSON-over-stdio." "Binary"
-        terminal = container "Terminal Backend" "tmux (macOS/Linux/WSL2) or process/ConPTY (Windows)." "System"
+        terminal = container "Terminal Backend" "Dedicated -S tmux server (macOS/Linux/WSL2) or process/ConPTY (Windows); sockets remain machine-local." "System"
         local_db = container "Derived SQLite Index" "Rebuildable transactional index for AX state, directory catalog, and search." "SQLite" {
             tags "Database"
         }

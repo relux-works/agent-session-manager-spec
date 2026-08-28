@@ -74,9 +74,10 @@ person "==Automation / Agent\n<size:16>[Person]</size>\n\nUses typed directory q
 
 rectangle "Agent Session Manager (ax)\n<size:16>[Software System]</size>" <<Boundary-QWdlbnQgU2Vzc2lvbiBNYW5hZ2VyIChheCk=>> {
   rectangle "==Session Cloning Core\n<size:16>[Container: Go + Session Adapter 1.0]</size>\n\nCaptures, canonicalizes, projects, validates, and publishes cross-environment continuation lineage." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.SessionCloningCore
-  rectangle "==ax Daemon\n<size:16>[Container: Go]</size>\n\nOptional user service for periodic sync, health, inventory, and enrichment scheduling." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.axDaemon
+  rectangle "==Background Control Plane\n<size:16>[Container: Go]</size>\n\nOptional service for sync, health, inventory, and enrichment; cannot create a credential-dependent macOS tmux server." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.BackgroundControlPlane
+  rectangle "==macOS Aqua Terminal Broker\n<size:16>[Container: Go + launchd agent]</size>\n\nMinimal same-user GUI-realm broker that creates and attests the dedicated AX tmux server and provider-auth readiness." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.macOSAquaTerminalBroker
   rectangle "==Provider Plugins\n<size:16>[Container: Binary]</size>\n\nExecutable plugins (ax-provider-<id>) via JSON-over-stdio." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.ProviderPlugins
-  rectangle "==Terminal Backend\n<size:16>[Container: System]</size>\n\ntmux (macOS/Linux/WSL2) or process/ConPTY (Windows)." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.TerminalBackend
+  rectangle "==Terminal Backend\n<size:16>[Container: System]</size>\n\nDedicated -S tmux server (macOS/Linux/WSL2) or process/ConPTY (Windows); sockets remain machine-local." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.TerminalBackend
   database "==Derived SQLite Index\n<size:16>[Container: SQLite]</size>\n\nRebuildable transactional index for AX state, directory catalog, and search." <<Element-RWxlbWVudCxDb250YWluZXIsRGF0YWJhc2U=>> as AgentSessionManagerax.DerivedSQLiteIndex
   database "==Immutable AX and Directory Records\n<size:16>[Container: File System]</size>\n\nContent-addressed blobs plus identity-addressed AX, cloning, and directory records." <<Element-RWxlbWVudCxDb250YWluZXIsRGF0YWJhc2U=>> as AgentSessionManagerax.ImmutableAXandDirectoryRecords
   rectangle "==ax CLI and Session Browser TUI\n<size:16>[Container: Go]</size>\n\nHuman command, browsing, selection, confirmation, launch, and attach surfaces." <<Element-RWxlbWVudCxDb250YWluZXI=>> as AgentSessionManagerax.axCLIandSessionBrowserTUI
@@ -95,10 +96,13 @@ AgentSessionManagerax.SessionCloningCore --> AgentSessionManagerax.ProviderPlugi
 AgentSessionManagerax.SessionCloningCore --> AgentSessionManagerax.ImmutableAXandDirectoryRecords <<Relationship-UmVsYXRpb25zaGlw>> : "Publishes clone evidence and lineage"
 AgentSessionManagerax.axCLIandSessionBrowserTUI --> AgentSessionManagerax.DerivedSQLiteIndex <<Relationship-UmVsYXRpb25zaGlw>> : "Reads/writes index"
 AgentSessionManagerax.axCLIandSessionBrowserTUI --> AgentSessionManagerax.ImmutableAXandDirectoryRecords <<Relationship-UmVsYXRpb25zaGlw>> : "Reads/writes records and blobs"
-AgentSessionManagerax.axDaemon --> AgentSessionManagerax.DerivedSQLiteIndex <<Relationship-UmVsYXRpb25zaGlw>> : "Reads/writes index"
-AgentSessionManagerax.axDaemon --> AgentSessionManagerax.ImmutableAXandDirectoryRecords <<Relationship-UmVsYXRpb25zaGlw>> : "Syncs records and blobs"
-AgentSessionManagerax.axDaemon --> AgentSessionManagerax.DirectoryControlPlane <<Relationship-UmVsYXRpb25zaGlw>> : "Schedules source-local inventory and health"
+AgentSessionManagerax.BackgroundControlPlane --> AgentSessionManagerax.DerivedSQLiteIndex <<Relationship-UmVsYXRpb25zaGlw>> : "Reads/writes index"
+AgentSessionManagerax.BackgroundControlPlane --> AgentSessionManagerax.ImmutableAXandDirectoryRecords <<Relationship-UmVsYXRpb25zaGlw>> : "Syncs records and blobs"
+AgentSessionManagerax.BackgroundControlPlane --> AgentSessionManagerax.DirectoryControlPlane <<Relationship-UmVsYXRpb25zaGlw>> : "Schedules source-local inventory and health"
+AgentSessionManagerax.BackgroundControlPlane --> AgentSessionManagerax.macOSAquaTerminalBroker <<Relationship-UmVsYXRpb25zaGlw>> : "Existing broker only"
 AgentSessionManagerax.axCLIandSessionBrowserTUI --> AgentSessionManagerax.TerminalBackend <<Relationship-UmVsYXRpb25zaGlw>> : "Runs 'ax pane' wrapper in durable pane"
+AgentSessionManagerax.axCLIandSessionBrowserTUI --> AgentSessionManagerax.macOSAquaTerminalBroker <<Relationship-UmVsYXRpb25zaGlw>> : "Realm/auth evidence"
+AgentSessionManagerax.macOSAquaTerminalBroker --> AgentSessionManagerax.TerminalBackend <<Relationship-UmVsYXRpb25zaGlw>> : "Creates/attests dedicated -S server"
 AgentSessionManagerax.axCLIandSessionBrowserTUI --> AgentSessionManagerax.ProviderPlugins <<Relationship-UmVsYXRpb25zaGlw>> : "Launches and orchestrates transactions via JSON-over-stdio"
 
 @enduml

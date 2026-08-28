@@ -1,8 +1,8 @@
-# Standalone Subsystems to AX v0.4.2 Traceability
+# Standalone Subsystems to AX v0.4.3 Traceability
 
 This document is a non-normative migration index. [SPEC.md](SPEC.md) is the only normative source; this file does not restate or extend its requirements. It accounts for the standalone *Cross-Environment Agent Session Cloning Specification v0.1.0* source identified by SHA-256 `d8e2ef73f6a07ef58219fd2c4e8e16dff681728ec0b153653fc87f1f200af475` and the standalone *AX Session Directory and Orchestration Specification v0.1.0* source identified by SHA-256 `486612e4c1a10dcfc6e75cf17c60beb974c6989b82c333a9350fa1befd1a448f`.
 
-AX v0.4.2 preserves the v0.3.0/v0.4.0 integration mapping below and corrects its implementation baseline. Direct unmanaged move is superseded by unmanaged clone or source-local adoption followed by a newly planned managed move. Directory Node Protocol/Request `1.0.0` remain immutable with their published platform vocabulary; `2.0.0` carries the AX platform vocabulary under an explicit dual-stack binding.
+AX v0.4.3 preserves the v0.3.0/v0.4.0 integration mapping and v0.4.2 Directory correction below while reconciling the implementation roadmap, continuation ownership UX, complete Git closure, and macOS execution realm. Direct unmanaged move is superseded by unmanaged clone or source-local adoption followed by a newly planned managed move. Directory Node Protocol/Request `1.0.0` remain immutable with their published platform vocabulary; `2.0.0` carries the AX platform vocabulary under an explicit dual-stack binding.
 
 Disposition codes:
 
@@ -156,7 +156,7 @@ accepted mapping authority is
 `.research/260827_session-directory-merge-audit.md` and board outcome
 `TASK-260827-32hife_session-directory-merge-audit.md`.
 
-| Standalone directory section | AX v0.4.2 target | Disposition and migration result |
+| Standalone directory section | AX v0.4.3 target | Disposition and migration result |
 | --- | --- | --- |
 | 1. Conformance, scope, and product boundary | §§1–2, 19 | N/S — product outcomes are integrated and all 45 merge invariants are individually registered as `DIR-INV-01..45`. |
 | 2. Architecture and responsibility boundaries | §§3.1, 7.9, 10.8, 11.8 | R/N — local-first topology is retained; Directory Node is a companion façade backed by the same environment implementation and gains no separate Provider/workspace authority. |
@@ -172,7 +172,20 @@ accepted mapping authority is
 | 12. Mesh catalog and convergence | §§11.4, 11.8, 17.5 | R/N — RPC 3 adds one disjoint `directory_record` namespace and remains dual-stack with RPC 2; no transcript/index server is introduced. |
 | 13. Security and privacy | §§16.1–16.7 | R/N — AX trust/path/process rules are reused and directory disclosure, enrichment, query, log, metric, and terminal exclusions are added. |
 | 14. Errors and exit semantics | §15.3 | N — Structured Error 1.2 adds exact directory codes and bindings without changing older envelopes. |
-| 15. Compatibility and versioning | §§1.5, 17.5 | N/S — v0.4.2 preserves immutable Request 1 and introduces Request/Protocol 2 for the AX platform vocabulary; the entire v0.3 cloning/workspace/transfer/materialization authority is reused unchanged. |
+| 15. Compatibility and versioning | §§1.5, 17.5 | N/S — v0.4.3 preserves immutable Request 1 and Request/Protocol 2 AX vocabulary bindings from v0.4.2; the entire v0.3 cloning/workspace/transfer/materialization authority is reused unchanged. |
+
+### v0.4.3 approved-roadmap and terminal-realm decisions
+
+| Approved decision | Normative AX destination |
+| --- | --- |
+| M0 internal plugin contracts/harness; no public stable SDK | §§7.1, 19.1 |
+| M2 multi-host MVP preview safety kernel; M3 daily-driver gate | §§13.13, 19.1–19.4 |
+| Unique non-mutating `ax NAME`; mutating routes remain plans | §§2.3, 13.15, 14.1 |
+| `ax sync --all` cannot change ownership or launch | §§2.2, 13.3 |
+| Complete M1 Git closure | §§12.1–12.3 |
+| Dedicated tmux `-S`, split Aqua broker, functional realm/auth evidence | §§3.1–3.2, 4.2, 4.4, 13.11, 16.2 |
+| Destination readiness before ownership commit; graceful verified-stop and force winning-lease branches | §§13.6–13.7, 13.15 |
+| Existing errors and unchanged contract SemVer | §§15.3, 17.1 |
 | 16. Observability and operation | §§18.1–18.4 | R/N — the open Observation Event 1 grammar is reused and directory lifecycle, doctor, metric, and audit requirements are added. |
 | 17. Conformance and test requirements | §§19.1–19.5, Appendix D | N/S — AX production-path and focused-negative fixture gates replace the standalone harness layout. |
 | 18. AX integration and merge contract | §§1.5, 5, 7.9, 10.8, 11.8, 13.15, 17.5 | N/S — all merge decisions are closed; duplicate Provider/workspace/blob/transfer/materialization/lease/terminal/cloning authority is forbidden. |

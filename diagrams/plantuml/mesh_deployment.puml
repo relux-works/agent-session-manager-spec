@@ -33,16 +33,17 @@ skinparam note {
 skinparam linetype ortho
 top to bottom direction
 
-title Mesh Deployment (Allowlisted Peers & Terminal Backends)
+title Mesh Deployment (Allowlisted Peers & macOS Terminal Realm)
 
-node "macOS / Linux Host" as UnixHost {
-    component "ax Daemon\n(launchd/systemd)" as UnixDaemon
+node "macOS / Linux / WSL2 Host" as UnixHost {
+    component "Background Control Plane\n(launchd/systemd)" as UnixDaemon
     component "ax CLI" as UnixCli
+    component "macOS Aqua Broker\n(minimal GUI realm)" as AquaBroker
     database "Local SQLite\n(Derived Index)" as UnixSqlite
     folder "Immutable Records/Blobs" as UnixStore
     folder "Native Provider Stores" as UnixNative
     
-    component "Terminal Backend\n(tmux)" as UnixTmux
+    component "Terminal Backend\n(dedicated tmux -S)" as UnixTmux
     component "Opaque Task-Board\n(Managed-Session Ownership Boundary)" as UnixTb
     
     UnixCli --> UnixSqlite
@@ -50,8 +51,17 @@ node "macOS / Linux Host" as UnixHost {
     UnixDaemon --> UnixSqlite
     UnixDaemon --> UnixStore
     UnixCli --> UnixTmux : pane wrapper
+    UnixCli --> AquaBroker : functional sentinel +\nprovider-auth smoke
+    UnixDaemon --> AquaBroker : contact existing only
+    AquaBroker --> UnixTmux : create / attest on macOS
     UnixCli --> UnixTb : Official Bridge Only\n(ax does not inspect)
     UnixTb --> UnixNative : Private manager-owned\nprovider state
+    note right of AquaBroker
+      macOS only
+      Evidence binds tmux generation,
+      provider build, and macOS version
+      Background cannot create server
+    end note
 }
 
 node "Windows Host" as WinHost {
@@ -88,6 +98,7 @@ note right of Mesh
   * Explicit peer allowlist only
   * No public TCP listeners
   * No replicated credentials/sockets/PIDs
+  * tmux socket + auth state stay machine-local
   * No default payload encryption
 end note
 

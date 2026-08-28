@@ -5,6 +5,47 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.3] - 2026-08-28
+
+### Changed
+
+- Reframed implementation delivery as M0 contract foundation, M1 single-host
+  durability, M2 multi-host MVP preview with the minimum fencing/journal/
+  idempotency/status-first/crash kernel, and M3 as the first daily-driver gate.
+- Kept plugin wire contracts, internal interfaces, and their conformance harness
+  in M0 while deferring any public stable SDK until Codex and Claude validate
+  the boundary.
+- Limited `ax NAME` auto-execution to one uniquely safe non-mutating route;
+  takeover, fork, move, and ambiguity remain pure plans requiring confirmation.
+- Made `ax sync --all` immutable-convergence-only, completed M1 Git closure over
+  tracked/index/staged/unstaged/untracked/ignored-policy/symlink/submodule
+  state, and required destination broker/auth readiness before ownership commit;
+  graceful takeover requires verified source stop before that commit, while
+  force takeover uses winning-lease fencing when source stop cannot be proved
+  and still creates no runtime before ownership commits.
+
+### Security
+
+- Required a dedicated AX `tmux -S` server below a private 0700 runtime parent,
+  with symlink/path-substitution refusal and machine-local socket/auth state.
+- Split the background control plane from the minimal macOS Aqua terminal
+  broker. Background callers may contact an existing broker but may not create
+  a credential-dependent tmux server.
+- Made `launchctl managername` diagnostic only; conformance requires a
+  functional AX sentinel plus separate provider-auth smoke bound to tmux server
+  generation, provider build, and macOS version. Logout/reboot without a
+  verified GUI realm parks recovery until GUI login.
+
+### Compatibility
+
+- This specification-package patch changes no Section 1.5 contract version or
+  wire shape. Structured Error remains `1.2.0`; realm/auth refusals reuse
+  `capability_unavailable` or `target_auth_missing` with typed details, and
+  route ambiguity continues to use `interactive_choice_required`.
+- Added one strict v0.4.3 positive fixture and eight independent expected-red
+  narrowing mutations through production validator entry points. Existing
+  `v0.4.2` and earlier tags remain immutable.
+
 ## [v0.4.2] - 2026-08-28
 
 ### Fixed

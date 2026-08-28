@@ -1,13 +1,13 @@
 # Contributing to the Agent Session Manager specification
 
-This guide is for contributors editing the `v0.4.2` specification in `relux-works/agent-session-manager-spec` (public, MIT, default branch `main`). It summarizes and links to the normative rules in [SPEC.md](SPEC.md) — it does not create a second contract. When this guide and [SPEC.md](SPEC.md) disagree, [SPEC.md](SPEC.md) wins.
+This guide is for contributors editing the `v0.4.3` specification in `relux-works/agent-session-manager-spec` (public, MIT, default branch `main`). It summarizes and links to the normative rules in [SPEC.md](SPEC.md) — it does not create a second contract. When this guide and [SPEC.md](SPEC.md) disagree, [SPEC.md](SPEC.md) wins.
 
 ## Scope and publication target
 
-The repository is **specification only** in `v0.4.2`. It does not contain an `ax` product binary, and publishing the spec does not claim that any future product acceptance matrix has passed. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20](SPEC.md#20-specification-publication-and-governance).
+The repository is **specification only** in `v0.4.3`. It does not contain an `ax` product binary, and publishing the spec does not claim that any future product acceptance matrix has passed. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20](SPEC.md#20-specification-publication-and-governance).
 
 The first specification release was `v0.1.0`; the current release is
-`v0.4.2`. Current release metadata and the proposed tag must say `v0.4.2`
+`v0.4.3`. Current release metadata and the proposed tag must say `v0.4.3`
 consistently without moving or rewriting any existing release tag — see
 [Signing, release, and attribution](#signing-release-and-attribution).
 
@@ -16,7 +16,7 @@ consistently without moving or rewriting any existing release tag — see
 ### 1 — Before editing
 
 - Read the settled product and architecture decisions (attached to `TASK-260819-1h306n` and summarized in [SPEC.md §1.4](SPEC.md#14-source-authority-and-evidence) and [Appendix A.1](SPEC.md#a1-settled-decision-traceability)). Preserve those decisions unless a contradiction makes implementation impossible; record any necessary refinement explicitly.
-- Read the accepted Muse and Antigravity evidence report at [`.research/260819_muse-antigravity-native-store-contracts.md`](.research/260819_muse-antigravity-native-store-contracts.md). Its retained unknowns must remain `unknown` or `unsupported` in `v0.4.2`.
+- Read the accepted Muse and Antigravity evidence report at [`.research/260819_muse-antigravity-native-store-contracts.md`](.research/260819_muse-antigravity-native-store-contracts.md). Its retained unknowns must remain `unknown` or `unsupported` in `v0.4.3`.
 - Check [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates) — the only intentionally unsettled facts. Do not invent parity for a gated cell.
 
 ### 2 — Making changes
@@ -47,13 +47,13 @@ All changes require an independent reviewer acceptance before publication. The `
 ### Sources
 
 - **C4**: `diagrams/c4/workspace.dsl` (includes `model.dsl`, `views.dsl`, `relationships.dsl`, `styles.dsl`). The required views are `SystemContext` and `ContainerContext` — see [SPEC.md §3.1](SPEC.md#31-required-components). The exported intermediaries `diagrams/c4/structurizr-*.puml` are generated from `workspace.dsl` and are not hand-edited.
-- **PlantUML**: `diagrams/plantuml/*.puml` — the eight handwritten PlantUML sources for `v0.4.2` are `takeover.puml`, `session_state.puml`, `mesh_deployment.puml`, `cloning_components.puml`, `cloning_transaction.puml`, `session_directory_components.puml`, `session_directory_enrichment.puml`, and `session_directory_continuation.puml`. The first three cover ownership, takeover/fork, and mesh/terminal boundaries; the next two cover Section 13.14 cloning; the three Directory views cover component authority, source-local inventory/enrichment, and pure-plan continuation execution from Sections 3.1, 10.8, 13.15, and 16.7.
+- **PlantUML**: `diagrams/plantuml/*.puml` — the eight handwritten PlantUML sources for `v0.4.3` are `takeover.puml`, `session_state.puml`, `mesh_deployment.puml`, `cloning_components.puml`, `cloning_transaction.puml`, `session_directory_components.puml`, `session_directory_enrichment.puml`, and `session_directory_continuation.puml`. The first three cover ownership, takeover/fork, and mesh/terminal boundaries; the next two cover Section 13.14 cloning; the three Directory views cover component authority, source-local inventory/enrichment, and pure-plan continuation execution from Sections 3.1, 10.8, 13.15, and 16.7.
 
 Committed `*.puml` and `*.dsl` sources are part of the spec artifact and must match [§3](SPEC.md#3-architecture-and-durable-local-layout), [§10.8](SPEC.md#108-directory-records-lineage-enrichment-query-and-continuation), [§13](SPEC.md#13-end-to-end-lifecycle-flows), and [§16.7](SPEC.md#167-directory-enrichment-query-and-terminal-safety) semantically.
 
 ### Render rules
 
-- Render C4 via Structurizr and PlantUML via the PlantUML renderer. The twelve committed SVG artifacts under `diagrams/artefacts/` for `v0.4.2` are `takeover.svg`, `session_state.svg`, `mesh_deployment.svg`, `cloning_components.svg`, `cloning_transaction.svg`, `session_directory_components.svg`, `session_directory_enrichment.svg`, `session_directory_continuation.svg`, `structurizr-SystemContext.svg`, `structurizr-SystemContext-key.svg`, `structurizr-ContainerContext.svg`, and `structurizr-ContainerContext-key.svg`; see acceptance case `AC-DIAG-001` in [SPEC.md §19.4](SPEC.md#194-end-to-end-acceptance-cases).
+- Render C4 via Structurizr and PlantUML via the PlantUML renderer. The twelve committed SVG artifacts under `diagrams/artefacts/` for `v0.4.3` are `takeover.svg`, `session_state.svg`, `mesh_deployment.svg`, `cloning_components.svg`, `cloning_transaction.svg`, `session_directory_components.svg`, `session_directory_enrichment.svg`, `session_directory_continuation.svg`, `structurizr-SystemContext.svg`, `structurizr-SystemContext-key.svg`, `structurizr-ContainerContext.svg`, and `structurizr-ContainerContext-key.svg`; see acceptance case `AC-DIAG-001` in [SPEC.md §19.4](SPEC.md#194-end-to-end-acceptance-cases).
 - Committed SVGs must be visually inspected for clipping, excessive width, contrast, readable labels, and correct arrow direction, and must match the cited normative sections. A source change without a re-rendered and re-inspected SVG is incomplete.
 - The render step must use the same sources that are committed — do not render from a stale or patched copy. Record the exact render commands and tool versions in the PR/task evidence (see [Validation](#validation)).
 
@@ -91,9 +91,9 @@ The exact flags are `validate -w`, `export -w ... -format plantuml -output`, and
 
 ### What the publication validator does and does not do
 
-For `v0.4.2` publication, the accepted validation entry point must check spec structure, contract fixtures, links, JCS identity and numeric-boundary vectors, schema/path common types, Directory Node major bindings, diagram presence, publication metadata, and the frozen `v0.4.2` content baseline for the five public claim documents. The baseline uses SHA-256 over UTF-8 text with line endings normalized to LF, making the check stable across supported checkout platforms. It is a bounded release-integrity control, not general natural-language theorem proving. The semantic validator must check the retained Section 13.13 recovery gate, Section 13.14 cloning closure, and the v0.4.2 Directory contract/namespace/query/continuation/security invariants. Focused expected-red mutations must produce actionable diagnostics. For a future specification revision, update the digest map in `scripts/validate_spec.py` only after the changed prose and expected-red coverage have been reviewed. The validator **must not** require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) product-conformance result. Any validator that tries to execute product acceptance cases fails publication case `SPEC-PUB-001`. See [SPEC.md §20.2](SPEC.md#202-publication-gate).
+For `v0.4.3` publication, the accepted validation entry point must check spec structure, contract fixtures, links, JCS identity and numeric-boundary vectors, schema/path common types, Directory Node major bindings, diagram presence, publication metadata, and the frozen `v0.4.3` content baseline for the five public claim documents. The baseline uses SHA-256 over UTF-8 text with line endings normalized to LF, making the check stable across supported checkout platforms. It is a bounded release-integrity control, not general natural-language theorem proving. The semantic validator must check the retained Section 13.13 recovery gate, Section 13.14 cloning closure, Directory conformance, and the eight v0.4.3 roadmap/terminal-realm safety classes. Focused expected-red mutations must produce actionable diagnostics. For a future specification revision, update the digest map in `scripts/validate_spec.py` only after the changed prose and expected-red coverage have been reviewed. The validator **must not** require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) product-conformance result. Any validator that tries to execute product acceptance cases fails publication case `SPEC-PUB-001`. See [SPEC.md §20.2](SPEC.md#202-publication-gate).
 
-The repository scripts identify and freeze the reviewed `v0.4.2` baseline, check Directory, cloning, and retained crash/restart semantics, run focused mutations, and validate diagram freshness. Every command below must exit `0`; a nonzero result is a gate failure, never an expected success or publication evidence.
+The repository scripts identify and freeze the reviewed `v0.4.3` baseline, check Directory, cloning, retained crash/restart, and roadmap/terminal-realm semantics, run focused mutations, and validate diagram freshness. Every command below must exit `0`; a nonzero result is a gate failure, never an expected success or publication evidence.
 
 ### Exact commands
 
@@ -137,7 +137,7 @@ Observed after `TASK-260819-37heok` rework:
 | `structurizr-cli version` | `structurizr-cli 2025.11.09`, `structurizr-java 5.0.2` |
 | `plantuml -version` | `PlantUML 1.2026.6 / 6287b33` |
 
-Provider binaries are not required. Keep link, command, metadata, and terminology consistent with [SPEC.md](SPEC.md) — especially `v0.4.2` naming, repository `relux-works/agent-session-manager-spec`, default branch `main`, and capability values `available`/`conditional`/`unsupported`/`unknown`.
+Provider binaries are not required. Keep link, command, metadata, and terminology consistent with [SPEC.md](SPEC.md) — especially `v0.4.3` naming, repository `relux-works/agent-session-manager-spec`, default branch `main`, and capability values `available`/`conditional`/`unsupported`/`unknown`.
 
 ## Compatibility and versioning
 
@@ -158,12 +158,12 @@ The full gate is normative in [SPEC.md §20.2](SPEC.md#202-publication-gate). In
 1. Verify a clean checkout contains `SPEC.md`, `README.md`, `CONTRIBUTING.md`, diagram sources and rendered SVGs, `VERSION`, `CHANGELOG`, release notes, and `LICENSE` (MIT).
 2. Run the accepted validation entry point as a standalone process and retain its real exit code.
 3. Explicitly verify that the validator does not require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) result.
-4. Verify `VERSION`, current document metadata, changelog, release notes, and the proposed tag all say `v0.4.2`; verify every existing release tag is unchanged.
+4. Verify `VERSION`, current document metadata, changelog, release notes, and the proposed tag all say `v0.4.3`; verify every existing release tag is unchanged.
 5. Run the semantic crash/restart gate and focused expected-red mutations; weakening the three outcomes, boundary registry, evidence, owner uniqueness, or native-identity preservation must produce an actionable diagnostic.
 6. Prepare the exact signed-commit command with author `Ivan Oparin <oparin@me.com>` and no AI trailer; hand it to the user for explicit review. Automation MUST NOT stage or commit before human approval.
-7. Prepare the exact signed annotated `v0.4.2` tag command; hand it to the user for explicit review. Automation MUST NOT create the tag before human approval.
+7. Prepare the exact signed annotated `v0.4.3` tag command; hand it to the user for explicit review. Automation MUST NOT create the tag before human approval.
 8. After the human creates the commit and tag, verify both signatures locally.
-9. Hand the exact `git push` commands for `main` and the `v0.4.2` tag to the user; automation MUST NOT push before explicit human approval and only after accepted validation/review.
+9. Hand the exact `git push` commands for `main` and the `v0.4.3` tag to the user; automation MUST NOT push before explicit human approval and only after accepted validation/review.
 10. Verify the public repository, default branch, license, commit signature, tag signature, and release URL.
 11. Attach publication evidence to the board.
 
@@ -172,13 +172,13 @@ No automation may publish, stage, commit, tag, or push before validation accepta
 ### Signing
 
 - **Author**: `Ivan Oparin <oparin@me.com>` — this is the commit author for the release commit. No AI `Co-Authored-By` trailer is included.
-- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Both the release commit and the annotated tag `v0.4.2` must be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
+- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Both the release commit and the annotated tag `v0.4.3` must be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
 - **Human commit gate**: Automation MUST NOT stage, commit, tag, or push. It MUST stop before those operations and hand the exact `git commit`, `git tag`, and `git push` commands to the user for explicit human execution.
 - Verify locally after the human signs:
 
 ```shell
 git log --show-signature -1
-git tag --verify v0.4.2
+git tag --verify v0.4.3
 ```
 
 ### AI attribution policy
@@ -200,7 +200,7 @@ scripts/test_expected_red.sh    # expected-red mutation suite (proves both valid
 run_validation.sh               # single public whole-package validation command (contracts + diagrams + freshness)
 .github/workflows/validate.yml  # CI path with pinned documentation-tool versions (single command + expected-red)
 diagrams/README.md              # diagram render quick-reference
-.research/                      # retained provider and Directory evidence inherited by v0.4.2
+.research/                      # retained provider and Directory evidence inherited by v0.4.3
 .planning/                      # public planning and audit evidence
 STANDALONE_TO_AX_TRACEABILITY.md # non-normative standalone migration index
 

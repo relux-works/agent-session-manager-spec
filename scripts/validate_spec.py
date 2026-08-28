@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for AX v0.4.2.
+"""Public, repository-only validation for AX v0.4.3.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
-and adds publication/metadata, recovery, cloning, and Directory closure for v0.4.2.
+and adds publication/metadata, recovery, cloning, Directory, and v0.4.3 realm closure.
 Repository-only: no ax binary, provider CLI, or task-board runtime required.
 """
 
@@ -18,6 +18,7 @@ import tomllib
 from collections.abc import Iterator
 
 from validate_directory import validate as validate_directory
+from validate_v043 import validate as validate_v043
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SPEC = ROOT / "SPEC.md"
@@ -30,17 +31,18 @@ CHANGELOG = ROOT / "CHANGELOG.md"
 RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
 TRACEABILITY = ROOT / "STANDALONE_TO_AX_TRACEABILITY.md"
 DIRECTORY_FIXTURE = ROOT / "fixtures" / "session_directory_conformance.json"
+V043_FIXTURE = ROOT / "fixtures" / "v0_4_3_roadmap_terminal_realm.json"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen v0.4.2 publication prose. Hashes use UTF-8 text with all line endings
+# Frozen v0.4.3 publication prose. Hashes use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. Future
 # specification releases must deliberately replace this bounded map after the
 # semantic checks and expected-red suite have been reviewed for the new prose.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "15f1e7f15bf1c9970ba324ee4e85f974f423853b42563f926298ed1638708b66",
-    "README.md": "6af02d75e9738523d4bb5e608e78d2d7679371414527ec12b4f89d581c452987",
-    "CONTRIBUTING.md": "18d36efc5ae2beadf0aac471455dd121e2e266efc072d90652d18e0e87ccd0d7",
-    "CHANGELOG.md": "a24fc710a8a43a0b2bdba4dddc45bfa899e4c35d745d6db8c596e04cd7f86cc1",
-    "RELEASE_NOTES.md": "93fc3ac85a8ee873df765f1176744cda3c71079e492f89d3eadb43c8779df41b",
+    "SPEC.md": "bf9b1e792cfb546674a481f5fc2c585c26c440501c2a0ae75328e8e7ce0445e2",
+    "README.md": "582b55e7acae576b402a34df5d4147d9d3d59daa400fd2ba216299f95b1366d5",
+    "CONTRIBUTING.md": "3251eff22641706b2732798179fca284d4a69bbc44a86fb669247f69b36939d0",
+    "CHANGELOG.md": "5e95b29e18ed2bb31521bb26d86a6be307f0d50d6223a824de843f89ed369e4b",
+    "RELEASE_NOTES.md": "0992b875025e68262ee7fd9818b512b96556dd07ac29d19516aec29f90c421c9",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -54,16 +56,16 @@ PLANTUML_DIR = ROOT / "diagrams" / "plantuml"
 EXPECTED_SVG_SHA256 = {
     "cloning_components.svg": "d9521205b83419a37582696699f43f178ed68f57a7846a2328f9aaff11a0bfbc",
     "cloning_transaction.svg": "03ec313c341ff0903ab4aa03e59e3e43c710e293059359510497a84472019d89",
-    "mesh_deployment.svg": "0b38e885aac889795b1464ce8227ae6ae858ff2590229a9163a6701d9b99dd8e",
+    "mesh_deployment.svg": "54b23ace83d1bdb0c3313a3c8af6b2ae75707528ed72f94a4ed935e20805c268",
     "session_directory_components.svg": "fad87564d3d5877a1478728d21d321c6ef0e769798c792ade46e165cb708066a",
-    "session_directory_continuation.svg": "37fa72309376dde5cbd2c47af37c2bb4ac8fb285f610ef3698e1d768afaa6e27",
+    "session_directory_continuation.svg": "38d0e77c3ecfc5b854a65a06306cffce168e03183d5aea7f635a64a66a1c7a2a",
     "session_directory_enrichment.svg": "4b61c7b2508a07e15f1bb3ef87a94f5cb85bda6d4bf4b552333a0c1b403b8813",
     "session_state.svg": "fae377f21fd374a40c2b831c6ced4e9f61c662a993c0b550d1c9ca0f0c0be507",
     "structurizr-ContainerContext-key.svg": "8fb4a6237262cb4e01855f526741d1e752ae3063162ede47f527eab8cf705ebe",
-    "structurizr-ContainerContext.svg": "a784b2970edd70d85e513d1c50cfdede817d102c71130064874a306d64db0b0d",
+    "structurizr-ContainerContext.svg": "f7b193c502fc9564ec1ed812e77837e423ad7ed60866cb0a1bb85aa4cbe760e4",
     "structurizr-SystemContext-key.svg": "d2b29e2efb08aa803166c8be5366933359c1b136d97fa01b0eedfce8406b65d1",
-    "structurizr-SystemContext.svg": "65c9e763d5e16df8eba007583c5a6a972750c3ddb0c69b29a280073ed9b75055",
-    "takeover.svg": "b06f3553a7bc09f316c73bc83169f0b637ebfaa6ff86f9fcd576ec82162b3b55",
+    "structurizr-SystemContext.svg": "95d8a0c0ccbc88557b028d3089d616840a2cbd9d4c27f05ee50cda3a6a207d38",
+    "takeover.svg": "91afd16c0f043d7e138b2f9558b62b54a5daaea7a61792840939802e5204141f",
 }
 
 EXPECTED_HANDWRITTEN_PLANTUML = {
@@ -78,8 +80,8 @@ EXPECTED_HANDWRITTEN_PLANTUML = {
 }
 
 FROZEN_ACCEPTED_INPUT_SHA256 = {
-    "STANDALONE_TO_AX_TRACEABILITY.md": "1bc9715a33d59862d3a3cd780a4ca68ed2cf7cf73196a3adf00bd7428fb45d28",
-    "diagrams/README.md": "c8ebc4715068a1a3aaf4e8c8fe86ff637b2267270b2ba7a6c0468e3adba711a5",
+    "STANDALONE_TO_AX_TRACEABILITY.md": "f46a943225333a228ecc9be19dd40eef8aa4d146e7f301dc1d8ec8a87161620f",
+    "diagrams/README.md": "1dcfcc6b54357d0ded343365bcaed4dc7c0948f8afdbe826480a18b2b7f89773",
     "diagrams/plantuml/cloning_components.puml": "50e728af2fddbc5f3b161d661068fc33c4fe341884c4c28a8ea541c24577118a",
     "diagrams/plantuml/cloning_transaction.puml": "aadeb780d4cbbe129059dd327bd67b42c1947e13660143f7b91a06c59c99887f",
 }
@@ -270,7 +272,7 @@ def check_required_files(errors: list[str]) -> None:
         VERSION_FILE, LICENSE_FILE, CHANGELOG, RELEASE_NOTES,
         SPEC, README, CONTRIBUTING, DIAGRAMS_README,
         C4_WORKSPACE, C4_MODEL, C4_VIEWS, C4_REL, C4_STYLES,
-        RESEARCH,
+        RESEARCH, DIRECTORY_FIXTURE, V043_FIXTURE,
         ROOT / "diagrams" / "plantuml" / "takeover.puml",
         ROOT / "diagrams" / "plantuml" / "session_state.puml",
         ROOT / "diagrams" / "plantuml" / "mesh_deployment.puml",
@@ -297,7 +299,7 @@ def normalized_release_document_sha256(path: pathlib.Path) -> str:
 
 
 def check_frozen_release_baseline(errors: list[str]) -> None:
-    """Protect the reviewed v0.4.2 claim prose without pretending to parse English."""
+    """Protect the reviewed v0.4.3 claim prose without pretending to parse English."""
     expected_names = {path.name for path in PUBLIC_CLAIM_DOCUMENTS}
     configured_names = set(FROZEN_RELEASE_DOCUMENT_SHA256)
     if configured_names != expected_names:
@@ -314,7 +316,7 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual = normalized_release_document_sha256(document)
         if actual != expected:
             errors.append(
-                f"{document.name}: frozen v0.4.2 release baseline mismatch "
+                f"{document.name}: frozen v0.4.3 release baseline mismatch "
                 f"(expected LF-normalized SHA-256 {expected}, got {actual}); "
                 "review the prose and update FROZEN_RELEASE_DOCUMENT_SHA256 only for an intentional release revision"
             )
@@ -363,8 +365,8 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
 def check_publication_metadata(errors: list[str]) -> None:
     if VERSION_FILE.exists():
         v = VERSION_FILE.read_text(encoding="utf-8").strip()
-        if v != "0.4.2":
-            errors.append(f"VERSION must be exactly '0.4.2', got {v!r}")
+        if v != "0.4.3":
+            errors.append(f"VERSION must be exactly '0.4.3', got {v!r}")
     if LICENSE_FILE.exists():
         lic = LICENSE_FILE.read_text(encoding="utf-8")
         canonical_mit = """MIT License
@@ -394,6 +396,7 @@ SOFTWARE.
     if CHANGELOG.exists():
         cl = CHANGELOG.read_text(encoding="utf-8")
         for required in (
+            "## [v0.4.3] - 2026-08-28",
             "## [v0.4.2] - 2026-08-28",
             "## [v0.4.1] - 2026-08-27",
             "## [v0.4.0] - 2026-08-27",
@@ -408,8 +411,8 @@ SOFTWARE.
         # CHANGELOG must at least mention qwen prohibition (already checked), but also we check RELEASE_NOTES for full set
     if RELEASE_NOTES.exists():
         rn = RELEASE_NOTES.read_text(encoding="utf-8")
-        if "v0.4.2" not in rn:
-            errors.append("RELEASE_NOTES.md missing v0.4.2")
+        if "v0.4.3" not in rn:
+            errors.append("RELEASE_NOTES.md missing v0.4.3")
         if "specification" not in rn.lower():
             errors.append("RELEASE_NOTES.md missing specification disclosure")
         if "specification artifacts only" not in rn.lower() and "specification only" not in rn.lower():
@@ -422,7 +425,7 @@ SOFTWARE.
 
 
 def check_public_diagram_ledgers(errors: list[str]) -> None:
-    """Keep public diagram inventories aligned with the v0.4.2 release sets."""
+    """Keep public diagram inventories aligned with the v0.4.3 release sets."""
     if len(EXPECTED_HANDWRITTEN_PLANTUML) != 8 or len(EXPECTED_SVG_SHA256) != 12:
         errors.append("public diagram ledger validator configuration must contain eight PlantUML sources and twelve SVG artifacts")
         return
@@ -559,8 +562,8 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         txt = doc.read_text(encoding="utf-8")
         if "relux-works/agent-session-manager-spec" not in txt:
             errors.append(f"{doc.name}: missing repository identity relux-works/agent-session-manager-spec")
-        if "v0.4.2" not in txt and "0.4.2" not in txt:
-            errors.append(f"{doc.name}: missing version v0.4.2/0.4.2")
+        if "v0.4.3" not in txt and "0.4.3" not in txt:
+            errors.append(f"{doc.name}: missing version v0.4.3/0.4.3")
     for doc in [SPEC, README, CONTRIBUTING]:
         if doc.exists():
             txt = doc.read_text(encoding="utf-8")
@@ -597,7 +600,7 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         for marker in stale_publication_markers:
             if marker in content:
                 errors.append(
-                    f"{document.relative_to(ROOT)}: stale/internal v0.4.2 publication marker {marker!r}"
+                    f"{document.relative_to(ROOT)}: stale/internal v0.4.3 publication marker {marker!r}"
                 )
 
 
@@ -2129,6 +2132,12 @@ def main() -> int:
     failed += directory_ledger["directory_failed_groups"]
     passed += directory_ledger["directory_gate_classes"] - directory_ledger["directory_failed_groups"]
     ledger.update(directory_ledger)
+    v043_errors, v043_ledger = validate_v043(ROOT, text)
+    errors.extend(v043_errors)
+    checks += v043_ledger["v043_gate_classes"]
+    failed += v043_ledger["v043_failed_groups"]
+    passed += v043_ledger["v043_gate_classes"] - v043_ledger["v043_failed_groups"]
+    ledger.update(v043_ledger)
 
     local_link_count = 0
     for doc in [SPEC, README, CONTRIBUTING, DIAGRAMS_README]:
@@ -2160,6 +2169,7 @@ def main() -> int:
     print(f"  Ledger: provider_operations={ledger.get('provider_operations',0)}, bridge_operations={ledger.get('bridge_operations',0)}, rpc_body_operations={ledger.get('rpc_body_operations',0)}, cli_bodies={ledger.get('cli_bodies',0)}, SessionState={ledger.get('SessionState',0)}, Git_payloads={ledger.get('Git_payloads',0)}")
     print(f"  Clone ledger: contracts={ledger.get('contracts',0)}, adapter_operations={ledger.get('adapter_operations',0)}, adapter_capabilities={ledger.get('adapter_capabilities',0)}, clone_commands={ledger.get('clone_commands',0)}, clone_events={ledger.get('clone_events',0)}, clone_error_classes={ledger.get('clone_error_classes',0)}, traceability_rows={ledger.get('traceability_rows',0)}")
     print(f"  Directory ledger: gate_classes={ledger.get('directory_gate_classes',0)}, contracts={ledger.get('directory_contracts',0)}, fixture_families={ledger.get('directory_fixture_families',0)}, expected_red_minimum={ledger.get('directory_expected_red_minimum',0)}")
+    print(f"  v0.4.3 ledger: gate_classes={ledger.get('v043_gate_classes',0)}, positive_cases={ledger.get('v043_positive_cases',0)}, negative_cases={ledger.get('v043_negative_cases',0)}")
     print("  Registry evidence: parsed provider, bridge, RPC-body, CLI-body, SessionState, Git-payload, cloning contract/adapter/CLI/event/error, and standalone traceability registries; no aggregate parity count is claimed")
     return 0
 

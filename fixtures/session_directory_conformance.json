@@ -1981,7 +1981,7 @@
     "AC-DIR-SEC-001"
   ],
   "publication": {
-    "spec_version": "0.4.2",
+    "spec_version": "0.4.3",
     "frozen_digest_owner": "publication-task",
     "required_documents": [
       "SPEC.md",
@@ -1992,7 +1992,7 @@
       "VERSION",
       "STANDALONE_TO_AX_TRACEABILITY.md"
     ],
-    "claim": "AX v0.4.2 Session Directory is specification-only until conforming implementations publish tuple evidence."
+    "claim": "AX v0.4.3 Session Directory is specification-only until conforming implementations publish tuple evidence."
   },
   "closed_body_unions": {
     "directory_node_request": {

@@ -1,0 +1,229 @@
+{
+  "fixture": "ax-v0.4.3-roadmap-terminal-realm-v1",
+  "specification_release": "0.4.3",
+  "contract_semver": {
+    "changed_contracts": [],
+    "structured_error_version": "1.2.0",
+    "allowed_error_codes": [
+      "capability_unavailable",
+      "target_auth_missing"
+    ],
+    "justification": "Normative roadmap, routing, Git closure, and macOS execution-realm constraints strengthen pre-product behavior without changing an independently consumed wire shape."
+  },
+  "roadmap": [
+    {
+      "phase": "M0",
+      "product_gate": "contract-foundation",
+      "requirements": [
+        "plugin-wire-contracts",
+        "internal-plugin-interfaces",
+        "plugin-conformance-harness"
+      ],
+      "public_stable_plugin_sdk": false
+    },
+    {
+      "phase": "M1",
+      "product_gate": "single-host-durability",
+      "requirements": [
+        "complete-git-closure"
+      ],
+      "public_stable_plugin_sdk": false
+    },
+    {
+      "phase": "M2",
+      "product_gate": "multi-host-mvp-preview",
+      "requirements": [
+        "lease-fencing",
+        "durable-journal",
+        "idempotency",
+        "status-first-recovery",
+        "crash-boundary-kernel"
+      ],
+      "public_stable_plugin_sdk": false
+    },
+    {
+      "phase": "M3",
+      "product_gate": "first-daily-driver",
+      "requirements": [
+        "daily-driver-acceptance-matrix"
+      ],
+      "public_stable_plugin_sdk": false
+    }
+  ],
+  "positive_cases": [
+    {
+      "id": "REALM-EXISTING-BROKER-POS",
+      "production_entrypoint": "terminal.ensure",
+      "facts": {
+        "caller_realm": "background",
+        "broker_state": "existing",
+        "credential_dependent_server_action": "contact-only"
+      },
+      "expected": "allow"
+    },
+    {
+      "id": "REALM-FUNCTIONAL-EVIDENCE-POS",
+      "production_entrypoint": "terminal.attest",
+      "facts": {
+        "launchctl_managername": "Aqua",
+        "functional_sentinel": true,
+        "provider_auth_smoke": true,
+        "evidence_binding": [
+          "macos_version",
+          "provider_build",
+          "tmux_server_generation"
+        ]
+      },
+      "expected": "allow"
+    },
+    {
+      "id": "ROUTE-UNIQUE-NONMUTATING-POS",
+      "production_entrypoint": "ax NAME",
+      "facts": {
+        "candidate_count": 1,
+        "route": "remote_attach",
+        "mutates_ownership": false,
+        "launches_runtime": false
+      },
+      "expected": "auto-execute"
+    },
+    {
+      "id": "SYNC-IMMUTABLE-POS",
+      "production_entrypoint": "ax sync --all",
+      "facts": {
+        "converges": [
+          "immutable-objects",
+          "policy-allowed-projections"
+        ],
+        "changes_ownership": false,
+        "launches_runtime": false
+      },
+      "expected": "allow"
+    },
+    {
+      "id": "GIT-CLOSURE-POS",
+      "production_entrypoint": "workspace.capture",
+      "facts": {
+        "closure": [
+          "dirty-index",
+          "ignored-policy",
+          "staged",
+          "submodules",
+          "symlinks",
+          "tracked",
+          "unstaged",
+          "untracked"
+        ]
+      },
+      "expected": "allow"
+    },
+    {
+      "id": "TAKEOVER-PREFLIGHT-POS",
+      "production_entrypoint": "takeover.execute",
+      "facts": {
+        "graceful_ordering": [
+          "destination-broker-auth-ready",
+          "fenced-source-stop",
+          "ownership-commit",
+          "destination-runtime-create"
+        ],
+        "force_ordering": [
+          "destination-broker-auth-ready",
+          "winning-force-lease-commit",
+          "destination-runtime-create",
+          "prior-owner-logically-fenced"
+        ],
+        "force_verified_source_stop": false
+      },
+      "expected": "allow"
+    },
+    {
+      "id": "SOCKET-LOCAL-EXCLUSION-POS",
+      "production_entrypoint": "replication.select",
+      "facts": {
+        "tmux_socket": "machine-local-excluded",
+        "provider_auth_state": "machine-local-excluded"
+      },
+      "expected": "allow"
+    },
+    {
+      "id": "SDK-INTERNAL-CONTRACT-POS",
+      "production_entrypoint": "release.admit",
+      "facts": {
+        "phase": "M0",
+        "plugin_wire_contract": "versioned-internal",
+        "conformance_harness": true,
+        "public_stable_sdk": false
+      },
+      "expected": "allow"
+    }
+  ],
+  "negative_cases": [
+    {
+      "id": "REALM-UNSAFE-SERVER-CREATE",
+      "production_entrypoint": "terminal.ensure",
+      "mutation": "background caller creates a credential-dependent tmux server",
+      "expected_error": "capability_unavailable"
+    },
+    {
+      "id": "REALM-SENTINEL-ONLY",
+      "production_entrypoint": "terminal.attest",
+      "mutation": "functional sentinel passes without a separate provider-auth smoke",
+      "expected_error": "target_auth_missing"
+    },
+    {
+      "id": "ROUTE-IMPLICIT-MUTATION",
+      "production_entrypoint": "ax NAME",
+      "mutation": "a uniquely ranked takeover, fork, or move is executed without confirmation",
+      "expected_error": "interactive_choice_required"
+    },
+    {
+      "id": "SYNC-OWNERSHIP-MUTATION",
+      "production_entrypoint": "ax sync --all",
+      "mutation": "sync changes ownership or launches a runtime",
+      "expected_error": "capability_unavailable"
+    },
+    {
+      "id": "GIT-INCOMPLETE-CLOSURE",
+      "production_entrypoint": "workspace.capture",
+      "mutation": "capture omits any tracked, dirty-index, staged, unstaged, untracked, ignored-policy, symlink, or submodule state",
+      "expected_error": "workspace_conflict"
+    },
+    {
+      "id": "TAKEOVER-UNSAFE-PREFLIGHT-ORDER",
+      "production_entrypoint": "takeover.execute",
+      "mutation": "ownership commits before destination broker and provider authentication readiness",
+      "expected_error": "target_auth_missing"
+    },
+    {
+      "id": "SOCKET-REPLICATION",
+      "production_entrypoint": "replication.select",
+      "mutation": "tmux socket or provider authentication state enters a transfer manifest",
+      "expected_error": "capability_unavailable"
+    },
+    {
+      "id": "SDK-PREMATURE-STABILITY",
+      "production_entrypoint": "release.admit",
+      "mutation": "M0 advertises a public stable plugin SDK before Codex and Claude boundary validation",
+      "expected_error": "capability_unavailable"
+    }
+  ],
+  "terminal_realm": {
+    "backend": "tmux",
+    "socket_mode": "dedicated--S",
+    "runtime_parent_mode": "0700",
+    "reject_symlink_or_path_substitution": true,
+    "socket_replication": "forbidden",
+    "managername_role": "diagnostic-hint-only",
+    "required_evidence": [
+      "functional-ax-sentinel",
+      "provider-auth-smoke"
+    ],
+    "evidence_binding": [
+      "macos-version",
+      "provider-build",
+      "tmux-server-generation"
+    ],
+    "logout_or_reboot_without_verified_gui_realm": "park-until-gui-login"
+  }
+}
