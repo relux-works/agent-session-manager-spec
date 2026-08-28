@@ -36,10 +36,10 @@ PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
 # specification releases must deliberately replace this bounded map after the
 # semantic checks and expected-red suite have been reviewed for the new prose.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "bdc4e5a95763cfa0df71a9a574968877102b32aac610b3b4344f836889cfec21",
+    "SPEC.md": "15f1e7f15bf1c9970ba324ee4e85f974f423853b42563f926298ed1638708b66",
     "README.md": "6af02d75e9738523d4bb5e608e78d2d7679371414527ec12b4f89d581c452987",
     "CONTRIBUTING.md": "18d36efc5ae2beadf0aac471455dd121e2e266efc072d90652d18e0e87ccd0d7",
-    "CHANGELOG.md": "02682df54479e034d14ebcad9f865bfe6ebbfa93c86c102b4ee488b45b015c69",
+    "CHANGELOG.md": "a24fc710a8a43a0b2bdba4dddc45bfa899e4c35d745d6db8c596e04cd7f86cc1",
     "RELEASE_NOTES.md": "93fc3ac85a8ee873df765f1176744cda3c71079e492f89d3eadb43c8779df41b",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"

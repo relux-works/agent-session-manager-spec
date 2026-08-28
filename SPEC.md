@@ -3019,6 +3019,42 @@ serve v1 concurrently for at least one stable specification release. Peers
 choose the highest mutually supported major and fail closed when no major is
 shared.
 
+A fresh adapter invocation has no trusted manifest from which to discover the
+peer's supported majors. The caller MUST therefore enumerate its locally
+supported Directory Node majors in strictly descending numeric order and make
+one <code>manifest</code> request for the highest not yet attempted major. Each
+attempt MUST launch a fresh process; a process that returned or failed an
+attempt is terminated and reaped and MUST NOT be reused for a lower major. The
+request binds <code>protocol_version</code> and request
+<code>schema_version</code> to the exact attempted <code>N.0.0</code> version and
+uses an empty body.
+
+There is exactly one downgrade trigger. The attempted process MUST return one
+well-framed Directory Node failure response whose <code>protocol</code>,
+<code>protocol_version</code>, <code>request_id</code>, and
+<code>operation=manifest</code> exactly echo the request and whose response
+<code>schema_version</code> is the bound <code>1.0.0</code>, whose Structured
+Error 1.2 has
+<code>code=incompatible_protocol</code>, <code>exit_code=6</code>, and
+<code>retryable=false</code>, and then exit with status 6. Only that complete
+response-plus-exit tuple authorizes the caller to launch a fresh process for
+the next lower locally supported major. The response is negotiation evidence,
+not trusted manifest data and not an ordinary retryable operation failure.
+
+Success requires one well-framed success response with every echo exact, a
+complete schema-valid manifest whose <code>supported_protocol_versions</code>
+contains the exact selected version, and process exit 0. A wrong or missing
+echo, malformed/partial/extra frame, invalid UTF-8/JSON/schema, timeout,
+signal, nonmatching exit status, authentication/allowlist failure, integrity
+failure, or any error other than the exact downgrade tuple is terminal and
+MUST NOT cause a lower-major attempt. The caller MUST NOT reinterpret a frame,
+manifest, platform token, request body, or error from one major as another.
+If every locally supported major returns the exact downgrade tuple, the caller
+terminates with its own Structured Error 1.2
+<code>incompatible_protocol</code>, exit 6, and no trusted manifest or partial
+result. These rules select v2 directly, permit v2-to-v1 fallback, support a
+v1-only caller/peer, and terminate deterministically when no major is common.
+
 Transport is one request and one response as line-delimited JSON over
 authenticated local stdio or allowlisted AX SSH. One line is at most 8 MiB.
 The request envelope contains exactly <code>schema</code>,
@@ -10211,10 +10247,13 @@ move uses the successful/partial outcome and exit 15 without pretending the
 target failed.
 
 For Directory Node 1, Directory Node 2, and RPC 3, a syntactically valid
-supported-major request receives one failure envelope with Error 1.2. An unsupported major,
-unparseable/oversize first frame, missing framing identity, or response that
-cannot be framed causes close/termination without trusting a peer/child error;
-the caller emits a local 1.2 <code>incompatible_protocol</code> or
+supported-major request receives one failure envelope with Error 1.2. The sole
+unsupported-major exception is a fresh Directory Node <code>manifest</code>
+bootstrap attempt, which uses the exact downgrade response/exit tuple in
+Section 7.9. Every other unsupported major, unparseable/oversize first frame,
+missing framing identity, or response that cannot be framed causes
+close/termination without trusting a peer/child error; the caller emits a local
+1.2 <code>incompatible_protocol</code> or
 <code>adapter_protocol_violation</code>/<code>transport_failure</code> as
 applicable. Error is a static binding and never a hello-contract key.
 

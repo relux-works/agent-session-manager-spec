@@ -22,7 +22,7 @@ NORMATIVE_SCHEMA_SECTIONS = {
     ),
     "Directory Node protocol": (
         "### 7.9 Companion Directory Node protocol", "## 8.",
-        "d5c69eaf49d00ef48fcf4f3086b1cdd7e887ce8bdf8f33abd2e5f1ebac0c1c3f",
+        "281dcffdb097544c191e57564ee054514f074050c8d6dc192b9e280fe701fa54",
     ),
     "directory records and query": (
         "### 10.8 Directory records, lineage, enrichment, query, and continuation", "## 11.",
@@ -119,6 +119,10 @@ OPERATION_TRANSITIONS = {
 }
 
 DIGEST_RE = re.compile(r"sha256:[0-9a-f]{64}\Z")
+SEMVER_RE = re.compile(
+    r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?\Z"
+)
 TIMESTAMP_RE = re.compile(
     r"[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])"
     r"T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\."
@@ -142,15 +146,73 @@ DIRECTORY_NODE_PROTOCOL_BINDINGS = {
 DIRECTORY_NODE_NEGOTIATION = {
     "preference": "highest_mutual_major",
     "no_shared_major": "incompatible_protocol",
+    "no_shared_major_exit_code": 6,
     "cross_major_coercion": False,
+    "fresh_process_per_attempt": True,
+    "manifest_success_exit_code": 0,
+    "downgrade_trigger": {
+        "operation": "manifest",
+        "code": "incompatible_protocol",
+        "exit_code": 6,
+        "retryable": False,
+        "require_exact_echo": True,
+    },
+    "non_downgrade_failures": [
+        "authentication_failure",
+        "integrity_failure",
+        "malformed_frame",
+        "operation_error",
+        "wrong_echo",
+    ],
     "v1_wsl2": "unrepresentable",
+}
+DIRECTORY_NODE_NEGOTIATION_CASES = {
+    "v2-selected": {"caller_supported_majors": [2, 1], "peer_supported_majors": [2, 1]},
+    "v2-to-v1": {"caller_supported_majors": [2, 1], "peer_supported_majors": [1]},
+    "v1-only": {"caller_supported_majors": [1], "peer_supported_majors": [1]},
+    "no-common-major": {"caller_supported_majors": [2, 1], "peer_supported_majors": [3]},
+}
+DIRECTORY_NODE_NEGOTIATION_ATTEMPT_FIELDS = {
+    "process_id",
+    "request_id",
+    "request_major",
+    "request_schema",
+    "request_schema_version",
+    "request_protocol",
+    "request_protocol_version",
+    "request_operation",
+    "request_deadline_ms",
+    "request_body",
+    "response_kind",
+    "response_echo_major",
+    "response_schema",
+    "response_schema_version",
+    "response_echo_protocol",
+    "response_echo_protocol_version",
+    "response_echo_request_id",
+    "response_echo_operation",
+    "manifest_supported_protocol_versions",
+    "error",
+    "exit_code",
+}
+DIRECTORY_CAPABILITIES = {
+    "directory_discovery",
+    "directory_incremental_scan",
+    "directory_head_digest",
+    "directory_tail_preview",
+    "native_title_read",
+    "native_runtime_observation",
+    "existing_session_adoption",
+    "native_resume",
 }
 
 # These rules are keyed by the immutable schema and an exact JSON path. They
 # deliberately do not infer a type from a value prefix or a field-name suffix:
 # a malformed value must still be checked against its declared contract type.
-# ``*`` descends through every member of an array. Nullable rules validate null
-# in their tagged/nullable context rather than treating it as a missing type.
+# ``*`` descends through every member of an array. The optional fourth rule
+# member names a nullable ancestor separately from leaf nullability: a null
+# parent may stop traversal, but every member is still required and non-null
+# when that parent is an object.
 COMMON_TYPE_RULES = {
     "urn:ax:schema:environment-observation": [
         ("host_id", "uuidv7", False),
@@ -158,6 +220,10 @@ COMMON_TYPE_RULES = {
         ("backend_realm_fingerprint", "digest", False),
         ("platform", "ax_platform", False),
         ("observed_at", "timestamp", False),
+        ("capabilities.{}.status", "enum:available|conditional|unavailable|unknown", False),
+        ("capabilities.{}.reason_code", "string", True),
+        ("capabilities.{}.evidence_ids", "sorted_unique:digest", False),
+        ("capabilities.{}.observed_at", "timestamp", False),
     ],
     "urn:ax:schema:native-session-observation": [
         ("instance_id", "digest", False),
@@ -181,6 +247,7 @@ COMMON_TYPE_RULES = {
         ("scan_root_authority_ids", "sorted_unique:digest", False),
         ("adapter_builds", "sorted_unique:jcs", False),
         ("adapter_builds.*.executable_sha256", "digest", False),
+        ("adapter_builds.*.adapter_version", "semver", False),
         ("started_at", "timestamp", False),
         ("completed_at", "timestamp", False),
         ("error_codes", "sorted_unique:string", False),
@@ -258,12 +325,21 @@ COMMON_TYPE_RULES = {
         ("source_host_id", "uuidv7", False),
         ("source_observation_id", "digest", False),
         ("source_head_digest", "digest", False),
+        ("source_lease.epoch", "positive_uint53", False, "source_lease"),
+        ("source_lease.lease_id", "uuidv4", False, "source_lease"),
+        ("source_lease.holder_host_id", "uuidv7", False, "source_lease"),
         ("source_checkpoint_id", "digest", True),
         ("source_runtime.evidence_id", "digest", True),
         ("source_runtime.observed_at", "timestamp", False),
         ("target.host_id", "uuidv7", False),
         ("target.installation_id", "digest", False),
         ("target.backend_realm_fingerprint", "digest", False),
+        ("target.environment_tuple.environment_id", "nonempty_string", False),
+        ("target.environment_tuple.environment_version", "nonempty_string", False),
+        ("target.environment_tuple.platform", "ax_platform", False),
+        ("target.environment_tuple.architecture", "architecture", False),
+        ("target.environment_tuple.store_schema_fingerprint", "digest", False),
+        ("target.environment_tuple.adapter_version", "semver", False),
         ("workspace.workspace_group_id", "uuidv7", True),
         ("workspace.workspace_record_id", "digest", True),
         ("workspace.checkpoint_id", "digest", True),
@@ -304,6 +380,12 @@ COMMON_TYPE_RULES = {
         ("validated_target.target.host_id", "uuidv7", False),
         ("validated_target.target.installation_id", "digest", False),
         ("validated_target.target.backend_realm_fingerprint", "digest", False),
+        ("validated_target.target.environment_tuple.environment_id", "nonempty_string", False),
+        ("validated_target.target.environment_tuple.environment_version", "nonempty_string", False),
+        ("validated_target.target.environment_tuple.platform", "ax_platform", False),
+        ("validated_target.target.environment_tuple.architecture", "architecture", False),
+        ("validated_target.target.environment_tuple.store_schema_fingerprint", "digest", False),
+        ("validated_target.target.environment_tuple.adapter_version", "semver", False),
         ("validated_target.environment_observation_id", "digest", False),
         ("validated_target.capability_evidence_ids", "sorted_unique:digest", False),
         ("validated_target.workspace.workspace_group_id", "uuidv7", True),
@@ -339,6 +421,9 @@ CLOSED_OBJECTS = {
     "directory_operation_receipt": ["schema", "schema_version", "directory_receipt_id", "previous_directory_receipt_id", "operation_id", "plan_id", "request_digest", "actor", "initiating_host_id", "responsible_host_id", "step_index", "step_id", "idempotency_key", "validated_source", "validated_target", "effect_receipt_ids", "state", "safe_retry", "error", "durable_effects", "compensations", "outcome", "created_at", "extensions"],
     "directory_query": ["schema", "schema_version", "query_id", "operations", "caller", "extensions"],
     "capability_result": ["status", "reason_code", "evidence_ids", "observed_at", "extensions"],
+    "environment_tuple": ["environment_id", "environment_version", "platform", "architecture", "store_schema_fingerprint", "adapter_version"],
+    "lease_expectation": ["epoch", "lease_id", "holder_host_id"],
+    "annotation_text_payload": ["text"],
     "directory_node_limits": ["max_frame_bytes", "max_scan_instances", "max_inventory_take", "max_excerpt_count", "max_excerpt_bytes", "max_enrichment_events", "max_enrichment_bytes", "extensions"],
     "preview_excerpt": ["role", "ordinal", "text", "source_event_id", "truncated", "extensions"],
     "management_binding": ["state", "session_id", "provider_identity_record_id", "evidence_ids", "extensions"],
@@ -385,6 +470,56 @@ SELF_SCHEMA_SHAPES = {
     "urn:ax:schema:session-enrichment-job-receipt": "enrichment_job_receipt",
     "urn:ax:schema:session-continuation-plan": "continuation_plan",
     "urn:ax:schema:session-directory-operation-receipt": "directory_operation_receipt",
+}
+
+# Every closed object reachable from an immutable positive vector is validated
+# at its exact path. Array and map wildcards are intentionally distinct: a
+# dict cannot impersonate an array (or vice versa) and skip child validation.
+# Nullable applies to the object itself, never to omitted members.
+RECURSIVE_SHAPE_RULES = {
+    "urn:ax:schema:environment-observation": [
+        ("capabilities", "capability_result", "map", False, DIRECTORY_CAPABILITIES),
+    ],
+    "urn:ax:schema:native-session-observation": [
+        ("workspace_identity", "workspace_identity", "object", True, None),
+        ("message_counts", "message_counts", "object", False, None),
+    ],
+    "urn:ax:schema:session-inventory-batch": [
+        ("adapter_builds", "adapter_build", "array", False, None),
+    ],
+    "urn:ax:schema:conversation-lineage-link": [],
+    "urn:ax:schema:session-annotation": [
+        ("payload", "annotation_text_payload", "object", False, None),
+        ("generator", "generator_identity", "object", True, None),
+        ("redaction_summary", "redaction_summary", "object", False, None),
+    ],
+    "urn:ax:schema:session-enrichment-profile": [
+        ("generator", "generator_identity", "object", False, None),
+    ],
+    "urn:ax:schema:session-enrichment-job-request": [],
+    "urn:ax:schema:session-enrichment-job-receipt": [
+        ("redaction_summary", "redaction_summary", "object", False, None),
+        ("generator", "generator_identity", "object", False, None),
+        ("usage", "usage_summary", "object", True, None),
+    ],
+    "urn:ax:schema:session-continuation-plan": [
+        ("source_lease", "lease_expectation", "object", True, None),
+        ("source_runtime", "runtime_expectation", "object", False, None),
+        ("target", "directory_target", "object", False, None),
+        ("target.environment_tuple", "environment_tuple", "object", False, None),
+        ("workspace", "workspace_route", "object", False, None),
+        ("steps", "continuation_step", "array", False, None),
+        ("contract_assertions", "contract_assertion", "array", False, None),
+    ],
+    "urn:ax:schema:session-directory-operation-receipt": [
+        ("validated_source", "validated_source", "object", False, None),
+        ("validated_source.runtime", "runtime_expectation", "object", False, None),
+        ("validated_target", "validated_target", "object", False, None),
+        ("validated_target.target", "directory_target", "object", False, None),
+        ("validated_target.target.environment_tuple", "environment_tuple", "object", False, None),
+        ("validated_target.workspace", "workspace_route", "object", False, None),
+        ("validated_target.contract_assertions", "contract_assertion", "array", False, None),
+    ],
 }
 
 NODE_REQUEST_BODIES = {
@@ -539,6 +674,16 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
                 found.extend(child_found)
                 missing.extend(child_missing)
             return found, missing
+        if head == "{}":
+            if not isinstance(value, dict):
+                return [], [(location, value is None)]
+            found = []
+            missing = []
+            for key, child in value.items():
+                child_found, child_missing = path_values(child, tuple(tail), f"{location}[{key!r}]")
+                found.extend(child_found)
+                missing.extend(child_missing)
+            return found, missing
         if not isinstance(value, dict):
             return [], [(location, value is None)]
         if head not in value:
@@ -579,6 +724,19 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
                 need("self_id_jcs", calendar_valid, f"timestamp is not a real UTC calendar instant at {location}")
         elif kind == "ax_platform":
             need("self_id_jcs", value in AX_PLATFORMS, f"platform must use the AX enum macos|linux|wsl2|windows at {location}")
+        elif kind == "architecture":
+            need("self_id_jcs", value in {"amd64", "arm64"}, f"schema-directed architecture validation failed at {location}")
+        elif kind == "semver":
+            need("self_id_jcs", isinstance(value, str) and bool(SEMVER_RE.fullmatch(value)), f"schema-directed SemVer validation failed at {location}")
+        elif kind == "uint53":
+            need("self_id_jcs", isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 9007199254740991, f"schema-directed uint53 validation failed at {location}")
+        elif kind == "positive_uint53":
+            need("self_id_jcs", isinstance(value, int) and not isinstance(value, bool) and 0 < value <= 9007199254740991, f"schema-directed positive uint53 validation failed at {location}")
+        elif kind.startswith("enum:"):
+            allowed = kind.split(":", 1)[1].split("|")
+            need("self_id_jcs", value in allowed, f"schema-directed enum validation failed at {location}")
+        elif kind == "nonempty_string":
+            need("self_id_jcs", isinstance(value, str) and bool(value), f"schema-directed non-empty string validation failed at {location}")
         elif kind == "string":
             need("self_id_jcs", isinstance(value, str), f"schema-directed string validation failed at {location}")
         else:
@@ -612,16 +770,88 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         need("self_id_jcs", rules is not None, f"schema-directed common-type rule registry missing for {schema}")
         if rules is None:
             return
-        for path, kind, nullable in rules:
+        for rule in rules:
+            path, kind, nullable = rule[:3]
+            nullable_ancestor = rule[3] if len(rule) == 4 else None
             values, missing_locations = path_values(canonical_input, tuple(path.split(".")), location)
             for missing_location, null_parent in missing_locations:
                 need(
                     "self_id_jcs",
-                    nullable and null_parent,
+                    (nullable_ancestor is None and nullable and null_parent)
+                    or (
+                        null_parent
+                        and nullable_ancestor is not None
+                        and missing_location == f"{location}.{nullable_ancestor}"
+                    ),
                     f"required schema-directed path missing at {missing_location}",
                 )
             for value, value_location in values:
                 validate_typed_value(kind, value, nullable, value_location)
+
+    def validate_closed_instance(value: object, shape: str, location: str) -> None:
+        expected_members = CLOSED_OBJECTS.get(shape)
+        need("self_id_jcs", expected_members is not None, f"recursive closed shape registry missing for {shape}")
+        if expected_members is None:
+            return
+        need("self_id_jcs", isinstance(value, dict), f"recursive closed shape {shape} must be an object at {location}")
+        if not isinstance(value, dict):
+            return
+        need(
+            "self_id_jcs",
+            set(value) == set(expected_members),
+            f"recursive closed shape {shape} member mismatch at {location}",
+        )
+        if "extensions" in expected_members:
+            need(
+                "self_id_jcs",
+                isinstance(value.get("extensions"), dict),
+                f"recursive closed shape {shape} extensions must be an object at {location}.extensions",
+            )
+        if shape == "capability_result":
+            status = value.get("status")
+            reason = value.get("reason_code")
+            need(
+                "self_id_jcs",
+                (status == "available" and reason is None)
+                or (status in {"conditional", "unavailable", "unknown"} and isinstance(reason, str) and bool(reason)),
+                f"CapabilityResult status/reason conditional mismatch at {location}",
+            )
+
+    def validate_recursive_shapes(schema: str, canonical_input: dict[str, object], location: str) -> None:
+        rules = RECURSIVE_SHAPE_RULES.get(schema)
+        need("self_id_jcs", rules is not None, f"recursive closed-shape rule registry missing for {schema}")
+        if rules is None:
+            return
+        for path, shape, container, nullable, exact_keys in rules:
+            values, missing_locations = path_values(canonical_input, tuple(path.split(".")), location)
+            for missing_location, _ in missing_locations:
+                need("self_id_jcs", False, f"required recursive closed shape missing at {missing_location}")
+            for value, value_location in values:
+                if value is None:
+                    need("self_id_jcs", nullable, f"null recursive closed shape forbidden at {value_location}")
+                    continue
+                if container == "object":
+                    validate_closed_instance(value, shape, value_location)
+                    continue
+                if container == "array":
+                    need("self_id_jcs", isinstance(value, list), f"recursive closed shape array required at {value_location}")
+                    if isinstance(value, list):
+                        for index, child in enumerate(value):
+                            validate_closed_instance(child, shape, f"{value_location}[{index}]")
+                    continue
+                if container == "map":
+                    need("self_id_jcs", isinstance(value, dict), f"recursive closed shape map required at {value_location}")
+                    if isinstance(value, dict):
+                        if exact_keys is not None:
+                            need(
+                                "self_id_jcs",
+                                set(value) == exact_keys,
+                                f"recursive closed shape map cardinality/key mismatch at {value_location}",
+                            )
+                        for key, child in value.items():
+                            validate_closed_instance(child, shape, f"{value_location}[{key!r}]")
+                    continue
+                need("self_id_jcs", False, f"unknown recursive closed shape container {container} at {value_location}")
 
     for row in vectors:
         if not isinstance(row, dict):
@@ -636,6 +866,7 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
             continue
         need("self_id_jcs", canonical_input.get("schema") == schema and canonical_input.get("schema_version") == "1.0.0", f"identity vector canonical_input schema/version mismatch for {schema}")
         validate_common_values(schema, canonical_input, f"identity_vectors[{schema}].canonical_input")
+        validate_recursive_shapes(schema, canonical_input, f"identity_vectors[{schema}].canonical_input")
         validate_typed_value("digest", row.get("expected_id"), False, f"identity_vectors[{schema}].expected_id")
         need("self_id_jcs", self_field not in canonical_input, f"identity vector canonical_input must omit only self field {self_field} for {schema}")
         expected_members = set(CLOSED_OBJECTS[SELF_SCHEMA_SHAPES[schema]]) - {self_field}
@@ -688,6 +919,120 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     need("directory_node", protocol_bindings.get("2.0.0", {}).get("probe_platforms") == AX_PLATFORMS, "Directory Node 2 probe platform registry must be macos|linux|wsl2|windows")
     need("directory_node", protocol_bindings == DIRECTORY_NODE_PROTOCOL_BINDINGS, "Directory Node protocol/request major binding mismatch")
     need("directory_node", node.get("negotiation") == DIRECTORY_NODE_NEGOTIATION, "Directory Node dual-stack negotiation registry mismatch")
+    negotiation_cases = node.get("negotiation_cases", [])
+    case_ids = [case.get("case_id") for case in negotiation_cases if isinstance(case, dict)]
+    need(
+        "directory_node",
+        len(negotiation_cases) == len(DIRECTORY_NODE_NEGOTIATION_CASES)
+        and set(case_ids) == set(DIRECTORY_NODE_NEGOTIATION_CASES)
+        and len(case_ids) == len(set(case_ids)),
+        "Directory Node bootstrap fixtures must contain exact v2-selected, v2-to-v1, v1-only, and no-common-major cases",
+    )
+    for case in negotiation_cases if isinstance(negotiation_cases, list) else []:
+        if not isinstance(case, dict):
+            need("directory_node", False, "Directory Node bootstrap fixture case must be an object")
+            continue
+        case_id = case.get("case_id", "unknown")
+        caller_majors = case.get("caller_supported_majors")
+        peer_majors = case.get("peer_supported_majors")
+        attempts = case.get("attempts")
+        caller_valid = isinstance(caller_majors, list) and bool(caller_majors) and all(type(major) is int and major in {1, 2} for major in caller_majors)
+        caller_valid = caller_valid and caller_majors == sorted(set(caller_majors), reverse=True)
+        peer_valid = isinstance(peer_majors, list) and bool(peer_majors) and all(type(major) is int and major > 0 for major in peer_majors)
+        peer_valid = peer_valid and peer_majors == sorted(set(peer_majors), reverse=True)
+        need("directory_node", caller_valid, f"Directory Node bootstrap {case_id} caller majors must be unique descending supported majors")
+        need("directory_node", peer_valid, f"Directory Node bootstrap {case_id} peer majors must be unique descending positive majors")
+        scenario = DIRECTORY_NODE_NEGOTIATION_CASES.get(case_id)
+        need(
+            "directory_node",
+            scenario is not None
+            and caller_majors == scenario["caller_supported_majors"]
+            and peer_majors == scenario["peer_supported_majors"],
+            f"Directory Node bootstrap {case_id} must match its exact named caller/peer scenario",
+        )
+        if not caller_valid or not peer_valid or not isinstance(attempts, list):
+            need("directory_node", False, f"Directory Node bootstrap {case_id} attempts must be executable")
+            continue
+        first_mutual = next((major for major in caller_majors if major in peer_majors), None)
+        attempted_majors = caller_majors[: caller_majors.index(first_mutual) + 1] if first_mutual is not None else caller_majors
+        need("directory_node", len(attempts) == len(attempted_majors), f"Directory Node bootstrap {case_id} must terminate at first mutual major or after exhaustion")
+        process_ids = [attempt.get("process_id") for attempt in attempts if isinstance(attempt, dict)]
+        need(
+            "directory_node",
+            len(process_ids) == len(attempts) and len(process_ids) == len(set(process_ids)) and all(isinstance(value, str) and value for value in process_ids),
+            f"Directory Node bootstrap {case_id} must use a fresh process for every attempt",
+        )
+        for index, expected_major in enumerate(attempted_majors):
+            if index >= len(attempts) or not isinstance(attempts[index], dict):
+                continue
+            attempt = attempts[index]
+            request_id = attempt.get("request_id")
+            expected_version = f"{expected_major}.0.0"
+            need(
+                "directory_node",
+                set(attempt) == DIRECTORY_NODE_NEGOTIATION_ATTEMPT_FIELDS,
+                f"Directory Node bootstrap {case_id} attempt {index + 1} must contain the exact closed attempt fields",
+            )
+            valid_request = (
+                valid_uuid(request_id, 7)
+                and attempt.get("request_schema") == "urn:ax:schema:session-directory-node-request"
+                and attempt.get("request_operation") == "manifest"
+                and type(attempt.get("request_deadline_ms")) is int
+                and 1 <= attempt.get("request_deadline_ms") <= 3600000
+                and attempt.get("request_body") == {}
+            )
+            need("directory_node", valid_request, f"Directory Node bootstrap {case_id} attempt {index + 1} request must be closed schema-valid manifest input")
+            exact_echo = (
+                type(attempt.get("request_major")) is int
+                and attempt.get("request_major") == expected_major
+                and attempt.get("request_protocol") == "urn:ax:protocol:session-directory-node"
+                and attempt.get("request_protocol_version") == expected_version
+                and attempt.get("request_schema_version") == expected_version
+                and type(attempt.get("response_echo_major")) is int
+                and attempt.get("response_echo_major") == expected_major
+                and attempt.get("response_schema") == "urn:ax:schema:session-directory-node-response"
+                and attempt.get("response_echo_protocol") == attempt.get("request_protocol")
+                and attempt.get("response_echo_protocol_version") == attempt.get("request_protocol_version")
+                and attempt.get("response_schema_version") == "1.0.0"
+                and attempt.get("response_echo_request_id") == request_id
+                and attempt.get("response_echo_operation") == attempt.get("request_operation")
+            )
+            need("directory_node", exact_echo, f"Directory Node bootstrap {case_id} attempt {index + 1} must exactly echo request identity")
+            if expected_major in peer_majors:
+                supported_versions = attempt.get("manifest_supported_protocol_versions")
+                valid_success = (
+                    attempt.get("response_kind") == "manifest_success"
+                    and attempt.get("error") is None
+                    and type(attempt.get("exit_code")) is int
+                    and attempt.get("exit_code") == 0
+                    and supported_versions == sorted(f"{major}.0.0" for major in peer_majors if major in {1, 2})
+                )
+                need("directory_node", valid_success, f"Directory Node bootstrap {case_id} selected-major manifest success framing mismatch")
+            else:
+                valid_downgrade = (
+                    attempt.get("response_kind") == "unsupported_major"
+                    and attempt.get("manifest_supported_protocol_versions") is None
+                    and attempt.get("error") == {"code": "incompatible_protocol", "exit_code": 6, "retryable": False}
+                    and type(attempt.get("exit_code")) is int
+                    and attempt.get("exit_code") == 6
+                )
+                need("directory_node", valid_downgrade, f"Directory Node bootstrap {case_id} downgrade requires exact incompatible_protocol/6/non-retryable response and exit")
+        expected_error = None if first_mutual is not None else "incompatible_protocol"
+        expected_exit = 0 if first_mutual is not None else 6
+        selected_major_valid = (
+            case.get("expected_selected_major") is None
+            if first_mutual is None
+            else type(case.get("expected_selected_major")) is int and case.get("expected_selected_major") == first_mutual
+        )
+        need(
+            "directory_node",
+            selected_major_valid
+            and case.get("expected_manifest_trusted") is (first_mutual is not None)
+            and case.get("expected_error") == expected_error
+            and type(case.get("expected_exit_code")) is int
+            and case.get("expected_exit_code") == expected_exit,
+            f"Directory Node bootstrap {case_id} terminal outcome mismatch",
+        )
     need("directory_node", node.get("response_union") == {"success": "body_without_error", "failure": "error_without_body"}, "Directory Node response must be body XOR error")
 
     mesh = data.get("mesh", {})
@@ -847,6 +1192,11 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         if (root / name).is_file()
     )
     need("publication_consistency", "AX v0.4.2 directory implementation is shipped and available." not in public_prose, "README/release claim is not supported by SPEC and fixtures")
+    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    current_baseline_claim = "current first safe Session Directory implementation baseline"
+    superseded_v041_claim = "v0.4.2 now supersedes that historical claim"
+    need("publication_consistency", changelog.count(current_baseline_claim) == 1, "CHANGELOG must contain exactly one current first-safe Session Directory implementation baseline claim")
+    need("publication_consistency", superseded_v041_claim in changelog and "v0.4.1 is not the current implementation baseline" in changelog, "CHANGELOG v0.4.1 baseline history must be explicitly superseded by v0.4.2")
     for doc in docs:
         need("publication_consistency", (root / doc).is_file(), f"required publication document missing: {doc}")
 
@@ -858,7 +1208,7 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         "self_id_jcs": ["each a digest in its one registered schema", "with only that self field omitted", "timestamps MUST be real UTC RFC 3339 calendar instants", "schema/version and exact JSON path", "SHA-256 digest identifiers MUST use"],
         "strict_examples": ["A negative mutation is applied alone to a fresh", "MUST NOT repair, round, ignore, or default the changed fact"],
         "closed_shapes": ["Every complete object is\nclosed and contains the exact registry", "Each displayed body is closed"],
-        "directory_node": ["The exact operation registry and bodies are:", "<code>enrichment-run</code>", "A success response contains exactly the common envelope", "A failure response contains exactly the common envelope", "a changed body is\n<code>idempotency_mismatch</code> without new records"],
+        "directory_node": ["strictly descending numeric order", "Each\nattempt MUST launch a fresh process", "There is exactly one downgrade trigger", "wrong or missing\necho", "If every locally supported major returns the exact downgrade tuple", "The exact operation registry and bodies are:", "<code>enrichment-run</code>", "A success response contains exactly the common envelope", "A failure response contains exactly the common envelope", "a changed body is\n<code>idempotency_mismatch</code> without new records"],
         "mesh_namespace": ["replace <code>contracts</code> with an exact 24-key map", "<code>Namespace[1..7]</code>", "<code>directory_record</code> namespace contains only schema-valid"],
         "environment_mapping": ["initial mapping is exactly <code>claude-code -> claude</code> and\n<code>codex -> codex</code>"],
         "observation_chains": ["Only a successful non-partial batch for the same root authority and realm may\npublish <code>presence=missing</code>", "Timestamps never order the chain"],

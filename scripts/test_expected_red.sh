@@ -2000,6 +2000,273 @@ mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-enrichment-prof
 expect_fail "required nullable schema path omission" "required schema-directed path missing" "$FIX"
 
 echo ""
+echo "Mutation 191: Directory Node bootstrap fixture coverage omits v1-only"
+FIX=$(fixture_copy "directory-bootstrap-case-narrowed")
+mutate_directory_fixture "$FIX" 'data["directory_node"]["negotiation_cases"]=[case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] != "v1-only"]'
+expect_fail "Directory Node bootstrap case coverage narrowed" "bootstrap fixtures must contain exact v2-selected, v2-to-v1, v1-only, and no-common-major cases" "$FIX"
+
+echo ""
+echo "Mutation 192: Directory Node bootstrap attempts majors in ascending order"
+FIX=$(fixture_copy "directory-bootstrap-major-order")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-to-v1")["caller_supported_majors"]=[1, 2]'
+expect_fail "Directory Node bootstrap descending-major gate" "caller majors must be unique descending supported majors" "$FIX"
+
+echo ""
+echo "Mutation 193: Directory Node fallback reuses the failed v2 process"
+FIX=$(fixture_copy "directory-bootstrap-process-reuse")
+mutate_directory_fixture "$FIX" 'case=next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-to-v1"); case["attempts"][1]["process_id"]=case["attempts"][0]["process_id"]'
+expect_fail "Directory Node bootstrap fresh-process gate" "must use a fresh process for every attempt" "$FIX"
+
+echo ""
+echo "Mutation 194: Authentication failure is admitted as a downgrade trigger"
+FIX=$(fixture_copy "directory-bootstrap-auth-downgrade")
+mutate_directory_fixture "$FIX" 'attempt=next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-to-v1")["attempts"][0]; attempt["error"]["code"]="authentication_failed"'
+expect_fail "Directory Node bootstrap exact downgrade trigger" "downgrade requires exact incompatible_protocol/6/non-retryable response and exit" "$FIX"
+
+echo ""
+echo "Mutation 195: Directory Node fallback accepts a wrong request echo"
+FIX=$(fixture_copy "directory-bootstrap-wrong-echo")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-to-v1")["attempts"][0]["response_echo_request_id"]="0198f4c8-9000-7000-8000-000000000099"'
+expect_fail "Directory Node bootstrap exact echo gate" "must exactly echo request identity" "$FIX"
+
+echo ""
+echo "Mutation 196: No-common-major bootstrap reports success"
+FIX=$(fixture_copy "directory-bootstrap-no-common-success")
+mutate_directory_fixture "$FIX" 'case=next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "no-common-major"); case["expected_error"]=None; case["expected_exit_code"]=0'
+expect_fail "Directory Node no-common-major termination gate" "terminal outcome mismatch" "$FIX"
+
+echo ""
+echo "Mutation 197: Directory Node bootstrap admits cross-major coercion"
+FIX=$(fixture_copy "directory-bootstrap-cross-major-coercion")
+mutate_directory_fixture "$FIX" 'data["directory_node"]["negotiation"]["cross_major_coercion"]=True'
+expect_fail "Directory Node cross-major coercion gate" "dual-stack negotiation registry mismatch" "$FIX"
+
+echo ""
+echo "Mutation 198: CHANGELOG restores v0.4.1 as an unsuperseded baseline"
+FIX=$(fixture_copy "changelog-v041-current-baseline")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "CHANGELOG.md"
+text = path.read_text(encoding="utf-8")
+old = "; v0.4.2 now supersedes that historical claim, so\n  v0.4.1 is not the current implementation baseline."
+if old not in text:
+    raise SystemExit("v0.4.1 supersession annotation missing before mutation")
+path.write_text(text.replace(old, ".", 1), encoding="utf-8")
+PY
+refresh_frozen_document_digest "$FIX" "CHANGELOG.md"
+expect_fail "CHANGELOG v0.4.1 supersession gate" "baseline history must be explicitly superseded by v0.4.2" "$FIX"
+
+echo ""
+echo "Mutation 199: Directory Node fallback accepts a wrong protocol-version echo"
+FIX=$(fixture_copy "directory-bootstrap-wrong-version-echo")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-to-v1")["attempts"][0]["response_echo_protocol_version"]="1.0.0"'
+expect_fail "Directory Node bootstrap exact version echo gate" "must exactly echo request identity" "$FIX"
+
+echo ""
+echo "Mutation 200: Selected v2 manifest omits the selected protocol version"
+FIX=$(fixture_copy "directory-bootstrap-manifest-selected-version-missing")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]["manifest_supported_protocol_versions"]=["1.0.0"]'
+expect_fail "Directory Node bootstrap manifest selected-version gate" "selected-major manifest success framing mismatch" "$FIX"
+
+echo ""
+echo "Mutation 201: Retryable incompatible-protocol error is admitted as a downgrade trigger"
+FIX=$(fixture_copy "directory-bootstrap-retryable-downgrade")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-to-v1")["attempts"][0]["error"]["retryable"]=True'
+expect_fail "Directory Node bootstrap non-retryable downgrade gate" "downgrade requires exact incompatible_protocol/6/non-retryable response and exit" "$FIX"
+
+echo ""
+echo "Mutation 202: Downgrade response exit and process exit disagree"
+FIX=$(fixture_copy "directory-bootstrap-exit-mismatch")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-to-v1")["attempts"][0]["exit_code"]=7'
+expect_fail "Directory Node bootstrap response/process exit agreement gate" "downgrade requires exact incompatible_protocol/6/non-retryable response and exit" "$FIX"
+
+echo ""
+echo "Mutation 203: Required Directory Node bootstrap case labels are swapped"
+FIX=$(fixture_copy "directory-bootstrap-case-label-swap")
+mutate_directory_fixture "$FIX" 'a=next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected"); b=next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v1-only"); a["case_id"], b["case_id"]=b["case_id"], a["case_id"]'
+expect_fail "Directory Node bootstrap named-scenario gate" "must match its exact named caller/peer scenario" "$FIX"
+
+echo ""
+echo "Mutation 204: Request and echo share a non-UUID identity"
+FIX=$(fixture_copy "directory-bootstrap-invalid-request-id")
+mutate_directory_fixture "$FIX" 'attempt=next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]; attempt["request_id"]="not-a-uuid"; attempt["response_echo_request_id"]="not-a-uuid"'
+expect_fail "Directory Node bootstrap UUIDv7 request identity gate" "request must be closed schema-valid manifest input" "$FIX"
+
+echo ""
+echo "Mutation 205: Request and echo use a non-manifest operation"
+FIX=$(fixture_copy "directory-bootstrap-non-manifest-request")
+mutate_directory_fixture "$FIX" 'attempt=next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]; attempt["request_operation"]="probe"; attempt["response_echo_operation"]="probe"'
+expect_fail "Directory Node bootstrap manifest-operation gate" "request must be closed schema-valid manifest input" "$FIX"
+
+echo ""
+echo "Mutation 206: Manifest bootstrap request body is non-empty"
+FIX=$(fixture_copy "directory-bootstrap-nonempty-request-body")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]["request_body"]={"unexpected": True}'
+expect_fail "Directory Node bootstrap empty-body gate" "request must be closed schema-valid manifest input" "$FIX"
+
+echo ""
+echo "Mutation 207: Bootstrap attempt admits an unknown field"
+FIX=$(fixture_copy "directory-bootstrap-unknown-attempt-field")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]["unexpected"]=True'
+expect_fail "Directory Node bootstrap closed-attempt gate" "must contain the exact closed attempt fields" "$FIX"
+
+echo ""
+echo "Mutation 208: Boolean masquerades as caller major 1"
+FIX=$(fixture_copy "directory-bootstrap-boolean-caller-major")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v1-only")["caller_supported_majors"]=[True]'
+expect_fail "Directory Node bootstrap strict caller-major type gate" "caller majors must be unique descending supported majors" "$FIX"
+
+echo ""
+echo "Mutation 209: Float masquerades as peer major 1"
+FIX=$(fixture_copy "directory-bootstrap-noninteger-peer-major")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v1-only")["peer_supported_majors"]=[1.0]'
+expect_fail "Directory Node bootstrap strict peer-major type gate" "peer majors must be unique descending positive majors" "$FIX"
+
+echo ""
+echo "Mutation 210: Bootstrap request uses the wrong schema identity"
+FIX=$(fixture_copy "directory-bootstrap-wrong-request-schema")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]["request_schema"]="urn:ax:schema:session-directory-node-response"'
+expect_fail "Directory Node bootstrap request-schema gate" "request must be closed schema-valid manifest input" "$FIX"
+
+echo ""
+echo "Mutation 211: Boolean masquerades as a valid request deadline"
+FIX=$(fixture_copy "directory-bootstrap-boolean-deadline")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]["request_deadline_ms"]=True'
+expect_fail "Directory Node bootstrap uint53 deadline gate" "request must be closed schema-valid manifest input" "$FIX"
+
+echo ""
+echo "Mutation 212: Bootstrap response uses the wrong schema identity"
+FIX=$(fixture_copy "directory-bootstrap-wrong-response-schema")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]["response_schema"]="urn:ax:schema:session-directory-node-request"'
+expect_fail "Directory Node bootstrap response-schema gate" "must exactly echo request identity" "$FIX"
+
+echo ""
+echo "Mutation 213: Boolean masquerades as request major 1"
+FIX=$(fixture_copy "directory-bootstrap-boolean-request-major")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v1-only")["attempts"][0]["request_major"]=True'
+expect_fail "Directory Node bootstrap strict request-major type gate" "must exactly echo request identity" "$FIX"
+
+echo ""
+echo "Mutation 214: Float masquerades as response echo major 1"
+FIX=$(fixture_copy "directory-bootstrap-noninteger-response-major")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v1-only")["attempts"][0]["response_echo_major"]=1.0'
+expect_fail "Directory Node bootstrap strict response-major type gate" "must exactly echo request identity" "$FIX"
+
+echo ""
+echo "Mutation 215: False masquerades as successful process exit 0"
+FIX=$(fixture_copy "directory-bootstrap-boolean-process-exit")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["attempts"][0]["exit_code"]=False'
+expect_fail "Directory Node bootstrap strict process-exit type gate" "selected-major manifest success framing mismatch" "$FIX"
+
+echo ""
+echo "Mutation 216: False masquerades as successful terminal exit 0"
+FIX=$(fixture_copy "directory-bootstrap-boolean-terminal-exit")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v2-selected")["expected_exit_code"]=False'
+expect_fail "Directory Node bootstrap strict terminal-exit type gate" "terminal outcome mismatch" "$FIX"
+
+echo ""
+echo "Mutation 217: True masquerades as selected major 1"
+FIX=$(fixture_copy "directory-bootstrap-boolean-selected-major")
+mutate_directory_fixture "$FIX" 'next(case for case in data["directory_node"]["negotiation_cases"] if case["case_id"] == "v1-only")["expected_selected_major"]=True'
+expect_fail "Directory Node bootstrap strict selected-major type gate" "terminal outcome mismatch" "$FIX"
+echo "Mutation 218: Required nullable WorkspaceRoute transfer manifest member is omitted"
+FIX=$(fixture_copy "directory-workspace-transfer-member-missing")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'del row["canonical_input"]["workspace"]["transfer_manifest_id"]'
+expect_fail "WorkspaceRoute required T|null member omission" "required schema-directed path missing" "$FIX"
+
+echo ""
+echo "Mutation 219: Required AdapterBuild executable digest member is omitted"
+FIX=$(fixture_copy "directory-adapter-build-executable-missing")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-inventory-batch" 'del row["canonical_input"]["adapter_builds"][0]["executable_sha256"]'
+expect_fail "AdapterBuild required executable digest omission" "required schema-directed path missing" "$FIX"
+
+echo ""
+echo "Mutation 220: Conditional source lease carries a malformed UUIDv4"
+FIX=$(fixture_copy "directory-source-lease-malformed-uuid4")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["source_lease"]={"epoch":1,"lease_id":"0198f4c8-4444-7444-8444-1234567890ab","holder_host_id":"0198f4c8-7d40-7e55-8e6f-1234567890ab"}'
+expect_fail "LeaseExpectation UUIDv4 type gate" "schema-directed UUIDv4 validation failed" "$FIX"
+
+echo ""
+echo "Mutation 221: Conditional source lease uses an array parent"
+FIX=$(fixture_copy "directory-source-lease-wrong-container")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["source_lease"]=[]'
+expect_fail "LeaseExpectation conditional parent shape" "recursive closed shape lease_expectation must be an object" "$FIX"
+
+echo ""
+echo "Mutation 222: Environment capability map drops one of its eight keys"
+FIX=$(fixture_copy "directory-capability-map-cardinality")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:environment-observation" 'del row["canonical_input"]["capabilities"]["native_resume"]'
+expect_fail "CapabilityResult exact eight-entry map" "recursive closed shape map cardinality/key mismatch" "$FIX"
+
+echo ""
+echo "Mutation 223: CapabilityResult omits its required observed timestamp"
+FIX=$(fixture_copy "directory-capability-value-shape")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:environment-observation" 'del row["canonical_input"]["capabilities"]["native_resume"]["observed_at"]'
+expect_fail "CapabilityResult closed value shape" "recursive closed shape capability_result member mismatch" "$FIX"
+
+echo ""
+echo "Mutation 224: CapabilityResult status bypasses its typed enum"
+FIX=$(fixture_copy "directory-capability-value-type")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:environment-observation" 'row["canonical_input"]["capabilities"]["native_resume"]["status"]=1'
+expect_fail "CapabilityResult typed status leaf" "schema-directed enum validation failed" "$FIX"
+
+echo ""
+echo "Mutation 225: Capability map wildcard is replaced with an array"
+FIX=$(fixture_copy "directory-capability-map-wrong-container")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:environment-observation" 'row["canonical_input"]["capabilities"]=[]'
+expect_fail "CapabilityResult map wildcard container" "recursive closed shape map required" "$FIX"
+
+echo ""
+echo "Mutation 226: EnvironmentTuple omits one of its exact six members"
+FIX=$(fixture_copy "directory-environment-tuple-member-missing")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'del row["canonical_input"]["target"]["environment_tuple"]["adapter_version"]'
+expect_fail "EnvironmentTuple exact six-member shape" "recursive closed shape environment_tuple member mismatch" "$FIX"
+
+echo ""
+echo "Mutation 227: EnvironmentTuple adapter version bypasses its typed leaf"
+FIX=$(fixture_copy "directory-environment-tuple-leaf-type")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["target"]["environment_tuple"]["adapter_version"]={}'
+expect_fail "EnvironmentTuple typed SemVer leaf" "schema-directed SemVer validation failed" "$FIX"
+
+echo ""
+echo "Mutation 228: EnvironmentTuple object is replaced with an array"
+FIX=$(fixture_copy "directory-environment-tuple-wrong-container")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-directory-operation-receipt" 'row["canonical_input"]["validated_target"]["target"]["environment_tuple"]=[]'
+expect_fail "EnvironmentTuple object container" "recursive closed shape environment_tuple must be an object" "$FIX"
+
+echo ""
+echo "Mutation 229: AdapterBuild array wildcard is replaced with a map"
+FIX=$(fixture_copy "directory-adapter-build-wrong-container")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-inventory-batch" 'row["canonical_input"]["adapter_builds"]={}'
+expect_fail "AdapterBuild array wildcard container" "recursive closed shape array required" "$FIX"
+
+echo ""
+echo "Mutation 230: Nested ContinuationStep admits an unknown member"
+FIX=$(fixture_copy "directory-continuation-step-unknown-member")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["steps"][0]["unknown"]=True'
+expect_fail "ContinuationStep recursively closed shape" "recursive closed shape continuation_step member mismatch" "$FIX"
+
+echo ""
+echo "Mutation 231: Conditional source lease carries a null epoch leaf"
+FIX=$(fixture_copy "directory-source-lease-null-epoch")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["source_lease"]={"epoch":None,"lease_id":"aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee","holder_host_id":"0198f4c8-7d40-7e55-8e6f-1234567890ab"}'
+expect_fail "LeaseExpectation non-null epoch leaf" "null is forbidden by schema-directed common type" "$FIX"
+
+echo ""
+echo "Mutation 232: Conditional source lease carries a null lease UUID leaf"
+FIX=$(fixture_copy "directory-source-lease-null-lease-id")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["source_lease"]={"epoch":1,"lease_id":None,"holder_host_id":"0198f4c8-7d40-7e55-8e6f-1234567890ab"}'
+expect_fail "LeaseExpectation non-null lease_id leaf" "null is forbidden by schema-directed common type" "$FIX"
+
+echo ""
+echo "Mutation 233: Conditional source lease carries a null holder host leaf"
+FIX=$(fixture_copy "directory-source-lease-null-holder-host-id")
+mutate_directory_vector_and_rehash "$FIX" "urn:ax:schema:session-continuation-plan" 'row["canonical_input"]["source_lease"]={"epoch":1,"lease_id":"aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee","holder_host_id":None}'
+expect_fail "LeaseExpectation non-null holder_host_id leaf" "null is forbidden by schema-directed common type" "$FIX"
+
+echo ""
 echo "=========================================="
 echo "Results: $PASS passed, $FAIL failed out of $TOTAL mutations"
 if [ $FAIL -ne 0 ]; then

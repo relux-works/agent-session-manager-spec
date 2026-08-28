@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Manifest and Response remain `1.0.0`; only Protocol and Request advance to
   `2.0.0`. Implementations should serve v1 and v2 concurrently for at least one
   stable specification release.
-- This errata is the first safe Session Directory implementation baseline. It
+- This errata is the current first safe Session Directory implementation baseline. It
   changes no AX ownership, lease, workspace, cloning, mesh namespace, record,
   or terminal authority.
 
@@ -57,10 +57,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Compatibility
 
-- This patch changes no Section 1.5 contract version or authority. It resolves
-  contradictory or unimplementable v0.4.0 text under already-settled AX
-  invariants and supersedes v0.4.0 as the first Directory implementation
-  baseline.
+- This patch changes no Section 1.5 contract version or authority. At its
+  publication it resolved contradictory or unimplementable v0.4.0 text under
+  already-settled AX invariants and superseded v0.4.0 as the first Directory
+  implementation baseline; v0.4.2 now supersedes that historical claim, so
+  v0.4.1 is not the current implementation baseline.
 
 ## [v0.4.0] - 2026-08-27
 

@@ -95,13 +95,70 @@
         "platform": "macos",
         "architecture": "arm64",
         "backend_realm_fingerprint": "sha256:1100000000000000000000000000000000000000000000000000000000000000",
-        "capabilities": {},
+        "capabilities": {
+          "directory_discovery": {
+            "status": "available",
+            "reason_code": null,
+            "evidence_ids": [],
+            "observed_at": "2026-08-27T00:00:00.000Z",
+            "extensions": {}
+          },
+          "directory_head_digest": {
+            "status": "available",
+            "reason_code": null,
+            "evidence_ids": [],
+            "observed_at": "2026-08-27T00:00:00.000Z",
+            "extensions": {}
+          },
+          "directory_incremental_scan": {
+            "status": "available",
+            "reason_code": null,
+            "evidence_ids": [],
+            "observed_at": "2026-08-27T00:00:00.000Z",
+            "extensions": {}
+          },
+          "directory_tail_preview": {
+            "status": "available",
+            "reason_code": null,
+            "evidence_ids": [],
+            "observed_at": "2026-08-27T00:00:00.000Z",
+            "extensions": {}
+          },
+          "existing_session_adoption": {
+            "status": "available",
+            "reason_code": null,
+            "evidence_ids": [],
+            "observed_at": "2026-08-27T00:00:00.000Z",
+            "extensions": {}
+          },
+          "native_resume": {
+            "status": "available",
+            "reason_code": null,
+            "evidence_ids": [],
+            "observed_at": "2026-08-27T00:00:00.000Z",
+            "extensions": {}
+          },
+          "native_runtime_observation": {
+            "status": "available",
+            "reason_code": null,
+            "evidence_ids": [],
+            "observed_at": "2026-08-27T00:00:00.000Z",
+            "extensions": {}
+          },
+          "native_title_read": {
+            "status": "available",
+            "reason_code": null,
+            "evidence_ids": [],
+            "observed_at": "2026-08-27T00:00:00.000Z",
+            "extensions": {}
+          }
+        },
         "authentication_status": "available",
         "runtime_status": "available",
         "observed_at": "2026-08-27T00:00:00.000Z",
         "extensions": {}
       },
-      "expected_id": "sha256:e0836b129157f0272ac427caf6fe9c74349abb745617718ceb37cac2ffaaf901"
+      "expected_id": "sha256:e634be1f9d05b1df850318c5e232415c9aba70404aaaa80166b682648c51ee96"
     },
     {
       "schema": "urn:ax:schema:native-session-observation",
@@ -366,7 +423,14 @@
         "target": {
           "host_id": "0198f4c8-5555-7555-8555-1234567890ab",
           "installation_id": "sha256:8300000000000000000000000000000000000000000000000000000000000000",
-          "environment_tuple": {},
+          "environment_tuple": {
+            "environment_id": "claude-code",
+            "environment_version": "synthetic-1",
+            "platform": "macos",
+            "architecture": "arm64",
+            "store_schema_fingerprint": "sha256:8310000000000000000000000000000000000000000000000000000000000000",
+            "adapter_version": "1.0.0"
+          },
           "provider_id": "claude",
           "backend_realm_fingerprint": "sha256:8400000000000000000000000000000000000000000000000000000000000000",
           "authentication_status": "available",
@@ -419,7 +483,7 @@
         "controller_digest": "sha256:8b00000000000000000000000000000000000000000000000000000000000000",
         "extensions": {}
       },
-      "expected_id": "sha256:7d69c88677d56c166feb42d34ef1fcbe2565856350d3074a360138d1230cb865"
+      "expected_id": "sha256:f8073f0712970e485562efcc70a44dc62b9c18ef8acb36059ca2350e55fdccd8"
     },
     {
       "schema": "urn:ax:schema:session-directory-operation-receipt",
@@ -460,7 +524,14 @@
           "target": {
             "host_id": "0198f4c8-5555-7555-8555-1234567890ab",
             "installation_id": "sha256:8300000000000000000000000000000000000000000000000000000000000000",
-            "environment_tuple": {},
+            "environment_tuple": {
+              "environment_id": "claude-code",
+              "environment_version": "synthetic-1",
+              "platform": "macos",
+              "architecture": "arm64",
+              "store_schema_fingerprint": "sha256:8310000000000000000000000000000000000000000000000000000000000000",
+              "adapter_version": "1.0.0"
+            },
             "provider_id": "claude",
             "backend_realm_fingerprint": "sha256:8400000000000000000000000000000000000000000000000000000000000000",
             "authentication_status": "available",
@@ -502,7 +573,7 @@
         "created_at": "2026-08-27T00:00:00.000Z",
         "extensions": {}
       },
-      "expected_id": "sha256:82e943f52c2dd61702dbe4a4a77ee46f182daa0d512b9e045d88797487d4bd01"
+      "expected_id": "sha256:1d06e2a6d8cd14e524247e94c8bcfd1699ffae13f2690e27d1ca8473eef50d39"
     }
   ],
   "sorted_id_fixture": [
@@ -822,6 +893,22 @@
       "evidence_ids",
       "observed_at",
       "extensions"
+    ],
+    "environment_tuple": [
+      "environment_id",
+      "environment_version",
+      "platform",
+      "architecture",
+      "store_schema_fingerprint",
+      "adapter_version"
+    ],
+    "lease_expectation": [
+      "epoch",
+      "lease_id",
+      "holder_host_id"
+    ],
+    "annotation_text_payload": [
+      "text"
     ],
     "directory_node_limits": [
       "max_frame_bytes",
@@ -1183,9 +1270,210 @@
     "negotiation": {
       "preference": "highest_mutual_major",
       "no_shared_major": "incompatible_protocol",
+      "no_shared_major_exit_code": 6,
       "cross_major_coercion": false,
+      "fresh_process_per_attempt": true,
+      "manifest_success_exit_code": 0,
+      "downgrade_trigger": {
+        "operation": "manifest",
+        "code": "incompatible_protocol",
+        "exit_code": 6,
+        "retryable": false,
+        "require_exact_echo": true
+      },
+      "non_downgrade_failures": [
+        "authentication_failure",
+        "integrity_failure",
+        "malformed_frame",
+        "operation_error",
+        "wrong_echo"
+      ],
       "v1_wsl2": "unrepresentable"
     },
+    "negotiation_cases": [
+      {
+        "case_id": "v2-selected",
+        "caller_supported_majors": [2, 1],
+        "peer_supported_majors": [2, 1],
+        "attempts": [
+          {
+            "process_id": "v2-selected-p1",
+            "request_id": "0198f4c8-9000-7000-8000-000000000001",
+            "request_major": 2,
+            "request_schema": "urn:ax:schema:session-directory-node-request",
+            "request_protocol": "urn:ax:protocol:session-directory-node",
+            "request_protocol_version": "2.0.0",
+            "request_schema_version": "2.0.0",
+            "request_operation": "manifest",
+            "request_deadline_ms": 30000,
+            "request_body": {},
+            "response_kind": "manifest_success",
+            "response_echo_major": 2,
+            "response_schema": "urn:ax:schema:session-directory-node-response",
+            "response_echo_protocol": "urn:ax:protocol:session-directory-node",
+            "response_echo_protocol_version": "2.0.0",
+            "response_schema_version": "1.0.0",
+            "response_echo_request_id": "0198f4c8-9000-7000-8000-000000000001",
+            "response_echo_operation": "manifest",
+            "manifest_supported_protocol_versions": ["1.0.0", "2.0.0"],
+            "error": null,
+            "exit_code": 0
+          }
+        ],
+        "expected_selected_major": 2,
+        "expected_manifest_trusted": true,
+        "expected_error": null,
+        "expected_exit_code": 0
+      },
+      {
+        "case_id": "v2-to-v1",
+        "caller_supported_majors": [2, 1],
+        "peer_supported_majors": [1],
+        "attempts": [
+          {
+            "process_id": "v2-to-v1-p1",
+            "request_id": "0198f4c8-9000-7000-8000-000000000002",
+            "request_major": 2,
+            "request_schema": "urn:ax:schema:session-directory-node-request",
+            "request_protocol": "urn:ax:protocol:session-directory-node",
+            "request_protocol_version": "2.0.0",
+            "request_schema_version": "2.0.0",
+            "request_operation": "manifest",
+            "request_deadline_ms": 30000,
+            "request_body": {},
+            "response_kind": "unsupported_major",
+            "response_echo_major": 2,
+            "response_schema": "urn:ax:schema:session-directory-node-response",
+            "response_echo_protocol": "urn:ax:protocol:session-directory-node",
+            "response_echo_protocol_version": "2.0.0",
+            "response_schema_version": "1.0.0",
+            "response_echo_request_id": "0198f4c8-9000-7000-8000-000000000002",
+            "response_echo_operation": "manifest",
+            "manifest_supported_protocol_versions": null,
+            "error": {"code": "incompatible_protocol", "exit_code": 6, "retryable": false},
+            "exit_code": 6
+          },
+          {
+            "process_id": "v2-to-v1-p2",
+            "request_id": "0198f4c8-9000-7000-8000-000000000003",
+            "request_major": 1,
+            "request_schema": "urn:ax:schema:session-directory-node-request",
+            "request_protocol": "urn:ax:protocol:session-directory-node",
+            "request_protocol_version": "1.0.0",
+            "request_schema_version": "1.0.0",
+            "request_operation": "manifest",
+            "request_deadline_ms": 30000,
+            "request_body": {},
+            "response_kind": "manifest_success",
+            "response_echo_major": 1,
+            "response_schema": "urn:ax:schema:session-directory-node-response",
+            "response_echo_protocol": "urn:ax:protocol:session-directory-node",
+            "response_echo_protocol_version": "1.0.0",
+            "response_schema_version": "1.0.0",
+            "response_echo_request_id": "0198f4c8-9000-7000-8000-000000000003",
+            "response_echo_operation": "manifest",
+            "manifest_supported_protocol_versions": ["1.0.0"],
+            "error": null,
+            "exit_code": 0
+          }
+        ],
+        "expected_selected_major": 1,
+        "expected_manifest_trusted": true,
+        "expected_error": null,
+        "expected_exit_code": 0
+      },
+      {
+        "case_id": "v1-only",
+        "caller_supported_majors": [1],
+        "peer_supported_majors": [1],
+        "attempts": [
+          {
+            "process_id": "v1-only-p1",
+            "request_id": "0198f4c8-9000-7000-8000-000000000004",
+            "request_major": 1,
+            "request_schema": "urn:ax:schema:session-directory-node-request",
+            "request_protocol": "urn:ax:protocol:session-directory-node",
+            "request_protocol_version": "1.0.0",
+            "request_schema_version": "1.0.0",
+            "request_operation": "manifest",
+            "request_deadline_ms": 30000,
+            "request_body": {},
+            "response_kind": "manifest_success",
+            "response_echo_major": 1,
+            "response_schema": "urn:ax:schema:session-directory-node-response",
+            "response_echo_protocol": "urn:ax:protocol:session-directory-node",
+            "response_echo_protocol_version": "1.0.0",
+            "response_schema_version": "1.0.0",
+            "response_echo_request_id": "0198f4c8-9000-7000-8000-000000000004",
+            "response_echo_operation": "manifest",
+            "manifest_supported_protocol_versions": ["1.0.0"],
+            "error": null,
+            "exit_code": 0
+          }
+        ],
+        "expected_selected_major": 1,
+        "expected_manifest_trusted": true,
+        "expected_error": null,
+        "expected_exit_code": 0
+      },
+      {
+        "case_id": "no-common-major",
+        "caller_supported_majors": [2, 1],
+        "peer_supported_majors": [3],
+        "attempts": [
+          {
+            "process_id": "no-common-major-p1",
+            "request_id": "0198f4c8-9000-7000-8000-000000000005",
+            "request_major": 2,
+            "request_schema": "urn:ax:schema:session-directory-node-request",
+            "request_protocol": "urn:ax:protocol:session-directory-node",
+            "request_protocol_version": "2.0.0",
+            "request_schema_version": "2.0.0",
+            "request_operation": "manifest",
+            "request_deadline_ms": 30000,
+            "request_body": {},
+            "response_kind": "unsupported_major",
+            "response_echo_major": 2,
+            "response_schema": "urn:ax:schema:session-directory-node-response",
+            "response_echo_protocol": "urn:ax:protocol:session-directory-node",
+            "response_echo_protocol_version": "2.0.0",
+            "response_schema_version": "1.0.0",
+            "response_echo_request_id": "0198f4c8-9000-7000-8000-000000000005",
+            "response_echo_operation": "manifest",
+            "manifest_supported_protocol_versions": null,
+            "error": {"code": "incompatible_protocol", "exit_code": 6, "retryable": false},
+            "exit_code": 6
+          },
+          {
+            "process_id": "no-common-major-p2",
+            "request_id": "0198f4c8-9000-7000-8000-000000000006",
+            "request_major": 1,
+            "request_schema": "urn:ax:schema:session-directory-node-request",
+            "request_protocol": "urn:ax:protocol:session-directory-node",
+            "request_protocol_version": "1.0.0",
+            "request_schema_version": "1.0.0",
+            "request_operation": "manifest",
+            "request_deadline_ms": 30000,
+            "request_body": {},
+            "response_kind": "unsupported_major",
+            "response_echo_major": 1,
+            "response_schema": "urn:ax:schema:session-directory-node-response",
+            "response_echo_protocol": "urn:ax:protocol:session-directory-node",
+            "response_echo_protocol_version": "1.0.0",
+            "response_schema_version": "1.0.0",
+            "response_echo_request_id": "0198f4c8-9000-7000-8000-000000000006",
+            "response_echo_operation": "manifest",
+            "manifest_supported_protocol_versions": null,
+            "error": {"code": "incompatible_protocol", "exit_code": 6, "retryable": false},
+            "exit_code": 6
+          }
+        ],
+        "expected_selected_major": null,
+        "expected_manifest_trusted": false,
+        "expected_error": "incompatible_protocol",
+        "expected_exit_code": 6
+      }
+    ],
     "response_union": {
       "success": "body_without_error",
       "failure": "error_without_body"
