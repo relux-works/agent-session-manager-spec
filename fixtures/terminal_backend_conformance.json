@@ -1,0 +1,487 @@
+{
+  "fixture": "ax-terminal-backend-conformance-v1",
+  "specification_version": "0.5.0",
+  "contract_versions": {
+    "manifest": "1.0.0",
+    "probe": "1.0.0",
+    "binding": "1.0.0",
+    "capability_evidence": "1.0.0",
+    "protocol": "1.0.0",
+    "configuration": "3.0.0",
+    "provider_protocol": "3.0.0",
+    "mesh_rpc": "4.0.0",
+    "session_event": "4.0.0",
+    "cli_result": "4.0.0",
+    "structured_error": "1.3.0"
+  },
+  "historical_v0_4_3": {
+    "registry_sha256": "sha256:958186993a6e59bbbc8e7fafc828f5913c4252fe964df4107132209c62f9fd83",
+    "configuration_backends": [
+      "tmux",
+      "conpty"
+    ],
+    "translations": [
+      {
+        "legacy": "tmux",
+        "backend_id": "ax.tmux",
+        "implementation_version": "legacy_unreported",
+        "backend_generation": "legacy_unreported",
+        "inferred_capabilities": []
+      },
+      {
+        "legacy": "conpty",
+        "backend_id": "ax.conpty",
+        "implementation_version": "legacy_unreported",
+        "backend_generation": "legacy_unreported",
+        "inferred_capabilities": []
+      }
+    ],
+    "reverse_projection": {
+      "ax.tmux": "tmux",
+      "ax.conpty": "conpty",
+      "other": "incompatible_schema"
+    },
+    "rewrite_or_redigest_history": false
+  },
+  "capability_registry": [
+    "durable_disconnect",
+    "local_attach",
+    "multi_attach",
+    "remote_attach",
+    "web_attach",
+    "headless_creation",
+    "reboot_restoration",
+    "input_quiescence",
+    "safe_boundary_observation",
+    "provider_process_observation",
+    "graceful_stop",
+    "stale_process_termination",
+    "terminal_state_retention",
+    "scrollback_retention",
+    "credential_capable_execution_realm",
+    "multiple_input_clients"
+  ],
+  "backends": [
+    {
+      "manifest": {
+        "schema": "urn:ax:schema:terminal-backend-manifest",
+        "schema_version": "1.0.0",
+        "manifest_id": "sha256:8c03b6b7203144abcab508bf96889a33d70cd868f8f93739b9d7d7f8655b1f67",
+        "terminal_backend_id": "ax.tmux",
+        "implementation_version": "1.0.0",
+        "protocol_versions": [
+          "1.0.0"
+        ],
+        "platforms": [
+          "linux",
+          "macos",
+          "wsl2"
+        ],
+        "implementation_kind": "builtin_go",
+        "executable_digest": null,
+        "static_capability_claims": [
+          {
+            "capability": "credential_capable_execution_realm",
+            "value": false,
+            "origin": "static",
+            "generation_variable": true,
+            "dependent_operations": [
+              "create",
+              "restore"
+            ],
+            "evidence_requirements": [
+              "conformance_fixture",
+              "credential_sentinel",
+              "provider_auth_smoke",
+              "runtime_probe"
+            ]
+          },
+          {
+            "capability": "local_attach",
+            "value": true,
+            "origin": "static",
+            "generation_variable": true,
+            "dependent_operations": [
+              "attach"
+            ],
+            "evidence_requirements": [
+              "conformance_fixture",
+              "policy_authorization",
+              "runtime_probe"
+            ]
+          }
+        ],
+        "conformance_fixture_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "extensions": {}
+      },
+      "probe": {
+        "schema": "urn:ax:schema:terminal-backend-probe",
+        "schema_version": "1.0.0",
+        "probe_id": "sha256:299f5509f4b12b137679ddf8cfe381d4e52d2e9e64d6e82a94ffc324f89620ac",
+        "terminal_backend_id": "ax.tmux",
+        "implementation_version": "1.0.0",
+        "protocol_version": "1.0.0",
+        "implementation_kind": "builtin_go",
+        "executable_digest": null,
+        "platform": "macos",
+        "os_version": "15.6",
+        "availability": "available",
+        "backend_generation_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "capability_claims": [
+          {
+            "capability": "credential_capable_execution_realm",
+            "value": true,
+            "origin": "probed",
+            "generation_variable": true,
+            "dependent_operations": [
+              "create",
+              "restore"
+            ],
+            "evidence_requirements": [
+              "conformance_fixture",
+              "credential_sentinel",
+              "provider_auth_smoke",
+              "runtime_probe"
+            ]
+          },
+          {
+            "capability": "local_attach",
+            "value": true,
+            "origin": "static",
+            "generation_variable": true,
+            "dependent_operations": [
+              "attach"
+            ],
+            "evidence_requirements": [
+              "conformance_fixture",
+              "policy_authorization",
+              "runtime_probe"
+            ]
+          }
+        ],
+        "evidence_ids": [
+          "sha256:4e3785954678fed9f7ce334fc9080b38afdd0e2f3c0f380786161b9d7eb45086",
+          "sha256:a9997b68c76caa52bad71945f8c374cf416662787f4ceb276ac217c7e3589b68"
+        ],
+        "probed_at": "2026-08-29T10:00:00.000Z",
+        "extensions": {}
+      },
+      "capability_evidence": [
+        {
+          "schema": "urn:ax:schema:terminal-capability-evidence",
+          "schema_version": "1.0.0",
+          "evidence_id": "sha256:4e3785954678fed9f7ce334fc9080b38afdd0e2f3c0f380786161b9d7eb45086",
+          "terminal_backend_id": "ax.tmux",
+          "implementation_version": "1.0.0",
+          "protocol_version": "1.0.0",
+          "backend_generation_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "capability": "credential_capable_execution_realm",
+          "value": true,
+          "platform": "macos",
+          "os_version": "15.6",
+          "conformance_fixture_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "observed_at": "2026-08-29T09:59:00.000Z",
+          "expires_at": "2027-08-29T09:59:00.000Z",
+          "issuer": "ax_local_probe",
+          "issuer_id": "sha256:f8ce7530e2134f18545f5c347413ed0cf27cb98b38119f075dbf97741c53f2f5",
+          "facts": [
+            "fixture_passed",
+            "prompt_absent",
+            "provider_auth_passed",
+            "runtime_probe_passed",
+            "sentinel_passed",
+            "ui_absent"
+          ],
+          "terminal_binding_id": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "provider_id": "anthropic.claude",
+          "provider_build": "claude-code-1.0.0",
+          "sentinel_result": "passed",
+          "provider_auth_smoke_result": "passed",
+          "extensions": {},
+          "attestation_signature": "rsa-sha256:PUliwyPp2Nob6CM+YwgUViDGbFkSAImWBehjjp+CMwezg1Lk2ptX81oHsmCEul0SWaPxdyOlh+pykugdd7H0nkmfs3uSrbZhRYBTofulpf7ZBGiU1nSTAMoN7ltEqxweAmAzAFP1Opr8QMgZVijWLW7RcNFB63DgkWbSvXewhyhzy6b377XAYzntHxSHvscl/OcKEF4ZFqfILkETGgmmtPzYmbPgkAWblb6zL3g2MxUhSjMDw/0JsqiMTBTGkjJ2CJ2CkL0J35eBNvX9MT4eB3+yJ83ku2fhJyU9YaF2VAt2a3sSLjr4szV06d7XW28m4P8CavC8UE3vOYB799oLYg=="
+        },
+        {
+          "schema": "urn:ax:schema:terminal-capability-evidence",
+          "schema_version": "1.0.0",
+          "evidence_id": "sha256:a9997b68c76caa52bad71945f8c374cf416662787f4ceb276ac217c7e3589b68",
+          "terminal_backend_id": "ax.tmux",
+          "implementation_version": "1.0.0",
+          "protocol_version": "1.0.0",
+          "backend_generation_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "capability": "local_attach",
+          "value": true,
+          "platform": "macos",
+          "os_version": "15.6",
+          "conformance_fixture_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "observed_at": "2026-08-29T09:59:00.000Z",
+          "expires_at": "2027-08-29T09:59:00.000Z",
+          "issuer": "ax_local_probe",
+          "issuer_id": "sha256:f8ce7530e2134f18545f5c347413ed0cf27cb98b38119f075dbf97741c53f2f5",
+          "facts": [
+            "fixture_passed",
+            "policy_checked",
+            "runtime_probe_passed"
+          ],
+          "terminal_binding_id": null,
+          "provider_id": null,
+          "provider_build": null,
+          "sentinel_result": null,
+          "provider_auth_smoke_result": null,
+          "extensions": {},
+          "attestation_signature": "rsa-sha256:Eb3GXiLHgyehvGombcNdQzJPYe+Jvjsfw6+mAdapgKUmFkuQ1aO87g/mMbh8M983DeW/sMgXl1jaIaqHHSkRo8ApnrgAeXEZroBAfsBN32XbkXx0Y6EmoNyR4mh8oRrjeq/ZGwlIEDPrtTPVHdGVDRxF8Tni02tshzpYkfvLf1J4uezAajPOtwUXo4b+Uu4uXSK5HDQSIyWXORWDxIsegM0fCaMcgdkrFdkLDw7yKTImN+tjt/PQjlCeamUlBfvDkUUYRmnQGoaxl3EUJa6KDOXZkt+GA72AS5QzhLOzLDWXyqbGbcuJPV8cbRGubWzD3uuIOCsS4WAmBs36FcIZ+Q=="
+        }
+      ],
+      "runtime": {
+        "entrypoint": [
+          "ax",
+          "pane",
+          "0198f4c8-7d40-7e55-8e6f-1234567890ab"
+        ],
+        "tmux_server": "private--S",
+        "ambient_server_reuse": false,
+        "credential_creation_actor": "aqua_broker",
+        "credential_proof": [
+          "ax_sentinel",
+          "provider_auth_smoke"
+        ],
+        "gui_only_proof": false
+      }
+    },
+    {
+      "manifest": {
+        "schema": "urn:ax:schema:terminal-backend-manifest",
+        "schema_version": "1.0.0",
+        "manifest_id": "sha256:6516fb0cb6c3e8eea8391a6286c4e9978772b4f5176cd034198023676a54a24b",
+        "terminal_backend_id": "ax.conpty",
+        "implementation_version": "1.0.0",
+        "protocol_versions": [
+          "1.0.0"
+        ],
+        "platforms": [
+          "windows"
+        ],
+        "implementation_kind": "native_runtime",
+        "executable_digest": null,
+        "static_capability_claims": [
+          {
+            "capability": "local_attach",
+            "value": true,
+            "origin": "static",
+            "generation_variable": true,
+            "dependent_operations": [
+              "attach"
+            ],
+            "evidence_requirements": [
+              "conformance_fixture",
+              "policy_authorization",
+              "runtime_probe"
+            ]
+          }
+        ],
+        "conformance_fixture_id": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "extensions": {}
+      },
+      "probe": {
+        "schema": "urn:ax:schema:terminal-backend-probe",
+        "schema_version": "1.0.0",
+        "probe_id": "sha256:e2de2272008e47fae7c664a9635dc97a39e9324485be6103f6262749320a716e",
+        "terminal_backend_id": "ax.conpty",
+        "implementation_version": "1.0.0",
+        "protocol_version": "1.0.0",
+        "implementation_kind": "native_runtime",
+        "executable_digest": null,
+        "platform": "windows",
+        "os_version": "10.0.26100",
+        "availability": "available",
+        "backend_generation_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "capability_claims": [
+          {
+            "capability": "local_attach",
+            "value": true,
+            "origin": "static",
+            "generation_variable": true,
+            "dependent_operations": [
+              "attach"
+            ],
+            "evidence_requirements": [
+              "conformance_fixture",
+              "policy_authorization",
+              "runtime_probe"
+            ]
+          }
+        ],
+        "evidence_ids": [
+          "sha256:16f809d6f3a31fe373feca310d07fe9f7335b545d831b2f2875849c5aba442f8"
+        ],
+        "probed_at": "2026-08-29T10:00:00.000Z",
+        "extensions": {}
+      },
+      "capability_evidence": [
+        {
+          "schema": "urn:ax:schema:terminal-capability-evidence",
+          "schema_version": "1.0.0",
+          "evidence_id": "sha256:16f809d6f3a31fe373feca310d07fe9f7335b545d831b2f2875849c5aba442f8",
+          "terminal_backend_id": "ax.conpty",
+          "implementation_version": "1.0.0",
+          "protocol_version": "1.0.0",
+          "backend_generation_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+          "capability": "local_attach",
+          "value": true,
+          "platform": "windows",
+          "os_version": "10.0.26100",
+          "conformance_fixture_id": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "observed_at": "2026-08-29T09:59:00.000Z",
+          "expires_at": "2027-08-29T09:59:00.000Z",
+          "issuer": "ax_local_probe",
+          "issuer_id": "sha256:f8ce7530e2134f18545f5c347413ed0cf27cb98b38119f075dbf97741c53f2f5",
+          "facts": [
+            "fixture_passed",
+            "policy_checked",
+            "runtime_probe_passed"
+          ],
+          "terminal_binding_id": null,
+          "provider_id": null,
+          "provider_build": null,
+          "sentinel_result": null,
+          "provider_auth_smoke_result": null,
+          "extensions": {},
+          "attestation_signature": "rsa-sha256:EKqTWEKz11MWE+PboSKDSlHRvjdKoSBnao+yX45TGIhpeM8q2Lh/nKvUV651BDZzSt5+WSsZeO/LlwP0ve9Z7VWxsDdigS/Q4iMcd7JrOuQBgDxONvNh42MLFdOTbKeq4ZvZf98UPwgvyKoaf5O5rGJ+SKrsLW3kDu3H8syRuaf270VQ3VV1Sq4hG/8jxl+ntMxHrTdaVXTl/LooN/2P2qwbo0kFe0u+LL/hEpBjTu8gb1RDWCNZReb0llkt/OzKA3eN+ad8ot4RE7k9Qq+yS9d+MIFUJvPdEygGKjLpWdfepEt28sU4P/Bv7gSqpxPaQshFNQAyrZGsgkDLvfobTw=="
+        }
+      ],
+      "runtime": {
+        "entrypoint": [
+          "ax",
+          "pane",
+          "0198f4c8-7d40-7e55-8e6f-1234567890ab"
+        ],
+        "durability_claim": "native_windows_without_tmux_equivalence"
+      }
+    }
+  ],
+  "positive_cases": [
+    {
+      "id": "TB-TMUX-UNIX-MANIFEST-PROBE",
+      "production_entrypoint": "registry.admit",
+      "expected": "available"
+    },
+    {
+      "id": "TB-CONPTY-WINDOWS-MANIFEST-PROBE",
+      "production_entrypoint": "registry.admit",
+      "expected": "available"
+    },
+    {
+      "id": "TB-LEGACY-TRANSLATION",
+      "production_entrypoint": "compat.read",
+      "expected": "identity_preserved"
+    },
+    {
+      "id": "TB-CAPABILITY-ADMISSION",
+      "production_entrypoint": "activation.resolve",
+      "requested_operation": "create",
+      "admitted_capability": "credential_capable_execution_realm",
+      "evidence_id": "sha256:4e3785954678fed9f7ce334fc9080b38afdd0e2f3c0f380786161b9d7eb45086",
+      "expected": "intersection_with_bound_evidence"
+    },
+    {
+      "id": "TB-MANIFEST-STATIC-ECHO",
+      "production_entrypoint": "registry.admit",
+      "backend_id": "ax.tmux",
+      "capability": "local_attach",
+      "expected": "member_for_member_equal"
+    },
+    {
+      "id": "TB-GENERATION-VARIABLE-OVERRIDE",
+      "production_entrypoint": "registry.admit",
+      "backend_id": "ax.tmux",
+      "capability": "credential_capable_execution_realm",
+      "expected": "false_to_true_with_derived_members_equal"
+    },
+    {
+      "id": "TB-ATTACH-OWNER-NEUTRAL",
+      "production_entrypoint": "terminal.attach",
+      "owner_before": "host-a",
+      "owner_after": "host-a",
+      "lease_epoch_before": 7,
+      "lease_epoch_after": 7,
+      "presentation_replica_is_ax_replica": false
+    },
+    {
+      "id": "TB-TAKEOVER-REBIND",
+      "production_entrypoint": "takeover.execute",
+      "session_before": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+      "session_after": "0198f4c8-7d40-7e55-8e6f-1234567890ab",
+      "backend_before": "ax.tmux",
+      "backend_after": "ax.conpty",
+      "supersedes": true,
+      "history_mutated": false
+    },
+    {
+      "id": "TB-CREDENTIAL-EVIDENCE-BINDING",
+      "production_entrypoint": "activation.resolve",
+      "evidence_id": "sha256:4e3785954678fed9f7ce334fc9080b38afdd0e2f3c0f380786161b9d7eb45086"
+    },
+    {
+      "id": "TB-RESUME-EVENT-VERSION-BINDING",
+      "production_entrypoint": "event.derive",
+      "terminal_backend_id": "ax.tmux",
+      "implementation_version": "1.0.0",
+      "protocol_version": "1.0.0",
+      "evidence_id": "sha256:4e3785954678fed9f7ce334fc9080b38afdd0e2f3c0f380786161b9d7eb45086",
+      "expected": "exact_evidence_tuple"
+    },
+    {
+      "id": "TB-SANITIZED-REPLICATION",
+      "production_entrypoint": "replication.select",
+      "namespace": "terminal_backend_evidence",
+      "included_classes": [
+        "manifest",
+        "probe",
+        "capability_evidence"
+      ],
+      "excluded_classes": [
+        "binding",
+        "native_reference",
+        "raw_generation",
+        "pid",
+        "socket",
+        "pipe",
+        "endpoint",
+        "token",
+        "relay_credential",
+        "backend_credential",
+        "provider_credential",
+        "terminal_output"
+      ]
+    },
+    {
+      "id": "TB-BOOTSTRAP-OLD-NEW",
+      "production_entrypoint": "backend.bootstrap",
+      "new_reader_old_object": "translate",
+      "old_reader_new_object": "browse_sync_read_only",
+      "first_operation": "manifest",
+      "capability_negotiation": "intersection_with_bound_evidence"
+    },
+    {
+      "id": "TB-UNSUPPORTED-BROWSE-NO-ACTIVATE",
+      "production_entrypoint": "activation.resolve",
+      "backend_id": "vendor.future",
+      "browse": true,
+      "sync": true,
+      "activate": false,
+      "restore": false,
+      "fallback": false,
+      "expected_error": "terminal_backend_unavailable"
+    }
+  ],
+  "policy": {
+    "backend_authority": "host_local_terminal_instance_only",
+    "logical_session_authority": "AX",
+    "relay_admitted": false,
+    "public_sdk_stable": false,
+    "superlogical": {
+      "normative": false,
+      "available": false,
+      "backend_id_reserved": false
+    }
+  }
+}

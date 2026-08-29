@@ -1,118 +1,102 @@
-# Agent Session Manager (`ax`) Specification v0.4.3
+# Agent Session Manager (`ax`) Specification v0.5.0
 
-This patch specification release preserves the v0.4.2 wire registry and
-reconciles the owner-approved implementation roadmap with macOS tmux/Keychain
-execution-realm safety. Existing tags remain immutable. No independently
-consumed contract changes version or shape; v0.4.3 is the current implementation
-baseline and retains v0.4.2's corrected Directory Node dual-stack contract.
+This minor specification release adds the first-class TerminalBackend contract
+family over immutable `v0.4.3` history. It is a specification-only release:
+this repository contains no `ax` binary, proves no product implementation
+available, and does not claim that any Section 19 platform or provider lane has
+passed. This release publishes specification artifacts only.
 
-**Status caveat:** this release publishes specification artifacts only. It contains no executable `ax` product binary, and publication does not imply that any provider/platform product-conformance lane has passed.
+## Authority and module boundary
 
-## Roadmap and ownership boundary
+AX remains the sole authority for LogicalSession identity and lineage,
+Owner/Replica state, leases and fencing, provider lifecycle and native state,
+workspace/materialization, checkpoints and evidence, task-board integration,
+mesh replication, and takeover.
 
-- M0 establishes plugin wire contracts, internal interfaces, and a conformance
-  harness without advertising a public stable SDK. M1 closes local durability
-  and complete Git state. M2 is the multi-host MVP preview and already contains
-  lease fencing, durable journaling, idempotency, status-first recovery, and the
-  crash-boundary kernel. M3 is the first daily-driver gate.
-- `ax NAME` auto-executes only one uniquely safe non-mutating attach/resume
-  route. Takeover, fork, move, and ambiguity remain pure plans requiring
-  confirmation or return `interactive_choice_required`.
-- `ax sync --all` converges immutable objects and policy-allowed projections;
-  it never changes ownership or launches a runtime. Remote attach targets the
-  current owner. Graceful takeover creates the destination runtime only after a
-  verified source stop and ownership commit. Force takeover cannot claim that
-  an unreachable source stopped: it proves destination broker/auth readiness
-  before committing the force lease and creates a runtime only under the
-  winning lease, which fences the prior owner logically.
-- M1 Git closure covers tracked, dirty-index, staged, unstaged, untracked,
-  ignored-policy, symlink, and submodule state.
+A TerminalBackend owns only one host-local TerminalInstance: AX-delegated
+PTY/process hosting, presentation and attach/reconnect, backend-local IPC, and
+backend-specific process observation. Attach clients and presentation mirrors
+are not AX Replicas and never acquire, renew, or transfer ownership. Every
+backend ultimately executes exactly `ax pane SESSION_ID`; a raw provider command
+is not a durable entry point.
 
-## macOS terminal execution realm
+## Current targets and future candidates
 
-- AX uses a dedicated `tmux -S` server below an AX-owned 0700 runtime parent and
-  rejects symlink or path substitution before socket operations.
-- The background control plane is separate from the minimal Aqua terminal
-  broker. Background CLI/SSH/daemon processes may contact an existing broker
-  but may not create a credential-dependent tmux server.
-- `launchctl managername` is diagnostic only. Functional acceptance requires
-  an AX sentinel plus a separate provider-auth smoke bound to the tmux server
-  generation, provider build, and macOS version. Aqua alone and sentinel-only
-  evidence fail closed.
-- tmux sockets and provider authentication state are machine-local exclusions.
-  Logout/reboot without a verified GUI realm parks recovery until GUI login.
+- `ax.tmux` remains the mandatory built-in Unix target on macOS, Linux, and
+  WSL2. It uses an AX-owned private runtime directory, a dedicated `tmux -S`
+  server, no ambient/default server reuse, and the existing macOS Aqua broker
+  plus functional sentinel and provider-auth evidence.
+- `ax.conpty` remains the native-Windows built-in path under the same semantic
+  boundary. The specification does not claim tmux-equivalent durability for
+  ConPTY.
+- Superlogical is an unavailable, non-normative, future-only candidate. No
+  normative ID is reserved and no API, SDK, support, compatibility, automation,
+  or conformance behavior is invented by this release.
 
-## Errata resolved
+These are normative specification targets, not implementation-availability
+claims.
 
-- Directory Node Protocol/Request `1.0.0` retain their published
-  `darwin|linux|windows` probe vocabulary. Protocol/Request `2.0.0` use the AX
-  `macos|linux|wsl2|windows` vocabulary. Manifest and Response remain `1.0.0`;
-  both protocol majors bind them explicitly and negotiate without cross-major
-  coercion.
-- Directory identity fixtures are now checked using declared schema paths, not
-  value prefixes or suggestive field names. Digest, UUIDv4, UUIDv7,
-  UUIDv7-or-digest, nullable, platform, real-calendar timestamp, and
-  sorted-unique constraints are executable. Adversarial fixtures recompute
-  self-IDs so these checks are independently proven.
+## Contracts and compatibility
 
-- Direct unmanaged cross-environment move is forbidden because an unmanaged
-  source has no AX Session, winning lease, epoch, Checkpoint, or fenced source
-  release. Operators may retain the source and clone it, or adopt it
-  source-locally before creating a new managed-move plan.
-- Positive Directory identity vectors now satisfy common digest, timestamp, and
-  platform grammars before their RFC 8785 identities are accepted.
-- Directory Node success/failure responses are a strict `body XOR error` union;
-  enrichment generator discriminators must match; batched query/result indexes
-  are positional and exact; lineage rows expose the deterministic member that
-  supplies singular projection fields.
-- Session Record/Event v1 base text now points explicitly to the independently
-  closed v2/v3 variants, and the complete `ax sessions` leaf registry includes
-  the typed `q`, `grep`, and `m` agent surfaces.
-- Focused diagrams were rerendered after eliminating overlapping labels and
-  reducing the C4 Container view to its intended internal-container scope.
-
-## Session Directory
-
-The human namespace is `ax sessions`, with the closed leaves `list`, `inspect`, `lineage`, `scan`, `enrich`, `jobs`, `plan`, `continue`, `operation`, `attach`, and `doctor`. Agents use the same typed Directory Query engine through `ax sessions q`, `ax sessions grep`, and `ax sessions m`; terminal/TUI scraping is not a supported interface. Existing `ax list`, `ax status`, and `ax session clone` keep their v0.3 semantics.
-
-The Directory Node companion protocol performs source-local discovery, bounded preview, exact-head reads, runtime observation, and sanitized record publication through the same environment implementation used by Provider 2 and Session Adapter 1. It does not gain native-write, lease, workspace, or session authority. The catalog/search SQLite database and display text are rebuildable derived views, never truth.
-
-Mesh RPC 3 adds the disjoint `directory_record` namespace for allowed immutable observations, batches, lineage, annotations/profiles, enrichment job records, continuation plans, and operation receipts. Raw transcripts, preview bodies, credentials/auth state, absolute native-store paths, model-provider payloads, terminal output, live process facts, and the derived SQLite index remain source-local and are never Directory replication members.
-
-## Enrichment, query, and TUI
-
-Enrichment is exact-head, bounded, redacted, and governed by immutable profiles. The isolated worker receives typed input and no AX, provider, shell, filesystem, native-store, credential, or mutation authority. Manual metadata cannot be overwritten by enrichment; concurrent manual heads remain a visible conflict; a result whose subject head changed is retained only as stale/superseded evidence.
-
-Default list/query output contains sanitized projections and no raw excerpt. Preview and transcript grep are explicit, bounded, redacted, and source-host scoped. The Session Browser TUI uses the same planner/query/executor contracts as CLI and agent surfaces; there is no TUI-only mutation path.
-
-## Continuation planning and execution
-
-Planning is pure and content-addressed. Execution requires explicit confirmation and revalidates the exact source head, lease/runtime state, target Environment Tuple, authentication/workspace facts, route, and expiry. A mismatch refuses execution; AX does not silently replan or substitute another route.
-
-Managed attach/resume/takeover/fork routes delegate to existing AX ownership, transfer, materialization, and terminal authority. Cross-environment continuation delegates to the v0.3 cloning transaction and its fidelity/read-back/Checkpoint gates. A managed cross-environment move commits and validates the target before attempting fenced source stop/release; if that last step fails, the valid target remains and the truthful partial-success outcome is `cloned_source_still_active`.
-
-## Contract and compatibility boundary
-
-| Contract | v0.4.3 version / disposition |
+| Contract | v0.5.0 disposition |
 | --- | --- |
-| Directory Node protocol / request | `2.0.0`; immutable `1.0.0` remains dual-stack |
-| Directory Node manifest / response | `1.0.0`, explicitly bound by both protocol majors |
-| Environment/Native observations, Inventory Batch, lineage, annotations, enrichment, continuation, operation receipt, and Directory Query | `1.0.0` |
-| Mesh RPC | `3.0.0` for Directory; `2.0.0` remains dual-stack for core sync |
-| Configuration | `2.0.0` with explicit migration/read-only downgrade behavior |
-| CLI Result | `3.0.0` for `sessions.*`; Result 1/2 remain unchanged |
-| Session Record and Session Event | `3.0.0` for native adoption and move lifecycle; historical v1/v2 remain valid |
-| Structured Error | `1.2.0` for Directory Node 1/2, Mesh RPC 3, Directory Query 1, and CLI Result 3 |
-| Provider Protocol / Session Adapter | `2.0.0` / `1.0.0`, unchanged |
-| Existing cloning, transfer, materialization, Checkpoint, lease, workspace, terminal, and task-board contracts | Reused unchanged |
+| Terminal Backend protocol / manifest / probe | New independently versioned `1.0.0` family |
+| Terminal Instance binding / capability evidence | New independently versioned `1.0.0` schemas |
+| Configuration | New `3.0.0` selection/policy shape; Configuration 1/2 remain immutable |
+| Provider Protocol | New `3.0.0` Terminal Instance descriptor; Provider 2 remains immutable |
+| Session Event | New `4.0.0` Terminal Instance binding events; older majors remain immutable |
+| Mesh RPC | New `4.0.0` sanitized backend-evidence replication; RPC 2/3 remain dual-readable as specified |
+| Structured Error | New `1.3.0` TerminalBackend surface binding; earlier bindings remain exact |
+| CLI Result | New `4.0.0` backend inspection and generalized start/resume results |
 
-An RPC 2 peer continues core synchronization but is represented as `directory_mesh_unsupported`, never as an empty or current Directory inventory. An old Configuration 1 binary opens Configuration 2 only in read-only diagnostic mode and cannot write a downgraded replacement.
+Historical `tmux|conpty` values translate exactly into the new built-in IDs only
+at the explicit compatibility boundary. Readers never rewrite or re-digest
+historical self-identifying objects. Unknown or unsupported backend history may
+remain browseable/synchronizable where the negotiated containing contract
+allows it, but it cannot activate, silently downgrade, or trigger restore
+fallback.
 
-## Diagrams and validation
+## Lifecycle, capabilities, and evidence
 
-The C4 System Context and Container views now include the Directory control plane and its relationships to source-local native stores, immutable records, mesh, cloning, provider, and terminal authority. Three focused PlantUML diagrams cover component boundaries, source-local inventory/enrichment, and continuation planning/execution. All twelve committed SVGs are pinned by SHA-256, regenerated from committed sources, and visually inspected.
+The semantic boundary closes backend identity, generation, manifest/probe
+agreement, states, operations, deadlines, retry disposition, and capability
+evidence. It defines `manifest`, `probe`, `create`, `attach`, `status`,
+`quiesce-input`, `wait-safe-boundary`, `request-stop`, `terminate-stale`, and
+`restore`. Create preserves `(session_id, bootstrap_operation_id)` idempotency
+across controller crash and lost result. Attach remains ownership-observational.
 
-The public repository validator remains specification-only. It validates contract fixtures, links, publication metadata, frozen public-document bytes, diagram source/artifact freshness, retained crash/restart and cloning gates, and Directory schema/namespace/query/route/security invariants. The expected-red suite succeeds only when every focused mutation is rejected by the production validator with its expected diagnostic.
+Capabilities are closed, versioned, and fail closed. Claims must reproduce from
+the required static or probed evidence and may vary by backend generation only
+where declared. Multi-attach, remote/web attach, and multiple authorized input
+clients are independent capabilities; one never implies another.
+
+## Security and credential realm
+
+Runtime IPC, tmux sockets, named pipes, attach tokens, relay credentials,
+backend auth state, provider credentials, backend-private live databases,
+GUI/login attestations, process facts, and terminal state remain machine-local
+and non-replicable. Only explicitly sanitized backend identity and conformance
+evidence may persist in AX records.
+
+Credential readiness is functional evidence inside the exact TerminalInstance:
+an AX-owned sentinel plus a provider-auth smoke bound to backend ID, versions,
+generation, provider build, platform, and OS version. Aqua or GUI presence alone
+is not proof. This release adds no permanent public TCP listener and approves no
+third-party relay/public-service transport.
+
+## Implementation milestones and SDK status
+
+- M0 defines the internal semantic boundary, registry, identity,
+  compatibility, and conformance harness.
+- M1 delivers the production built-in tmux path and single-host durability.
+- M2 adds the multi-host preview and its minimum fencing, idempotency, journal,
+  and recovery safety kernel.
+- M3 is the first daily-driver tmux gate on required macOS/Linux lanes,
+  including Aqua/provider-auth evidence and full recovery.
+
+A stable public TerminalBackend SDK remains deferred until tmux and at least one
+materially different backend validate the boundary. The local adapter protocol
+and internal interfaces in this specification are not a stable public SDK.
 
 ## Retained provider and platform caveats
 
@@ -123,9 +107,16 @@ The public repository validator remains specification-only. It validates contrac
 - Native Windows and WSL2 are distinctly partitioned. Native Windows does not claim `tmux` support, using native process supervision and ConPTY instead.
 - Payload encryption at rest is not provided; `mesh.payload_encryption` remains `none`.
 
-## Traceability
+## Validation, diagrams, and traceability
 
-`STANDALONE_TO_AX_TRACEABILITY.md` maps every cloning and Session Directory standalone section to the resulting AX v0.4.3 section and records reuse, addition, or supersession without becoming normative. Appendix A of `SPEC.md` maps accepted decisions, task criteria, and Directory publication artifacts; Appendix D defines the exhaustive contract and fixture catalog. `SPEC.md` remains the only normative source.
-The v0.4.3 roadmap and terminal-realm decisions map directly to SPEC Sections
-2–4, 7.1, 12–17, 19, and Appendix D; no public summary becomes a second
-normative authority.
+The release adds `fixtures/terminal_backend_conformance.json`, the focused
+TerminalBackend validator and expected-red mutations, a C4 component view, and a
+focused PlantUML authority/lifecycle view. These are specification-conformance
+artifacts; they do not execute or attest a product implementation.
+
+Appendix A.11 of `SPEC.md` maps the owner brief and release requirements to the
+normative sections and fixture gates. Appendix D catalogs the independently
+versioned contracts and negative mutations. `STANDALONE_TO_AX_TRACEABILITY.md`
+retains the historical cloning/Directory mappings and adds a non-normative
+v0.5.0 TerminalBackend release-delta index. `SPEC.md` remains the only normative
+source.

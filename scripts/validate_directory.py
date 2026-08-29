@@ -17,7 +17,7 @@ from typing import Callable
 # they are not publication/frozen-document digests.
 NORMATIVE_SCHEMA_SECTIONS = {
     "Configuration 2.0.0 directory extension": (
-        "### 6.4 Configuration 2.0.0 directory extension", "## 7.",
+        "### 6.4 Configuration 2.0.0 directory extension", "### 6.5 Configuration 3.0.0 TerminalBackend extension",
         "d6e9a78f719dc5c5ee4905c6bf73e2f64f1f5ecd7d6be0d53b3ffd88fb72c417",
     ),
     "Directory Node protocol": (
@@ -29,7 +29,7 @@ NORMATIVE_SCHEMA_SECTIONS = {
         "03e0077f6356e281560d8cf37643baee7d46c004cc453f5f5379ebfc076eacaf",
     ),
     "Mesh RPC 3 directory replication": (
-        "### 11.8 Mesh RPC 3.0.0 directory replication", "## 12.",
+        "### 11.8 Mesh RPC 3.0.0 directory replication", "### 11.9 Mesh RPC 4.0.0 TerminalBackend evidence replication",
         "a2a6f9c94d09ff946a1b24e4d29f4eba94e66b18090ff2d4f6f3f9b388c211b6",
     ),
     "directory continuation planning and execution": (
@@ -37,7 +37,7 @@ NORMATIVE_SCHEMA_SECTIONS = {
         "cb0b953e2290473b6fe51da7c251bae4a7ba21ca2be1da6970b0f31bf509be5e",
     ),
     "CLI Result 3 and Directory Query": (
-        "### 14.5 Session Directory CLI Result 3, query, and TUI", "## 15.",
+        "### 14.5 Session Directory CLI Result 3, query, and TUI", "### 14.6 CLI Result 4.0.0 TerminalBackend surfaces",
         "2e3bc8620ea4f9fc88c149cfa644b3c6d99f4a20e450825f535e0a6b68de26bf",
     ),
     "Structured Error 1.2": (
@@ -1185,7 +1185,7 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     need("publication_consistency", publication.get("spec_version") == "0.4.3" and publication.get("frozen_digest_owner") == "publication-task" and publication.get("required_documents") == docs, "v0.4.3 candidate/release ownership or document registry mismatch")
     claim = "AX v0.4.3 Session Directory is specification-only until conforming implementations publish tuple evidence."
     need("publication_consistency", publication.get("claim") == claim, "README/release claim is not supported by SPEC and fixtures")
-    need("publication_consistency", "The following versions are active in v0.4.3." in spec and "implementation release acceptance rule" in spec, "SPEC does not support v0.4.3 specification-only claim")
+    need("publication_consistency", "The exact historical v0.4.3 registry is the table above" in spec and "implementation release acceptance rule" in spec, "SPEC does not preserve the v0.4.3 specification-only claim")
     public_prose = "\n".join(
         (root / name).read_text(encoding="utf-8")
         for name in ("README.md", "RELEASE_NOTES.md")
@@ -1225,7 +1225,7 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         "tuple_matrix": ["The initial mapping is exactly", "Adoption is source-local and unavailable unless the exact accepted tuple proves"],
         "security": ["ANSI, OSC, bidi overrides,\ncontrols, invalid width, and hostile grapheme sequences are removed or visibly\nescaped", "All native/process launches use structured argv, explicit workspace-derived cwd,\nminimal environment allowlists"],
         "traceability": ["Appendix D. Requirement traceability", "<code>AC-DIR-INV-001</code>"],
-        "publication_consistency": ["The following versions are active in v0.4.3.", "implementation release acceptance rule"],
+        "publication_consistency": ["The exact historical v0.4.3 registry is the table above", "implementation release acceptance rule"],
     }
     for group, literals in spec_requirements.items():
         for literal in literals:

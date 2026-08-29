@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Expected-red mutation suite for v0.4.3 ==="
+echo "=== Expected-red mutation suite for v0.5.0 (including immutable v0.4.3 history) ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -63,6 +63,7 @@ mutate_v043_fixture() {
   local mutation="$2"
   python3 - "$fixture_dir" "$mutation" <<'PY'
 from pathlib import Path
+import hashlib
 import json
 import sys
 
@@ -95,6 +96,190 @@ else:
 
 path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 PY
+}
+
+mutate_terminal_backend_fixture() {
+  local fixture_dir="$1"
+  local mutation="$2"
+  python3 - "$fixture_dir" "$mutation" <<'PY'
+from pathlib import Path
+import hashlib
+import json
+import sys
+
+path = Path(sys.argv[1]) / "fixtures" / "terminal_backend_conformance.json"
+mutation = sys.argv[2]
+data = json.loads(path.read_text(encoding="utf-8"))
+cases = {row["id"]: row for row in data["positive_cases"]}
+tmux = data["backends"][0]
+conpty = data["backends"][1]
+
+def identity(obj, id_member):
+    canonical = {key: value for key, value in obj.items() if key != id_member}
+    payload = json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+def rehash_manifest(backend):
+    backend["manifest"]["manifest_id"] = identity(backend["manifest"], "manifest_id")
+
+def rehash_probe(backend):
+    backend["probe"]["probe_id"] = identity(backend["probe"], "probe_id")
+
+def rehash_evidence(backend, evidence):
+    old_id = evidence["evidence_id"]
+    evidence["evidence_id"] = identity(evidence, "evidence_id")
+    new_id = evidence["evidence_id"]
+    backend["probe"]["evidence_ids"] = sorted(new_id if item == old_id else item for item in backend["probe"]["evidence_ids"])
+    for case in data["positive_cases"]:
+        if case.get("evidence_id") == old_id:
+            case["evidence_id"] = new_id
+    rehash_probe(backend)
+
+if mutation == "backend-ownership":
+    data["policy"]["backend_authority"] = "logical_session_owner"
+elif mutation == "presentation-is-replica":
+    cases["TB-ATTACH-OWNER-NEUTRAL"]["presentation_replica_is_ax_replica"] = True
+elif mutation == "raw-provider-entrypoint":
+    tmux["runtime"]["entrypoint"][0:2] = ["claude", "--resume"]
+elif mutation == "duplicate-id":
+    conpty["manifest"]["terminal_backend_id"] = "ax.tmux"
+    conpty["probe"]["terminal_backend_id"] = "ax.tmux"
+elif mutation == "invalid-id":
+    tmux["manifest"]["terminal_backend_id"] = "AX TMUX"
+    tmux["probe"]["terminal_backend_id"] = "AX TMUX"
+elif mutation == "duplicate-version":
+    tmux["manifest"]["protocol_versions"].append("1.0.0")
+elif mutation == "invalid-version":
+    tmux["manifest"]["implementation_version"] = "legacy_unreported"
+    tmux["probe"]["implementation_version"] = "legacy_unreported"
+elif mutation == "manifest-probe-mismatch":
+    tmux["probe"]["implementation_kind"] = "trusted_executable"
+elif mutation == "unknown-capability":
+    tmux["probe"]["capability_claims"][0]["capability"] = "owns_session"
+elif mutation == "unevidenced-capability":
+    tmux["probe"]["evidence_ids"] = []
+elif mutation == "operation-without-capability":
+    cases["TB-CAPABILITY-ADMISSION"]["admitted_capability"] = "local_attach"
+elif mutation == "restore-fallback":
+    cases["TB-UNSUPPORTED-BROWSE-NO-ACTIVATE"]["fallback"] = True
+elif mutation == "attach-owner-change":
+    cases["TB-ATTACH-OWNER-NEUTRAL"]["owner_after"] = "host-b"
+elif mutation == "stale-generation":
+    credential = tmux["capability_evidence"][0]
+    credential["backend_generation_digest"] = "sha256:abababababababababababababababababababababababababababababababab"
+    rehash_evidence(tmux, credential)
+elif mutation == "malformed-evidence-id":
+    tmux["capability_evidence"][0]["evidence_id"] = "not-a-digest"
+elif mutation == "self-minted-evidence":
+    credential = tmux["capability_evidence"][0]
+    credential["issuer_id"] = "sha256:abababababababababababababababababababababababababababababababab"
+    rehash_evidence(tmux, credential)
+elif mutation == "forged-trusted-issuer":
+    credential = tmux["capability_evidence"][0]
+    credential["provider_build"] = "forged-by-caller"
+    rehash_evidence(tmux, credential)
+elif mutation == "absent-evidence-object":
+    tmux["capability_evidence"].pop(0)
+elif mutation == "unreferenced-evidence-object":
+    extra = dict(tmux["capability_evidence"][1])
+    extra["observed_at"] = "2026-08-29T09:58:00.000Z"
+    extra["evidence_id"] = identity(extra, "evidence_id")
+    tmux["capability_evidence"].append(extra)
+elif mutation == "conflicting-evidence":
+    extra = dict(tmux["capability_evidence"][1])
+    extra["observed_at"] = "2026-08-29T09:58:00.000Z"
+    extra["evidence_id"] = identity(extra, "evidence_id")
+    tmux["capability_evidence"].append(extra)
+    tmux["probe"]["evidence_ids"].append(extra["evidence_id"])
+    tmux["probe"]["evidence_ids"].sort()
+    rehash_probe(tmux)
+elif mutation == "expired-evidence":
+    credential = tmux["capability_evidence"][0]
+    credential["expires_at"] = "2026-08-29T09:59:30.000Z"
+    rehash_evidence(tmux, credential)
+elif mutation == "missing-required-fact":
+    local = tmux["capability_evidence"][1]
+    local["facts"].remove("policy_checked")
+    rehash_evidence(tmux, local)
+elif mutation == "unknown-static-capability":
+    claim = dict(tmux["manifest"]["static_capability_claims"][1])
+    claim["capability"] = "owns_session"
+    tmux["manifest"]["static_capability_claims"].append(claim)
+    tmux["manifest"]["static_capability_claims"].sort(key=lambda item: item["capability"])
+    rehash_manifest(tmux)
+elif mutation == "unproven-static-capability":
+    claim = dict(tmux["manifest"]["static_capability_claims"][1])
+    claim["capability"] = "remote_attach"
+    tmux["manifest"]["static_capability_claims"].append(claim)
+    tmux["manifest"]["static_capability_claims"].sort(key=lambda item: item["capability"])
+    tmux["probe"]["capability_claims"].append(dict(claim))
+    tmux["probe"]["capability_claims"].sort(key=lambda item: item["capability"])
+    rehash_manifest(tmux)
+    rehash_probe(tmux)
+elif mutation == "static-omission":
+    tmux["probe"]["capability_claims"] = [claim for claim in tmux["probe"]["capability_claims"] if claim["capability"] != "local_attach"]
+    removed = tmux["capability_evidence"].pop(1)["evidence_id"]
+    tmux["probe"]["evidence_ids"].remove(removed)
+    rehash_probe(tmux)
+elif mutation == "static-echo-mismatch":
+    tmux["probe"]["capability_claims"][1]["value"] = False
+    removed = tmux["capability_evidence"].pop(1)["evidence_id"]
+    tmux["probe"]["evidence_ids"].remove(removed)
+    rehash_probe(tmux)
+elif mutation == "static-override-mismatch":
+    tmux["probe"]["capability_claims"][0]["dependent_operations"] = ["create"]
+    rehash_probe(tmux)
+elif mutation == "null-availability":
+    tmux["probe"]["availability"] = None
+    rehash_probe(tmux)
+elif mutation == "invalid-probed-at":
+    tmux["probe"]["probed_at"] = "not-a-timestamp"
+    rehash_probe(tmux)
+elif mutation == "nested-unknown-member":
+    tmux["runtime"]["owns_session"] = False
+elif mutation == "null-conpty-durability":
+    conpty["runtime"]["durability_claim"] = None
+elif mutation == "positive-conpty-expected-type":
+    cases["TB-CONPTY-WINDOWS-MANIFEST-PROBE"]["expected"] = 17
+elif mutation == "positive-tmux-entrypoint":
+    cases["TB-TMUX-UNIX-MANIFEST-PROBE"]["production_entrypoint"] = "fixture.helper"
+elif mutation == "positive-legacy-expected":
+    cases["TB-LEGACY-TRANSLATION"]["expected"] = "identity_rewritten"
+elif mutation == "resume-version-mismatch":
+    cases["TB-RESUME-EVENT-VERSION-BINDING"]["implementation_version"] = "2.0.0"
+elif mutation == "pid-identity":
+    tmux["manifest"]["terminal_backend_id"] = "pid"
+    tmux["probe"]["terminal_backend_id"] = "pid"
+elif mutation.startswith("replicate-"):
+    cases["TB-SANITIZED-REPLICATION"]["included_classes"].append(mutation.removeprefix("replicate-"))
+elif mutation == "ambient-tmux":
+    tmux["runtime"]["ambient_server_reuse"] = True
+elif mutation == "background-create":
+    tmux["runtime"]["credential_creation_actor"] = "background_cli"
+elif mutation == "gui-only-proof":
+    tmux["runtime"]["credential_proof"] = ["gui_bootstrap"]
+    tmux["runtime"]["gui_only_proof"] = True
+elif mutation == "superlogical-available":
+    data["policy"]["superlogical"]["available"] = True
+elif mutation == "relay-bypass":
+    data["policy"]["relay_admitted"] = True
+elif mutation == "premature-public-sdk":
+    data["policy"]["public_sdk_stable"] = True
+else:
+    raise SystemExit(f"unknown TerminalBackend mutation {mutation}")
+
+path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+run_terminal_backend_mutation() {
+  local mutation="$1"
+  local label="$2"
+  local diagnostic="$3"
+  local fix
+  fix=$(fixture_copy "terminal-backend-$mutation")
+  mutate_terminal_backend_fixture "$fix" "$mutation"
+  expect_fail "$label" "$diagnostic" "$fix"
 }
 
 # Semantic mutations intentionally advance the frozen SPEC digest inside their
@@ -603,25 +788,25 @@ echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.4.3 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.5.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.4.3 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.5.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
 printf '\nQwen sessions do not need task-board in v0.2.1.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.4.3 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.5.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.4.3 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.5.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
@@ -721,8 +906,8 @@ python3 -c "
 import pathlib
 p=pathlib.Path('$FIX/SPEC.md')
 t=p.read_text()
-old='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code> |'
-new='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>1.0.0</code> |'
+old='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor |'
+new='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>1.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor |'
 assert old in t
 p.write_text(t.replace(old, new, 1))
 "
@@ -1351,13 +1536,13 @@ echo ""
 echo "Mutation 105: Internal v0.3.0 task ownership ID leaks into public docs"
 FIX=$(fixture_copy "clone-public-internal-task-id")
 printf '\nGate owner: TASK-260826-example.\n' >> "$FIX/README.md"
-expect_fail "public package must not expose active internal task ownership" "stale/internal v0.4.3 publication marker" "$FIX"
+expect_fail "public package must not expose active internal task ownership" "stale/internal v0.5.0 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 106: Stale v0.2.1 diagram-ledger wording returns"
 FIX=$(fixture_copy "clone-stale-diagram-ledger")
 printf '\nUses the unchanged v0.2.1 SHA-256 ledger.\n' >> "$FIX/diagrams/README.md"
-expect_fail "diagram docs must describe the v0.4.3 ledger" "stale/internal v0.4.3 publication marker" "$FIX"
+expect_fail "diagram docs must describe the historical v0.4.3 ledger" "stale/internal v0.5.0 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 107: Target derivation mutates the source provider identity after digest refresh"
@@ -1524,13 +1709,13 @@ root = Path(sys.argv[1])
 for name in ("README.md", "CONTRIBUTING.md"):
     path = root / name
     text = path.read_text(encoding="utf-8")
-    text = text.replace("eight handwritten PlantUML sources", "five handwritten PlantUML sources")
-    text = text.replace("twelve committed SVG artifacts", "nine committed SVG artifacts")
+    text = text.replace("nine handwritten PlantUML sources", "five handwritten PlantUML sources")
+    text = text.replace("fifteen committed SVG artifacts", "nine committed SVG artifacts")
     path.write_text(text, encoding="utf-8")
 PY
 refresh_frozen_document_digest "$FIX" "README.md"
 refresh_frozen_document_digest "$FIX" "CONTRIBUTING.md"
-expect_fail "public diagram ledgers must not narrow to stale 5/9 counts" "public diagram ledger must declare eight handwritten PlantUML sources" "$FIX"
+expect_fail "public diagram ledgers must not narrow to stale 5/9 counts" "public diagram ledger must declare nine handwritten PlantUML sources" "$FIX"
 
 mutate_directory_fixture() {
   local fixture_dir="$1"
@@ -2442,6 +2627,194 @@ if text.count(old) != 1:
 path.write_text(text.replace(old, new, 1), encoding="utf-8")
 PY
 expect_fail "v0.4.3 platform-scoped Aqua broker" "Aqua broker readiness must be conditional on a macOS target" "$FIX"
+
+echo ""
+echo "TerminalBackend diagram authority mutations"
+FIX=$(fixture_copy "terminal-backend-diagram-authority-inversion")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "diagrams" / "plantuml" / "terminal_backend_components.puml"
+text = path.read_text(encoding="utf-8")
+old = "Never owns or interprets LogicalSession"
+new = "Owns and interprets LogicalSession"
+if text.count(old) != 1:
+    raise SystemExit("TerminalBackend authority marker cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+expect_fail "diagram must reject TerminalBackend authority inversion" "terminal backend diagram semantic marker missing" "$FIX"
+
+FIX=$(fixture_copy "terminal-backend-diagram-superlogical-admitted")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "diagrams" / "plantuml" / "terminal_backend_components.puml"
+text = path.read_text(encoding="utf-8")
+old = "Superlogical is an illustrative future candidate only: unavailable"
+new = "Superlogical is an available supported backend"
+if text.count(old) != 1:
+    raise SystemExit("Superlogical future-only marker cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+expect_fail "diagram must reject supported Superlogical claim" "terminal backend diagram semantic marker missing" "$FIX"
+
+FIX=$(fixture_copy "terminal-backend-diagram-synonym")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "diagrams" / "c4" / "model.dsl"
+text = path.read_text(encoding="utf-8")
+old = 'terminal_runtime = container "Terminal Runtime Core"'
+new = 'terminal_runtime = container "Terminal Backend (tmux or ConPTY)"'
+if text.count(old) != 1:
+    raise SystemExit("Terminal Runtime Core marker cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+expect_fail "C4 must reject TerminalBackend implementation synonym" "terminal backend diagram semantic marker missing" "$FIX"
+
+echo ""
+echo "TerminalBackend independent expected-red mutations"
+FIX=$(fixture_copy "terminal-backend-stale-readme-milestones")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "README.md"
+text = path.read_text(encoding="utf-8")
+old = "M1 delivers the production built-in `ax.tmux` backend and\nsingle-host durability."
+new = "M1 closes the full local/Git state surface."
+if text.count(old) != 1:
+    raise SystemExit("README TerminalBackend M1 milestone cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+refresh_frozen_document_digest "$FIX" "README.md"
+expect_fail "stale README TerminalBackend M1 milestone summary" "README.md: TerminalBackend roadmap M1 milestone missing or stale" "$FIX"
+
+run_terminal_backend_mutation "backend-ownership" "backend claims LogicalSession ownership" "must not claim AX LogicalSession/Owner/Replica authority"
+run_terminal_backend_mutation "presentation-is-replica" "presentation mirror becomes AX Replica" "attach/client mirror must be ownership-neutral"
+run_terminal_backend_mutation "raw-provider-entrypoint" "raw provider durable entrypoint" "durable entrypoint must be exactly ax pane SESSION_ID"
+run_terminal_backend_mutation "duplicate-id" "duplicate backend ID" "canonical backend IDs must be unique"
+run_terminal_backend_mutation "invalid-id" "invalid backend ID grammar" "invalid terminal_backend_id"
+run_terminal_backend_mutation "duplicate-version" "duplicate protocol version" "protocol versions must be sorted unique"
+run_terminal_backend_mutation "invalid-version" "invalid implementation version" "invalid implementation version"
+run_terminal_backend_mutation "manifest-probe-mismatch" "manifest/probe implementation mismatch" "manifest/probe identity mismatch"
+run_terminal_backend_mutation "unknown-capability" "unknown capability claim" "unknown capability"
+run_terminal_backend_mutation "unevidenced-capability" "true capability without evidence" "evidence_ids must exactly cover returned Capability Evidence objects"
+run_terminal_backend_mutation "operation-without-capability" "operation admitted without required capability" "operation without its reproduced evidenced capability must be refused"
+run_terminal_backend_mutation "restore-fallback" "restore silently falls back" "unsupported backend must remain browse/sync-only"
+run_terminal_backend_mutation "attach-owner-change" "attach mutates ownership" "attach/client mirror must be ownership-neutral"
+run_terminal_backend_mutation "stale-generation" "stale generation evidence" "backend_generation_digest does not bind exact Probe tuple"
+run_terminal_backend_mutation "malformed-evidence-id" "malformed Capability Evidence ID" "evidence_id identity recomputation mismatch"
+run_terminal_backend_mutation "self-minted-evidence" "self-minted Capability Evidence issuer" "issuer is untrusted or self-minted"
+run_terminal_backend_mutation "forged-trusted-issuer" "caller forges evidence under trusted issuer ID" "attestation signature verification failed"
+run_terminal_backend_mutation "absent-evidence-object" "absent Capability Evidence treated as satisfied" "evidence_ids must exactly cover returned Capability Evidence objects"
+run_terminal_backend_mutation "unreferenced-evidence-object" "unreferenced returned Capability Evidence" "evidence_ids must exactly cover returned Capability Evidence objects"
+run_terminal_backend_mutation "conflicting-evidence" "conflicting evidence for one true claim" "every true claim requires exactly one non-conflicting evidence object"
+run_terminal_backend_mutation "expired-evidence" "expired Capability Evidence" "must be unexpired at Probe time"
+run_terminal_backend_mutation "missing-required-fact" "Capability Evidence missing required fact" "does not satisfy exact claim evidence requirements"
+run_terminal_backend_mutation "unknown-static-capability" "unknown Manifest static capability" "unknown capability"
+run_terminal_backend_mutation "unproven-static-capability" "unproven Manifest static capability" "every true claim requires exactly one non-conflicting evidence object"
+run_terminal_backend_mutation "static-omission" "Manifest static capability omitted by Probe" "static capability omitted from Probe"
+run_terminal_backend_mutation "static-echo-mismatch" "Manifest static capability echo mismatch" "static capability echo mismatch"
+run_terminal_backend_mutation "static-override-mismatch" "generation-variable override changes derived members" "probed override dependent_operations mismatch"
+run_terminal_backend_mutation "null-availability" "Probe non-null enum bypass" "availability must be closed non-null enum"
+run_terminal_backend_mutation "invalid-probed-at" "Probe timestamp bypass" "probed_at must be RFC3339 UTC timestamp"
+run_terminal_backend_mutation "nested-unknown-member" "nested runtime unknown member" "runtime recursive closed shape mismatch"
+run_terminal_backend_mutation "null-conpty-durability" "null ConPTY durability claim" "durability_claim must be exact non-null ConPTY durability enum"
+run_terminal_backend_mutation "positive-conpty-expected-type" "typed ConPTY positive expectation" "positive case typed/semantic mismatch: TB-CONPTY-WINDOWS-MANIFEST-PROBE"
+run_terminal_backend_mutation "positive-tmux-entrypoint" "tmux positive case bypasses production entrypoint" "positive case typed/semantic mismatch: TB-TMUX-UNIX-MANIFEST-PROBE"
+run_terminal_backend_mutation "positive-legacy-expected" "legacy translation positive expectation rewritten" "positive case typed/semantic mismatch: TB-LEGACY-TRANSLATION"
+run_terminal_backend_mutation "resume-version-mismatch" "Session Event 4 resume evidence version mismatch" "Session Event 4 session.resumed backend version tuple must match validated evidence"
+run_terminal_backend_mutation "pid-identity" "PID used as backend identity" "mutable endpoint used as identity"
+run_terminal_backend_mutation "replicate-socket" "replicated backend socket" "replication must contain only sanitized identity/capability evidence"
+run_terminal_backend_mutation "replicate-pipe" "replicated backend pipe" "replication must contain only sanitized identity/capability evidence"
+run_terminal_backend_mutation "replicate-token" "replicated attach token" "replication must contain only sanitized identity/capability evidence"
+run_terminal_backend_mutation "replicate-relay_credential" "replicated relay credential" "replication must contain only sanitized identity/capability evidence"
+run_terminal_backend_mutation "replicate-backend_credential" "replicated backend credential" "replication must contain only sanitized identity/capability evidence"
+run_terminal_backend_mutation "replicate-provider_credential" "replicated provider credential" "replication must contain only sanitized identity/capability evidence"
+run_terminal_backend_mutation "ambient-tmux" "ambient/default tmux server reuse" "private -S server and reject ambient/default server reuse"
+run_terminal_backend_mutation "background-create" "background credential-dependent tmux creation" "background credential-dependent tmux creation must be refused"
+run_terminal_backend_mutation "gui-only-proof" "GUI bootstrap used as credential proof" "GUI-only proof is insufficient"
+run_terminal_backend_mutation "superlogical-available" "unsupported Superlogical availability" "Superlogical must remain future-only"
+run_terminal_backend_mutation "relay-bypass" "third-party relay policy bypass" "third-party relay policy bypass is forbidden"
+run_terminal_backend_mutation "premature-public-sdk" "premature stable public SDK" "stable public SDK is premature"
+
+FIX=$(fixture_copy "terminal-backend-public-implementation-claim")
+printf '\nTerminalBackend implementations are shipped and available.\n' >> "$FIX/README.md"
+refresh_frozen_document_digest "$FIX" "README.md"
+expect_fail "release artifact claims TerminalBackend implementation availability" "release artifact must not claim TerminalBackend implementation availability" "$FIX"
+
+FIX=$(fixture_copy "terminal-backend-public-sdk-claim")
+printf '\nA stable public TerminalBackend SDK is available.\n' >> "$FIX/RELEASE_NOTES.md"
+refresh_frozen_document_digest "$FIX" "RELEASE_NOTES.md"
+expect_fail "release artifact claims stable public TerminalBackend SDK" "release artifact must not claim stable public TerminalBackend SDK" "$FIX"
+
+FIX=$(fixture_copy "terminal-backend-resume-event-version-shape")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = "| <code>session.resumed</code> | <code>checkpoint_id:digest</code>, <code>execution_profile:standard&#124;yolo</code>, <code>profile_source_event_id:digest&#124;null</code>, <code>terminal_binding_id:digest</code>, <code>terminal_backend_id:terminal-backend-id</code>, <code>implementation_version:semver</code>, <code>protocol_version:semver</code>, <code>evidence_ids:sorted unique digest[1..256]</code> |"
+new = "| <code>session.resumed</code> | <code>checkpoint_id:digest</code>, <code>execution_profile:standard&#124;yolo</code>, <code>profile_source_event_id:digest&#124;null</code>, <code>terminal_binding_id:digest</code>, <code>terminal_backend_id:terminal-backend-id</code>, <code>evidence_ids:sorted unique digest[1..256]</code> |"
+if text.count(old) != 1:
+    raise SystemExit("Session Event 4 resume version tuple cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "Session Event 4 resume omits backend versions" "Session Event 4 session.resumed must bind backend implementation/protocol versions" "$FIX"
+
+FIX=$(fixture_copy "terminal-backend-provider3-shape-drift")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = "| <code>protocol_version</code> | Semantic Version in Terminal Backend Protocol major 1 |"
+new = "| <code>protocol_version</code> | Any Semantic Version |"
+if text.count(old) != 1:
+    raise SystemExit("Provider Protocol 3 protocol-version row cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "Provider Protocol 3 closed shape drift" "normative schema fingerprint drift: Provider Protocol 3.0.0" "$FIX"
+
+FIX=$(fixture_copy "terminal-backend-error13-shape-drift")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = "| 10 | <code>terminal_backend_stale_generation</code> |"
+new = "| 6 | <code>terminal_backend_stale_generation</code> |"
+if text.count(old) != 1:
+    raise SystemExit("Structured Error 1.3 stale-generation row cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "Structured Error 1.3 code mapping drift" "normative schema fingerprint drift: Structured Error 1.3.0" "$FIX"
+
+FIX=$(fixture_copy "terminal-backend-historical-definition")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = "| <code>terminal.backend</code> | Platform default | <code>tmux</code> on macOS/Linux/WSL2; <code>conpty</code> on Windows |"
+new = "| <code>terminal.backend</code> | Platform default | <code>tmux</code> on every platform |"
+if text.count(old) != 1:
+    raise SystemExit("historical Configuration 1.0.0 terminal.backend row cardinality mismatch")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "modified actual historical Configuration definition" "historical definition fingerprint drift: Configuration 1.0.0 field constraints" "$FIX"
 
 echo ""
 echo "=========================================="

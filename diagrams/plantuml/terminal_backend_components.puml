@@ -1,0 +1,77 @@
+@startuml terminal_backend_components
+skinparam BackgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+    FontColor #000000
+}
+skinparam rectangle {
+    BackgroundColor #F5F5F5
+    BorderColor #9E9E9E
+    FontColor #000000
+}
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #FBC02D
+    FontColor #000000
+}
+skinparam linetype ortho
+top to bottom direction
+
+title TerminalBackend Module and Authority Boundary
+
+component "AX CLI / Attach Client" as Client
+
+rectangle "AX authority (authoritative state and decisions)" as AX {
+    component "AX Terminal Controller" as Controller
+    component "Terminal Backend Registry\nidentity / version / platform\ncapability + probe admission" as Registry
+    component "LogicalSession + Owner/Replica\nleases/fencing + provider lifecycle/native state\nworkspace + checkpoints/evidence\ntask-board + mesh/takeover" as Authority
+}
+
+rectangle "Host-local Terminal Runtime Core" as Runtime {
+    component "TerminalBackend Boundary\nAX-delegated operations" as Backend
+    component "Built-in tmux Backend\nmacOS / Linux / WSL2\nprivate dedicated -S server" as Tmux
+    component "Built-in ConPTY Backend\nnative Windows\nno tmux-equivalent durability claim" as ConPTY
+    component "AX Pane Entrypoint\nax pane SESSION_ID" as Pane
+}
+
+component "macOS Aqua Broker\ncreates + attests exact private -S generation\nand functional credential readiness" as Aqua
+component "Provider Plugin" as Provider
+
+Client --> Controller
+Controller --> Authority : owns and mutates
+Controller --> Registry : resolve + admit
+Registry --> Tmux
+Registry --> ConPTY
+Controller --> Backend
+Tmux ..> Backend : implements
+ConPTY ..> Backend : implements
+Tmux --> Pane : hosts exactly
+ConPTY --> Pane : hosts exactly
+Controller --> Pane : supplies authorized session/provider context
+Pane --> Provider : AX-authorized provider lifecycle only
+Aqua --> Tmux
+
+note right of Backend
+  Owns one host-local TerminalInstance only:
+  delegated PTY/process hosting,
+  presentation/attach/reconnect,
+  local IPC, and process observation.
+
+  Never owns or interprets LogicalSession,
+  Owner/Replica, leases/fencing, provider state,
+  workspace, checkpoints, task-board, mesh,
+  or takeover. Client mirrors never mutate ownership.
+
+  Runtime IPC, sockets/pipes, attach credentials, and backend-private live state
+  stay machine-local and never carry AX authoritative state.
+end note
+
+note bottom of Registry
+  Superlogical is an illustrative future candidate only: unavailable,
+  non-normative, and non-conforming. No API, backend ID, support,
+  compatibility, or admission claim is made.
+end note
+
+@enduml

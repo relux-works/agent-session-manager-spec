@@ -1,8 +1,15 @@
-# Standalone Subsystems to AX v0.4.3 Traceability
+# Standalone Subsystems to AX v0.5.0 Traceability
 
 This document is a non-normative migration index. [SPEC.md](SPEC.md) is the only normative source; this file does not restate or extend its requirements. It accounts for the standalone *Cross-Environment Agent Session Cloning Specification v0.1.0* source identified by SHA-256 `d8e2ef73f6a07ef58219fd2c4e8e16dff681728ec0b153653fc87f1f200af475` and the standalone *AX Session Directory and Orchestration Specification v0.1.0* source identified by SHA-256 `486612e4c1a10dcfc6e75cf17c60beb974c6989b82c333a9350fa1befd1a448f`.
 
-AX v0.4.3 preserves the v0.3.0/v0.4.0 integration mapping and v0.4.2 Directory correction below while reconciling the implementation roadmap, continuation ownership UX, complete Git closure, and macOS execution realm. Direct unmanaged move is superseded by unmanaged clone or source-local adoption followed by a newly planned managed move. Directory Node Protocol/Request `1.0.0` remain immutable with their published platform vocabulary; `2.0.0` carries the AX platform vocabulary under an explicit dual-stack binding.
+AX v0.5.0 preserves the v0.3.0/v0.4.0 integration mapping and v0.4.2/v0.4.3
+corrections below while adding the independently versioned TerminalBackend
+family. Direct unmanaged move remains superseded by unmanaged clone or
+source-local adoption followed by a newly planned managed move. Directory Node
+Protocol/Request `1.0.0` remain immutable with their published platform
+vocabulary; `2.0.0` carries the AX platform vocabulary under an explicit
+dual-stack binding. Published v0.4.3 terminal-realm contracts, fixtures, and
+digests remain immutable history.
 
 Disposition codes:
 
@@ -205,6 +212,25 @@ accepted mapping authority is
 | Tuple registry publication and revocation | Release artifacts `compatibility/supported-environment-tuples-v1.json` and `.sshsig`; AX release authority accepts/revokes, local policy may only deny more | Makes target-write admission monotonic, signed, exact, and non-self-authorizing; [§13.14.5](SPEC.md#13145-events-state-and-tuple-admission). |
 
 None of these decisions weakens the adapter boundary, item-level fidelity accounting, stable-snapshot proof, rollback-retaining transaction, independent read-back, target Checkpoint closure, or lineage.
+
+### v0.5.0 TerminalBackend release delta
+
+This is a non-normative index into `SPEC.md`; it does not define another
+backend contract.
+
+| Release requirement | Normative AX destination |
+| --- | --- |
+| AX authority versus host-local TerminalBackend authority | §§2.2, 4.A–4.E, 5, 7, 9–13, 16 |
+| Registry, IDs, versions, manifest/probe, trust, generation, and bindings | §§1.5, 4.B, 6.5, 7.A, 17 |
+| Ten lifecycle operations, states, idempotency, deadlines, recovery, and Error 1.3 | §§4.C, 15.3, 17.2–17.4 |
+| Closed capabilities, evidence, input policy, and credential realm | §§4.D–4.E, 16.1–16.4 |
+| tmux mandatory Unix target, private `-S`, Aqua/provider-auth evidence | §§3.1–3.2, 4.2, 13.11, 19.1–19.4 |
+| ConPTY native-Windows path without tmux-equivalent durability | §§4.3, 8.4, 13.11, 19.2–19.4 |
+| Superlogical unavailable, non-normative, and future-only | §4.E, Appendix C |
+| Exact legacy translation, old/new readers, mixed peers, browse-only unknown backends, and no restore fallback | §§4.E, 6.5, 7.A, 11.9, 14.6, 17.2–17.4 |
+| M0 internal boundary/harness, M1 tmux, M2 preview kernel, M3 daily-driver tmux gate, stable public SDK deferred | §§7.1, 19.1, 19.5 |
+| Release/package SemVer, public caveats, and no implementation availability claim | §§17.1, 19.5, 20; Appendix A.11 |
+| Positive fixtures, expected-red mutations, diagrams, and publication validation | §19.4, §20.2, Appendix D |
 
 ## Supersession register
 

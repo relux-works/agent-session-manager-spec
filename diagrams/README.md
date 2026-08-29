@@ -1,10 +1,11 @@
 # Architecture Diagrams
 
-This directory contains the architecture diagrams rendered for Agent Session Manager (`ax`) v0.4.3. The C4 views integrate Directory and the minimal macOS Aqua terminal broker as bounded AX components; focused PlantUML views keep ownership/deployment, cloning, Directory component authority, source-local inventory/enrichment, and continuation execution separate and reviewable.
+This directory contains the architecture diagrams for immutable Agent Session Manager (`ax`) v0.4.3 history and the v0.5.0 TerminalBackend candidate. The C4 views keep the Terminal Runtime Core distinct from its tmux and ConPTY implementations; focused PlantUML views keep TerminalBackend authority, ownership/deployment, cloning, Directory component authority, source-local inventory/enrichment, and continuation execution separate and reviewable.
 
 ## Matching SPEC.md References
 
-- **C4 System / Container**: `SPEC.md` Sections 3.1 (required components), 7.9 (Directory Node companion façade), 9.1 (task-board distinct boundary), 10.5-10.8 (materialization, records, Directory), and 13.14-13.15 (cloning and continuation)
+- **C4 System / Container / TerminalBackend Component**: `SPEC.md` Sections 3.1 (required components), 4.A (TerminalBackend authority), 6.5 (Configuration 3.0.0), 7.9 (Directory Node companion façade), 9.1 (task-board distinct boundary), 10.5-10.8 (materialization, records, Directory), and 13.14-13.15 (cloning and continuation)
+- **TerminalBackend Components**: `SPEC.md` Sections 4.A, 6.5, 11.9, and 14.6 (AX controller/registry authority, host-local backend boundary, built-in tmux and ConPTY, Aqua evidence, exact `ax pane SESSION_ID`, and future-only Superlogical status)
 - **Mesh Deployment**: `SPEC.md` Sections 3.2, 4.2/4.4, 11 (Mesh/RPC), 14, 16.2, 18 (allowlisted peers, split background/Aqua broker, dedicated tmux server, machine-local socket/auth state)
 - **Session State**: `SPEC.md` Sections 13.1-13.10 (Logical Session Ownership, single active owner, explicit handoff/takeover/fork)
 - **Takeover Sequence**: `SPEC.md` Sections 4.2 and 13.6-13.8 (destination broker/auth readiness, fenced source stop, ownership commit, runtime creation, takeover/fork)
@@ -35,7 +36,7 @@ All diagram validation and rendering is handled by the single repository entry p
 ./run_validation.sh
 ```
 
-To validate and render all eight handwritten diagrams from the project root, use these exact commands. PlantUML resolves the relative output directory from `diagrams/plantuml/`, so `../artefacts` writes the canonical files under `diagrams/artefacts/`:
+To validate and render all nine handwritten diagrams from the project root, use these exact commands. PlantUML resolves the relative output directory from `diagrams/plantuml/`, so `../artefacts` writes the canonical files under `diagrams/artefacts/`:
 
 ```bash
 plantuml -checkonly diagrams/plantuml/*.puml
@@ -47,7 +48,7 @@ This single command:
 1. Validates the C4 Structurizr workspace.
 2. Exports C4 to PlantUML in a temporary directory.
 3. Renders all SVGs (C4 and handwritten PlantUML) into the temporary directory.
-4. Compares generated C4 `.puml` bytes exactly, checks every committed SVG against the v0.4.3 SHA-256 ledger, and compares embedded PlantUML source/version metadata with the fresh render. Font and Graphviz geometry may vary by platform without weakening committed-byte integrity or source freshness.
+4. Compares generated C4 `.puml` bytes exactly, checks every committed SVG against the reviewed SHA-256 ledger, and compares embedded PlantUML source/version metadata with the fresh render. Font and Graphviz geometry may vary by platform without weakening committed-byte integrity or source freshness.
 
 ## Artifact Map
 
@@ -57,6 +58,8 @@ All paths below are root-relative. The rendered SVGs are stored in `diagrams/art
 - `diagrams/artefacts/structurizr-ContainerContext.svg`: focused C4 Container
   view of AX-internal deployable units and actors; external systems remain in
   the System Context view so the container artifact stays bounded and readable.
+- `diagrams/artefacts/structurizr-TerminalBackendComponents.svg`: focused C4 component view of AX Terminal Controller/Registry authority and the host-local TerminalBackend boundary.
+- `diagrams/artefacts/terminal_backend_components.svg`: focused PlantUML component view of built-in tmux/ConPTY implementations, the Aqua path, exact pane entrypoint, and explicitly non-conforming future-candidate status.
 - `diagrams/artefacts/mesh_deployment.svg`: Physical and network deployment boundaries.
 - `diagrams/artefacts/session_state.svg`: Ownership and lifecycle state machine.
 - `diagrams/artefacts/takeover.svg`: Detailed graceful and force takeover sequences.
@@ -77,3 +80,5 @@ After rendering, visually inspect all SVGs to ensure:
 6. **Directory Authority:** The Directory views keep native stores and exact-head reads source-local, make SQLite/display text derived rather than authoritative, isolate enrichment, and delegate continuation effects to existing AX/cloning transactions.
 7. **Arrow Direction:** Inventory and preview reads point toward the source-local adapter/store; immutable publication points toward record storage/mesh; continuation planning precedes confirmation/revalidation; target commit and evidence precede attach, and a move never releases the source first.
 8. **macOS Realm:** Background control-plane arrows only contact an existing Aqua broker; the broker alone creates/attests the dedicated tmux server; takeover shows broker/auth readiness before ownership commit and runtime creation after commit.
+9. **TerminalBackend Authority:** AX Controller/Registry owns LogicalSession, Owner/Replica, leases/fencing, provider/workspace/checkpoint/task-board/mesh/takeover authority. Each backend owns only one host-local TerminalInstance and every implementation hosts exactly `ax pane SESSION_ID`; attach/client mirrors remain ownership-neutral.
+10. **Implementation Status:** tmux is the mandatory Unix built-in, ConPTY is the native-Windows built-in without a tmux-equivalent durability claim, Aqua reaches tmux only, and Superlogical appears only as unavailable, non-normative, and non-conforming future context with no invented API or ID.

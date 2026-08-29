@@ -1,9 +1,9 @@
-# Agent Session Manager (<code>ax</code>) v0.4.3 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.5.0 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.4.3</code> |
-| Document status | Review candidate and implementation contract |
+| Specification release | <code>v0.5.0</code> |
+| Document status | Release candidate and implementation contract |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
 | Default branch | <code>main</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.4.3. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.5.0. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -56,7 +56,7 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
     AX ownership, workspace, transfer, materialization, cloning, and terminal
     authority.
 
-The v0.4.3 product is a Go CLI, optional per-user background service, provider
+The specified v0.5.0 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -113,16 +113,21 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following versions are active in v0.4.3. Historical Session Record/Event
-1.0.0, Materialization Plan 1.0.0, Materialization Journal 2.0.0, CLI Result
-1.0.0, and Structured Error 1.0.0 objects remain readable and immutable.
+The following registry is the active v0.5.0 registry. Historical
+objects, including every v0.4.3 object and fixture, remain readable and
+immutable; a version shown here never widens an earlier version in place.
 
 | Contract | Schema identifier | Version |
 | --- | --- | --- |
-| Configuration | <code>urn:ax:schema:config</code> | <code>1.0.0</code>, <code>2.0.0</code> for directory-capable installations |
-| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code> |
+| Configuration | <code>urn:ax:schema:config</code> | <code>1.0.0</code>, <code>2.0.0</code> for directory-capable installations, <code>3.0.0</code> for TerminalBackend selection and policy |
+| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor |
 | Provider manifest | <code>urn:ax:schema:provider-manifest</code> | <code>1.0.0</code> |
 | Provider probe | <code>urn:ax:schema:provider-probe</code> | <code>1.0.0</code> |
+| Terminal Backend protocol | <code>urn:ax:protocol:terminal-backend</code> | <code>1.0.0</code> |
+| Terminal Backend manifest | <code>urn:ax:schema:terminal-backend-manifest</code> | <code>1.0.0</code> |
+| Terminal Backend probe | <code>urn:ax:schema:terminal-backend-probe</code> | <code>1.0.0</code> |
+| Terminal Instance binding | <code>urn:ax:schema:terminal-instance-binding</code> | <code>1.0.0</code> |
+| Terminal capability evidence | <code>urn:ax:schema:terminal-capability-evidence</code> | <code>1.0.0</code> |
 | Session Adapter protocol | <code>urn:ax:protocol:session-adapter</code> | <code>1.0.0</code> |
 | Session Adapter manifest | <code>urn:ax:schema:session-adapter-manifest</code> | <code>1.0.0</code> |
 | Session Adapter probe | <code>urn:ax:schema:session-adapter-probe</code> | <code>1.0.0</code> |
@@ -130,9 +135,9 @@ The following versions are active in v0.4.3. Historical Session Record/Event
 | Directory Node manifest | <code>urn:ax:schema:session-directory-node-manifest</code> | <code>1.0.0</code> |
 | Directory Node request | <code>urn:ax:schema:session-directory-node-request</code> | <code>1.0.0</code>, <code>2.0.0</code> for the AX platform vocabulary |
 | Directory Node response | <code>urn:ax:schema:session-directory-node-response</code> | <code>1.0.0</code> |
-| Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code>, <code>3.0.0</code> for directory replication |
+| Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code>, <code>3.0.0</code> for directory replication, <code>4.0.0</code> for sanitized TerminalBackend evidence replication |
 | Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone targets, <code>3.0.0</code> for unified creation provenance |
-| Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone lifecycle, <code>3.0.0</code> for adoption and move lifecycle |
+| Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone lifecycle, <code>3.0.0</code> for adoption and move lifecycle, <code>4.0.0</code> for Terminal Instance bindings |
 | Lease record | <code>urn:ax:schema:lease</code> | <code>1.0.0</code> |
 | Checkpoint record | <code>urn:ax:schema:checkpoint</code> | <code>1.0.0</code> |
 | Workspace group | <code>urn:ax:schema:workspace-group</code> | <code>1.0.0</code> |
@@ -147,9 +152,9 @@ The following versions are active in v0.4.3. Historical Session Record/Event
 | Clone materialization recovery state (journal variant) | <code>urn:ax:schema:materialization-journal</code> | <code>3.0.0</code> |
 | Task-board bridge | <code>urn:ax:protocol:task-board-bridge</code> | <code>1.0.0</code> |
 | Task-board bundle | <code>urn:ax:schema:task-board-bundle</code> | <code>1.0.0</code> |
-| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for cloning, <code>1.2.0</code> for directory surfaces |
+| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for cloning, <code>1.2.0</code> for directory surfaces, <code>1.3.0</code> for TerminalBackend surfaces |
 | Observation event | <code>urn:ax:schema:observation</code> | <code>1.0.0</code> |
-| CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code>, <code>2.0.0</code> for <code>session.clone.*</code>, <code>3.0.0</code> for <code>sessions.*</code> commands |
+| CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code>, <code>2.0.0</code> for <code>session.clone.*</code>, <code>3.0.0</code> for <code>sessions.*</code> commands, <code>4.0.0</code> for TerminalBackend commands and generalized start/resume results |
 | Clone Raw Object Manifest | <code>urn:ax:schema:clone-raw-object-manifest</code> | <code>1.0.0</code> |
 | Clone Capture Manifest | <code>urn:ax:schema:clone-capture-manifest</code> | <code>1.0.0</code> |
 | Clone Bundle Manifest | <code>urn:ax:schema:session-clone-bundle</code> | <code>1.0.0</code> |
@@ -174,6 +179,20 @@ The following versions are active in v0.4.3. Historical Session Record/Event
 | Session Continuation Plan | <code>urn:ax:schema:session-continuation-plan</code> | <code>1.0.0</code> |
 | Session Directory Operation Receipt | <code>urn:ax:schema:session-directory-operation-receipt</code> | <code>1.0.0</code> |
 | Session Directory Query | <code>urn:ax:schema:session-directory-query</code> | <code>1.0.0</code> |
+
+The exact historical v0.4.3 registry is the table above with the five Terminal
+Backend contract rows absent and with exactly these six rows pinned to their
+then-active versions: Configuration <code>1.0.0,2.0.0</code>; Provider protocol
+<code>2.0.0</code>; Mesh RPC <code>2.0.0,3.0.0</code>; Session event
+<code>1.0.0,2.0.0,3.0.0</code>; Structured error
+<code>1.0.0,1.1.0,1.2.0</code>; and CLI result
+<code>1.0.0,2.0.0,3.0.0</code>. Every other row, identifier, version, order,
+and meaning is exactly the v0.4.3 registry. No other addition, removal, or
+substitution is permitted when validating v0.4.3 history. The v0.5.0 release
+activates the five Terminal Backend contracts plus Configuration
+<code>3.0.0</code>, Provider Protocol <code>3.0.0</code>, Mesh RPC
+<code>4.0.0</code>, Session Event <code>4.0.0</code>, CLI Result
+<code>4.0.0</code>, and Structured Error <code>1.3.0</code>.
 
 No contract version is implied by the <code>ax</code> executable version.
 Section 17 defines compatibility and migration. Independent versioning means
@@ -694,12 +713,14 @@ specification permits them, but cross-platform file transfer/chunking MUST be
 Go-native and MUST NOT depend on <code>rsync</code> or
 <code>robocopy</code>.
 
-The v0.4.3 diagram deliverable MUST render this model as C4 System Context and
-Container views, including the Directory Control Plane, source-local Directory
-Node, isolated enrichment worker, cloning boundary, and their relationships to
-existing AX authority. Runtime takeover, state, mesh, cloning, directory
-component, inventory/enrichment, and continuation flows MUST be rendered as
-separate focused PlantUML sources from Sections 10.8, 12, 13, and 16.7. Section
+The v0.5.0 diagram deliverable MUST render this model as C4 System Context,
+Container, and TerminalBackend Component views, including the Directory Control
+Plane, source-local Directory Node, isolated enrichment worker, cloning
+boundary, AX Terminal Controller/Registry, host-local backend boundary, tmux and
+ConPTY built-ins, and their relationships to existing AX authority. Runtime
+takeover, state, mesh, cloning, directory component, inventory/enrichment,
+continuation, and TerminalBackend authority/lifecycle flows MUST be rendered as
+separate focused PlantUML sources from Sections 4, 10.8, 12, 13, and 16.7. Section
 13.13 adds a conformance gate over those flows, not a new component or sequence
 topology. Those rendered artifacts MUST NOT add relationships absent from this
 document or depict the derived index, display text, Directory Node, or
@@ -837,6 +858,482 @@ leave the prior index usable or trigger a clean rebuild. Index schema version is
 an implementation detail and MUST NOT be used as a wire compatibility signal.
 
 ## 4. Terminal persistence
+
+### 4.A TerminalBackend authority and terminology
+
+TerminalBackend is a host-local presentation and delegated process-hosting
+module. AX alone owns Logical Session identity and lineage, Owner and AX
+Replica roles, leases and fencing, provider lifecycle/native identity/store,
+workspace materialization, Checkpoints/evidence, task-board integration, mesh
+replication, and takeover. A backend owns exactly one host-local
+<dfn>Terminal Instance</dfn>: delegated PTY/process hosting, presentation,
+attach/reconnect, backend-local IPC, and backend-specific process observation.
+
+An <dfn>AX Replica</dfn> is a host holding synchronized durable AX state. A
+<dfn>presentation replica</dfn> or <dfn>client mirror</dfn> is only a view/input
+client of one Terminal Instance. Presentation replication MUST NOT create an AX
+Replica, acquire or renew a lease, change Owner, authorize input, or publish an
+owner-authored event. Schemas, CLI, UI, and logs MUST NOT use these terms
+interchangeably.
+
+Every backend-created runtime ultimately executes exactly
+<code>ax pane SESSION_ID</code>; a raw provider command is forbidden as a
+durable entry point. A backend MUST NOT interpret ownership, start or resume a
+provider without AX authorization, replace AX/provider/workspace/Checkpoint/
+task-board/mesh state, or turn attach into a lease mutation. A valid takeover
+or owner resume MAY bind the same Logical Session to a different conforming
+destination backend without clone or fork; AX emits a new immutable binding,
+event, and evidence and never mutates history.
+
+### 4.B Registry, identity, discovery, and trust
+
+<code>terminal_backend_id</code> is 1–128 ASCII bytes matching
+<code>[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*</code>. The <code>ax.</code> namespace is
+reserved. Canonical built-ins are <code>ax.tmux</code> and
+<code>ax.conpty</code>. Third parties use a stable vendor-owned namespace. No
+normative Superlogical ID is reserved.
+
+Terminal Backend Manifest 1.0.0 is the following closed immutable object; no
+other member is permitted:
+
+| Member | Exact type and constraint |
+| --- | --- |
+| <code>schema</code> | literal <code>urn:ax:schema:terminal-backend-manifest</code> |
+| <code>schema_version</code> | literal <code>1.0.0</code> |
+| <code>manifest_id</code> | digest computed by the identity rule below |
+| <code>terminal_backend_id</code> | terminal-backend-id |
+| <code>implementation_version</code> | semver |
+| <code>protocol_versions</code> | sorted unique semver[1..32], each in Terminal Backend Protocol major 1 |
+| <code>platforms</code> | sorted unique enum[1..4] from <code>macos|linux|wsl2|windows</code> |
+| <code>implementation_kind</code> | <code>builtin_go|local_program|trusted_executable|native_runtime</code> |
+| <code>executable_digest</code> | digest for <code>local_program</code> or <code>trusted_executable</code>; null otherwise |
+| <code>static_capability_claims</code> | sorted by capability, unique TerminalBackendCapabilityClaim[0..16] whose <code>origin</code> is <code>static</code> |
+| <code>conformance_fixture_id</code> | digest |
+| <code>extensions</code> | exact empty object <code>{}</code>; non-empty extensions require a later contract version |
+
+Terminal Backend Probe 1.0.0 is the following closed immutable observation; no
+other member is permitted:
+
+| Member | Exact type and constraint |
+| --- | --- |
+| <code>schema</code> | literal <code>urn:ax:schema:terminal-backend-probe</code> |
+| <code>schema_version</code> | literal <code>1.0.0</code> |
+| <code>probe_id</code> | digest computed by the identity rule below |
+| <code>terminal_backend_id</code> | terminal-backend-id |
+| <code>implementation_version</code> | semver equal to the admitted Manifest |
+| <code>protocol_version</code> | semver selected from the Manifest's <code>protocol_versions</code> |
+| <code>implementation_kind</code> | enum equal to the Manifest member |
+| <code>executable_digest</code> | digest|null exactly equal to the Manifest member |
+| <code>platform</code> | <code>macos|linux|wsl2|windows</code>, contained in the Manifest's <code>platforms</code> |
+| <code>os_version</code> | string[1..256] |
+| <code>availability</code> | <code>available|conditional|unavailable|unknown</code> |
+| <code>backend_generation_digest</code> | digest of the domain-separated raw generation |
+| <code>capability_claims</code> | sorted by capability, unique TerminalBackendCapabilityClaim[0..16] |
+| <code>evidence_ids</code> | sorted unique digest[0..256] referencing Capability Evidence 1.0.0 |
+| <code>probed_at</code> | timestamp |
+| <code>extensions</code> | exact empty object <code>{}</code> |
+
+The generation digest uses SHA-256 over UTF-8
+<code>ax-terminal-backend-generation-v1\0</code> followed by the backend's
+host-local raw generation bytes; it neither reveals nor reconstructs that
+generation. Manifest-to-Probe reconciliation is the following closed rule. The
+Probe <code>terminal_backend_id</code>, <code>implementation_version</code>,
+<code>implementation_kind</code>, and <code>executable_digest</code> MUST equal
+the Manifest members; its <code>protocol_version</code> MUST be exactly one member
+of <code>protocol_versions</code>, and its <code>platform</code> MUST be exactly
+one member of <code>platforms</code>. Array-to-scalar selection is membership,
+not aggregate equality.
+
+Let <code>M[c]</code> be the one Manifest static claim for capability
+<code>c</code>, when present, and <code>P[c]</code> the one Probe claim. The
+declared sorted-unique constraints make a duplicate key invalid before this
+reconciliation runs. The complete keyed relation is:
+
+1. Every <code>M[c]</code> MUST have exactly one <code>P[c]</code>; omission is a
+   manifest/probe mismatch.
+2. <code>P[c].origin=static</code> is permitted only when <code>M[c]</code>
+   exists, and <code>P[c]</code> MUST then equal <code>M[c]</code> member for
+   member. It is a static echo, not a new observation.
+3. <code>P[c].origin=probed</code> with an existing <code>M[c]</code> is a
+   generation-bound override. It is permitted only when
+   <code>M[c].generation_variable=true</code>; its <code>value</code> MAY differ,
+   while <code>generation_variable</code>, <code>dependent_operations</code>, and
+   <code>evidence_requirements</code> MUST remain equal to <code>M[c]</code> and
+   the capability registry row.
+4. <code>P[c].origin=probed</code> without <code>M[c]</code> is a probed
+   addition. It is permitted only for a capability in the closed registry, and
+   its three registry-derived members MUST equal that row. A Probe cannot add
+   a claim with <code>origin=static</code>.
+5. A true <code>P[c]</code> is admitted only when unexpired Capability Evidence
+   bound to this exact Manifest/Probe tuple satisfies every listed evidence
+   requirement. The required fact mapping is
+   <code>conformance_fixture-&gt;fixture_passed</code>,
+   <code>runtime_probe-&gt;runtime_probe_passed</code>,
+   <code>credential_sentinel-&gt;sentinel_passed</code>,
+   <code>provider_auth_smoke-&gt;provider_auth_passed</code>, and
+   <code>policy_authorization-&gt;policy_checked</code>. A false claim has no
+   matching Capability Evidence because Evidence <code>value</code> is the
+   literal <code>true</code>.
+6. <code>evidence_ids</code> MUST be exactly the sorted unique IDs of all
+   returned Capability Evidence objects used by true <code>P</code> claims.
+   Every referenced object MUST name exactly one present true claim; an ID for
+   an absent or false claim, an unreferenced returned object, conflicting
+   evidence, or duplicate/conflicting claims invalidates the whole Probe.
+
+A partial, malformed, stale, or failed Manifest, Probe, or evidence read is an
+error, never absence or availability. Any failed equality, membership, keyed
+relation, evidence binding, or evidence coverage rule is
+<code>terminal_backend_manifest_probe_mismatch</code> and fails before
+activation; executable substitution or implementation drift additionally maps
+to its more specific Section 15.3 code.
+
+Discovery completes before activation. Duplicate/ambiguous IDs,
+manifest/probe disagreement, implementation drift, untrusted executable
+substitution, stale generation, unknown identity/version, or unevidenced claims
+fail closed. A manifest is not availability proof. External adapters use argv
+and local length-prefixed framing: unsigned 32-bit big-endian byte length plus
+UTF-8 JSON, at most 1 MiB, one request/response at a time. EOF, oversize,
+invalid JSON, unsolicited output, or deadline expiry terminates the adapter.
+M0 exposes only an internal semantic interface and conformance harness; a
+stable public SDK is deferred until tmux and one materially different backend
+validate the boundary.
+
+Manifest, Probe, Binding, and Capability Evidence IDs equal the lowercase
+<code>sha256:</code> digest of RFC 8785 JCS bytes with their own ID member
+omitted. A reader MUST recompute the ID before use. Manifest and Probe remain
+immutable observations when later probes supersede them.
+
+Terminal Backend Protocol 1.0.0 has a closed request envelope containing
+exactly <code>protocol</code> with literal
+<code>urn:ax:protocol:terminal-backend</code>,
+<code>protocol_version</code> with exact value <code>1.0.0</code>,
+<code>request_id:UUIDv7</code>, <code>operation</code>, and <code>body</code>.
+Its response repeats those three identity members exactly and contains
+<code>ok:true,result:&lt;operation-success-body&gt;</code> or
+<code>ok:false,error:StructuredError1.3</code>, never both result and error.
+Operation is one of the ten names in Section 4.C and the exact bodies are its
+typed matrix. Unknown members, operations, or body variants are protocol
+errors. This is an AX-controlled local adapter wire, not a stable public SDK.
+
+AX allocates <code>terminal_instance_id:UUIDv7</code>. Terminal Instance Binding
+1.0.0 is the following closed immutable host-local object; no other member is
+permitted:
+
+| Member | Exact type and constraint |
+| --- | --- |
+| <code>schema</code> | literal <code>urn:ax:schema:terminal-instance-binding</code> |
+| <code>schema_version</code> | literal <code>1.0.0</code> |
+| <code>binding_id</code> | digest computed by the identity rule above |
+| <code>session_id</code> | Logical Session UUIDv7 |
+| <code>host_id</code> | AX Host UUIDv7 |
+| <code>host_incarnation_id</code> | UUIDv7 allocated once for the current host-agent process incarnation |
+| <code>terminal_instance_id</code> | AX-allocated UUIDv7 |
+| <code>terminal_backend_id</code> | terminal-backend-id |
+| <code>implementation_version</code> | semver equal to admitted Manifest and Probe |
+| <code>protocol_version</code> | semver in Terminal Backend Protocol major 1, equal to the Probe |
+| <code>backend_generation</code> | string[1..256]; this is the canonical bound in every containing contract |
+| <code>native_reference</code> | sanitized opaque string[1..512], meaningful only to this backend on this host incarnation |
+| <code>created_at</code> | timestamp |
+| <code>supersedes_binding_id</code> | digest|null; null only for the first binding of this Session on this host incarnation |
+| <code>extensions</code> | exact empty object <code>{}</code> |
+
+Identity MUST NOT be a PID, handle, socket, path, named pipe, URL, token, or
+mutable endpoint. Binding is host/incarnation-local and does not alter Logical
+Session identity. Boundary conformance cases MUST reject generation lengths 0
+and 257 and accept length 256 in the Binding, Provider Protocol 3 descriptor,
+operation bodies, and CLI Result 4 summary.
+
+### 4.C Lifecycle and operations
+
+Terminal Instance state is exactly <code>absent</code>, <code>creating</code>,
+<code>parked</code>, <code>active</code>, <code>quiescing</code>,
+<code>stopped</code>, <code>stale_fenced</code>, or <code>unavailable</code>.
+This describes local hosting only; it is not a second ownership state machine.
+
+Every mutating request carries operation, Session, Terminal Instance and
+idempotency IDs; exact backend ID/version/generation; deadline; and an expiring
+AX authorization with winning lease ID/epoch. Results repeat those identities,
+before/after state, side effects, evidence IDs, and one retry disposition:
+<code>replay_same</code>, <code>status_first</code>,
+<code>new_authorization</code>, or <code>required_operator_action</code>.
+Authorization and generation are rechecked immediately before each side effect.
+A deadline cancels waiting, not a committed effect.
+
+The closed <dfn>TerminalInstanceState</dfn> enum is the eight-state registry in
+the first paragraph of this subsection. The closed
+<dfn>TerminalBackendSideEffect</dfn> enum is exactly
+<code>binding_persisted|wrapper_started|attach_client_created|input_closed|safe_boundary_observed|graceful_stop_requested|process_closed|backend_store_closed|stale_incarnation_terminated|wrapper_restored</code>.
+The closed <dfn>PresentationTransport</dfn> enum is
+<code>local_only|trusted_private_mesh|third_party_relay</code>. The closed
+<dfn>ProviderProofKind</dfn> enum is
+<code>provider_quiescence|provider_process_exit|ax_checkpoint_boundary</code>.
+The closed <dfn>TerminalStatusLastEffect</dfn> enum is exactly
+TerminalBackendSideEffect.
+
+<code>creating</code> is entered only by <code>create</code> after its durable
+idempotency receipt and before its first listed side effect. An error before a
+side effect restores the source state. An error after an effect whose result
+cannot be proven moves the local observation to <code>unavailable</code> with
+<code>status_first</code>; it MUST NOT claim <code>absent</code>. No operation
+other than <code>quiesce-input</code> enters <code>quiescing</code>, and no
+backend operation enters <code>stale_fenced</code>: AX fencing observation does.
+
+<dfn>AXAuthorization</dfn> is a closed object containing exactly
+<code>lease_id:UUIDv4</code>, <code>lease_epoch:uint53[1..9007199254740991]</code>,
+<code>holder_host_id:UUIDv7</code>,
+<code>authorization_kind:create|control|force_stale|restore</code>,
+<code>issued_at:timestamp</code>, <code>expires_at:timestamp</code>, and
+<code>authorization_evidence_id:digest</code>. Expiry is strictly after issue;
+the lease tuple MUST equal the current winning AX lease at every side effect.
+
+<dfn>AttachAuthorization</dfn> is a closed, ownership-neutral AX policy object
+containing exactly <code>policy_evidence_id:digest</code>,
+<code>authorizing_host_id:UUIDv7</code>,
+<code>transport:PresentationTransport</code>,
+<code>input_authorized:boolean</code>, <code>issued_at:timestamp</code>, and
+<code>expires_at:timestamp</code>. Expiry is strictly after issue. It authorizes
+only the named presentation transport and input boolean; it contains no lease
+and cannot acquire, renew, or transfer ownership.
+
+<dfn>MutationContext</dfn> is a closed object containing exactly
+<code>operation_id:UUIDv7</code>, <code>session_id:UUIDv7</code>,
+<code>terminal_instance_id:UUIDv7</code>,
+<code>terminal_backend_id:terminal-backend-id</code>,
+<code>implementation_version:semver</code>, <code>protocol_version:semver</code>,
+<code>backend_generation:string[1..256]</code>,
+<code>idempotency_key:string[1..256]</code>, <code>deadline_at:timestamp</code>,
+and <code>authorization:AXAuthorization</code>. The key is the canonical UTF-8
+encoding specified per operation below; it is not caller-chosen free text.
+
+<dfn>MutationResult</dfn> is a closed object containing exactly
+<code>operation_id:UUIDv7</code>, <code>session_id:UUIDv7</code>,
+<code>terminal_instance_id:UUIDv7</code>,
+<code>terminal_backend_id:terminal-backend-id</code>,
+<code>implementation_version:semver</code>, <code>protocol_version:semver</code>,
+<code>backend_generation:string[1..256]</code>,
+<code>before_state:TerminalInstanceState</code>,
+<code>after_state:TerminalInstanceState</code>,
+<code>side_effects:sorted-unique TerminalBackendSideEffect[0..10]</code>,
+<code>evidence_ids:sorted-unique digest[0..256]</code>, and
+<code>retry_disposition:replay_same|status_first|new_authorization|required_operator_action</code>.
+Every repeated identity MUST equal the request context.
+
+The ten operation request and success bodies are closed objects containing
+exactly the listed members. <code>Entrypoint</code> is the closed object
+<code>{argv:string[3]}</code>, and its three values MUST be literal
+<code>ax</code>, literal <code>pane</code>, and the canonical request Session
+UUIDv7 string. <code>attach_descriptor</code> is a sensitive opaque
+<code>string[1..4096]</code> usable only on the responding host and MUST NOT be
+persisted or replicated.
+
+| Operation | Exact body input | Exact success result |
+| --- | --- | --- |
+| <code>manifest</code> | <code>{deadline_at:timestamp}</code> | <code>{manifest:TerminalBackendManifest}</code> |
+| <code>probe</code> | <code>{platform:macos\|linux\|wsl2\|windows,os_version:string[1..256],requested_capabilities:sorted-unique TerminalBackendCapability[0..16],deadline_at:timestamp}</code> | <code>{probe:TerminalBackendProbe,evidence:sorted-by-evidence_id unique CapabilityEvidence[0..256]}</code> |
+| <code>create</code> | <code>{context:MutationContext,binding:TerminalInstanceBinding,bootstrap_operation_id:UUIDv7,entrypoint:Entrypoint,presentation_transport:PresentationTransport,interactive:boolean}</code> | <code>{mutation:MutationResult,binding:TerminalInstanceBinding,attach_descriptor:string[1..4096]\|null}</code> |
+| <code>attach</code> | <code>{session_id:UUIDv7,terminal_instance_id:UUIDv7,terminal_backend_id:terminal-backend-id,implementation_version:semver,protocol_version:semver,backend_generation:string[1..256],client_id:UUIDv7,transport:PresentationTransport,input_authorized:boolean,deadline_at:timestamp,authorization:AttachAuthorization}</code> | <code>{client_mirror_id:UUIDv7,attach_descriptor:string[1..4096],input_authorized:boolean,evidence_ids:sorted-unique digest[1..256]}</code> |
+| <code>status</code> | <code>{session_id:UUIDv7,terminal_instance_id:UUIDv7\|null,terminal_backend_id:terminal-backend-id,implementation_version:semver,protocol_version:semver,backend_generation:string[1..256]\|null,include_provider_observation:boolean,deadline_at:timestamp}</code> | <code>{state:TerminalInstanceState,identity_match:boolean,wrapper_present:boolean,provider_present:boolean\|null,attachable:boolean,last_operation_id:UUIDv7\|null,last_effect:TerminalStatusLastEffect\|null,evidence_ids:sorted-unique digest[0..256]}</code> |
+| <code>quiesce-input</code> | <code>{context:MutationContext,quiescence_generation:UUIDv7}</code> | <code>{mutation:MutationResult,quiescence_generation:UUIDv7,input_closed_at:timestamp}</code> |
+| <code>wait-safe-boundary</code> | <code>{context:MutationContext,quiescence_generation:UUIDv7,provider_proof_kind:ProviderProofKind,timeout_ms:uint53[1..3600000]}</code> | <code>{mutation:MutationResult,safe_boundary_evidence_id:digest,observed_at:timestamp}</code> |
+| <code>request-stop</code> | <code>{context:MutationContext,safe_boundary_evidence_id:digest,graceful_timeout_ms:uint53[1..3600000]}</code> | <code>{mutation:MutationResult,process_closed:true,store_closed:true}</code> |
+| <code>terminate-stale</code> | <code>{context:MutationContext,stale_lease_id:UUIDv4,stale_epoch:uint53[1..9007199254740991],diagnostic_evidence_id:digest}</code> | <code>{mutation:MutationResult,target_incarnation_closed:true}</code> |
+| <code>restore</code> | <code>{context:MutationContext,prior_binding_id:digest,checkpoint_id:digest,bootstrap_operation_id:UUIDv7}</code> | <code>{mutation:MutationResult,binding:TerminalInstanceBinding,restored_parked:true}</code> |
+
+For <code>status</code>, <code>terminal_instance_id</code> and
+<code>backend_generation</code> are either both null (Session-scoped lookup) or
+both non-null (exact-instance lookup). A successful exact-instance result sets
+<code>identity_match</code> true only when Session, instance, backend,
+implementation, protocol, and generation all match. A non-match sets
+<code>identity_match:false</code>, <code>state:absent</code>,
+<code>wrapper_present:false</code>, <code>provider_present:null</code>,
+<code>attachable:false</code>, and both last fields null; it does not authorize
+fallback. <code>provider_present</code> is null unless provider observation was
+requested and evidenced. <code>attachable</code> is true only in
+<code>parked|active</code> with a currently evidenced matching attach
+capability. In <code>attach</code>, the result input boolean MUST equal both the
+request and AttachAuthorization; <code>attach_descriptor</code> in
+<code>create</code> is non-null exactly when <code>interactive</code> is true.
+
+The following table is the exact transition, authorization, idempotency,
+deadline/recovery, evidence, capability, and Structured Error 1.3 mapping.
+An error not listed for an operation MUST NOT be emitted by the backend for a
+syntactically valid request; AX-local parsing may additionally emit
+<code>terminal_backend_protocol_error</code>. <code>same</code> means no state
+transition and no side effect.
+
+| Operation | Allowed source → success state; exact side effects | Authorization and idempotency key | Deadline/lost-result recovery and required evidence | Capability dependencies | Allowed error codes |
+| --- | --- | --- | --- | --- | --- |
+| <code>manifest</code> | no Terminal Instance source or target; none | none; byte-stable by executable/implementation digest | <code>deadline_at</code> closes adapter; retry request; Manifest ID is evidence | none | <code>terminal_backend_protocol_incompatible</code>, <code>terminal_backend_protocol_error</code>, <code>terminal_backend_process_failed</code>, <code>terminal_backend_timeout</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>probe</code> | no Terminal Instance source or target; none | trusted implementation; key is request ID | <code>deadline_at</code> closes adapter; retry with a new request ID; Probe plus evidence for every true claim | none | <code>terminal_backend_untrusted</code>, <code>terminal_backend_manifest_probe_mismatch</code>, <code>terminal_backend_implementation_drift</code>, <code>terminal_backend_protocol_error</code>, <code>terminal_backend_process_failed</code>, <code>terminal_backend_timeout</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>create</code> | <code>absent|stopped</code> → <code>active</code> when interactive, otherwise <code>parked</code>; <code>binding_persisted,wrapper_started</code> and optionally <code>attach_client_created</code> | <code>create</code>; UTF-8 <code>session_id + "/" + bootstrap_operation_id</code> | persist receipt before <code>wrapper_started</code>; identical retry replays it; uncertainty requires <code>status</code>; binding plus capability/credential evidence | <code>headless_creation</code> when non-interactive; <code>credential_capable_execution_realm</code> when provider credentials are required | <code>idempotency_mismatch</code>, <code>local_precondition_failed</code>, <code>terminal_backend_unauthorized</code>, <code>terminal_backend_stale_generation</code>, <code>terminal_backend_capability_unproven</code>, <code>terminal_backend_unavailable</code>, <code>terminal_backend_timeout</code>, <code>terminal_backend_process_failed</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>attach</code> | <code>parked</code> → <code>active</code> or <code>active</code> → <code>active</code>; <code>attach_client_created</code> | valid unexpired AttachAuthorization equal to request transport/input; UTF-8 <code>terminal_instance_id + "/" + client_id</code> | timeout creates no authorized input unless the durable client receipt says so; retry same client ID; attach-policy/capability evidence | matching <code>local_attach|remote_attach|web_attach</code>; <code>multi_attach</code> for overlap; <code>multiple_input_clients</code> plus AX policy for concurrent input | <code>idempotency_mismatch</code>, <code>local_precondition_failed</code>, <code>terminal_backend_unauthorized</code>, <code>terminal_backend_stale_generation</code>, <code>terminal_backend_capability_unproven</code>, <code>terminal_backend_unavailable</code>, <code>terminal_backend_timeout</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>status</code> | <code>absent|creating|parked|active|quiescing|stopped|stale_fenced|unavailable</code> → same state; none | none; key is full queried identity tuple | timeout/read failure is unknown, never absent; retry query; status evidence IDs only | <code>provider_process_observation</code> exactly when provider observation requested | <code>terminal_backend_stale_generation</code>, <code>terminal_backend_capability_unproven</code>, <code>terminal_backend_unavailable</code>, <code>terminal_backend_timeout</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>quiesce-input</code> | <code>active|parked</code> → <code>quiescing</code>; <code>input_closed</code> | <code>control</code>; UTF-8 <code>terminal_instance_id + "/quiesce/" + quiescence_generation</code> | receipt precedes input closure; identical retry replays; uncertainty uses <code>status</code>; evidence binds closure time/generation | <code>input_quiescence</code> | <code>idempotency_mismatch</code>, <code>local_precondition_failed</code>, <code>terminal_backend_unauthorized</code>, <code>terminal_backend_stale_generation</code>, <code>terminal_backend_capability_unproven</code>, <code>terminal_backend_timeout</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>wait-safe-boundary</code> | <code>quiescing</code> → <code>quiescing</code>; <code>safe_boundary_observed</code> | <code>control</code>; UTF-8 <code>terminal_instance_id + "/boundary/" + quiescence_generation + "/" + provider_proof_kind</code> | lesser of request deadline and timeout; identical retry returns the same proof; no proof on timeout; safe-boundary evidence | <code>safe_boundary_observation</code>; also <code>provider_process_observation</code> for provider proof kinds | <code>idempotency_mismatch</code>, <code>local_precondition_failed</code>, <code>terminal_backend_unauthorized</code>, <code>terminal_backend_stale_generation</code>, <code>terminal_backend_capability_unproven</code>, <code>quiesce_timeout</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>request-stop</code> | <code>quiescing</code> → <code>stopped</code>; <code>graceful_stop_requested,process_closed,backend_store_closed</code> | <code>control</code>; UTF-8 <code>terminal_instance_id + "/stop/" + safe_boundary_evidence_id</code> | lesser deadline/timeout; lost result requires <code>status</code>, then same-key retry only if not closed; boundary and closure evidence | <code>graceful_stop</code> | <code>idempotency_mismatch</code>, <code>local_precondition_failed</code>, <code>terminal_backend_unauthorized</code>, <code>terminal_backend_stale_generation</code>, <code>terminal_backend_capability_unproven</code>, <code>stop_timeout</code>, <code>terminal_backend_process_failed</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>terminate-stale</code> | <code>stale_fenced|unavailable</code> → <code>stopped</code>; <code>stale_incarnation_terminated,process_closed</code> | <code>force_stale</code>; UTF-8 <code>terminal_instance_id + "/terminate/" + stale_lease_id + "/" + decimal(stale_epoch)</code> | deadline may leave uncertain closure; use <code>status</code> before same-key retry; diagnostic, fencing, and closure evidence | <code>stale_process_termination</code> and <code>provider_process_observation</code> | <code>idempotency_mismatch</code>, <code>local_precondition_failed</code>, <code>terminal_backend_unauthorized</code>, <code>terminal_backend_stale_generation</code>, <code>terminal_backend_capability_unproven</code>, <code>terminal_backend_timeout</code>, <code>terminal_backend_process_failed</code>, <code>terminal_backend_integrity_failure</code> |
+| <code>restore</code> | <code>absent|stopped|unavailable</code> → <code>parked</code>; <code>binding_persisted,wrapper_restored</code> | <code>restore</code>; UTF-8 <code>session_id + "/" + bootstrap_operation_id</code> | persist receipt before restore; identical retry replays; uncertainty uses <code>status</code>; prior binding, Checkpoint, new binding, capability/credential evidence | <code>reboot_restoration</code>; <code>credential_capable_execution_realm</code> when credentials are required | <code>idempotency_mismatch</code>, <code>local_precondition_failed</code>, <code>terminal_backend_unauthorized</code>, <code>terminal_backend_stale_generation</code>, <code>terminal_backend_capability_unproven</code>, <code>terminal_backend_restore_mismatch</code>, <code>terminal_backend_unavailable</code>, <code>terminal_backend_timeout</code>, <code>terminal_backend_process_failed</code>, <code>terminal_backend_integrity_failure</code> |
+
+Create is idempotent on <code>(session_id, bootstrap_operation_id)</code> across
+controller crash and lost result. AX and backend durably bind the pair before
+the first child side effect. Identical retry returns the one result/instance;
+a changed operation in the bootstrap window is <code>idempotency_mismatch</code>.
+Only a successful status read proves absence. Attach is ownership-observational
+for current-owner resume, local/remote/web, reconnect, and multi-attach.
+
+### 4.D Closed capabilities and evidence
+
+<dfn>TerminalBackendCapability</dfn> is the exact 16-value registry below.
+<dfn>TerminalBackendOperation</dfn> is exactly
+<code>manifest|probe|create|attach|status|quiesce-input|wait-safe-boundary|request-stop|terminate-stale|restore</code>.
+<dfn>CapabilityEvidenceRequirement</dfn> is exactly
+<code>conformance_fixture|runtime_probe|credential_sentinel|provider_auth_smoke|policy_authorization</code>.
+
+<dfn>TerminalBackendCapabilityClaim</dfn> is a closed object containing exactly
+<code>capability:TerminalBackendCapability</code>,
+<code>origin:static|probed</code>, <code>value:boolean</code>,
+<code>generation_variable:boolean</code>,
+<code>dependent_operations:sorted-unique TerminalBackendOperation[1..10]</code>,
+and <code>evidence_requirements:sorted-unique CapabilityEvidenceRequirement[1..5]</code>.
+The latter three members MUST exactly equal the registry row for the capability;
+a Manifest or Probe cannot redefine them. A false claim is retained to make a
+probed refusal explicit but confers no operation.
+
+| Capability | Exact semantics | Generation-variable | Exact dependent operations | Exact evidence requirements |
+| --- | --- | --- | --- | --- |
+| <code>durable_disconnect</code> | Wrapper survives every client disconnect. | false | <code>create,status</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>local_attach</code> | Local-only presentation. | true | <code>attach</code> | <code>conformance_fixture,policy_authorization,runtime_probe</code> |
+| <code>remote_attach</code> | Presentation over trusted private mesh only. | true | <code>attach</code> | <code>conformance_fixture,policy_authorization,runtime_probe</code> |
+| <code>web_attach</code> | Web presentation over an admitted transport only. | true | <code>attach</code> | <code>conformance_fixture,policy_authorization,runtime_probe</code> |
+| <code>multi_attach</code> | Concurrent presentation clients; no multi-input or ownership implication. | true | <code>attach</code> | <code>conformance_fixture,policy_authorization,runtime_probe</code> |
+| <code>headless_creation</code> | Create without UI or prompt in the proven execution realm. | true | <code>create</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>reboot_restoration</code> | Re-establish after reboot; does not claim process survival. | true | <code>restore</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>input_quiescence</code> | Reject new input with generation-bound evidence. | true | <code>quiesce-input</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>safe_boundary_observation</code> | Observe AX/provider-selected safe-boundary proof. | true | <code>wait-safe-boundary</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>provider_process_observation</code> | Observe provider presence without PID identity. | true | <code>status,terminate-stale,wait-safe-boundary</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>graceful_stop</code> | Request and observe orderly exit. | true | <code>request-stop</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>stale_process_termination</code> | Target one fenced stale incarnation. | true | <code>terminate-stale</code> | <code>conformance_fixture,policy_authorization,runtime_probe</code> |
+| <code>terminal_state_retention</code> | Retain local presentation state, never portable Checkpoint state. | true | <code>create,restore,status</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>scrollback_retention</code> | Retain local scrollback, never replicated terminal output. | true | <code>create,restore,status</code> | <code>conformance_fixture,runtime_probe</code> |
+| <code>credential_capable_execution_realm</code> | Exact instance passes AX sentinel and provider-auth smoke without UI. | true | <code>create,restore</code> | <code>conformance_fixture,credential_sentinel,provider_auth_smoke,runtime_probe</code> |
+| <code>multiple_input_clients</code> | Backend serializes multiple input clients; AX policy separately authorizes use. | true | <code>attach</code> | <code>conformance_fixture,policy_authorization,runtime_probe</code> |
+
+<dfn>CapabilityEvidenceFact</dfn> is the exact enum
+<code>fixture_passed|runtime_probe_passed|sentinel_passed|provider_auth_passed|policy_checked|ui_absent|prompt_absent</code>.
+Capability Evidence 1.0.0 is the following closed immutable object; no other
+member is permitted:
+
+| Member | Exact type and constraint |
+| --- | --- |
+| <code>schema</code> | literal <code>urn:ax:schema:terminal-capability-evidence</code> |
+| <code>schema_version</code> | literal <code>1.0.0</code> |
+| <code>evidence_id</code> | digest computed by the Section 4.B identity rule |
+| <code>terminal_backend_id</code> | terminal-backend-id |
+| <code>implementation_version</code> | semver equal to Manifest and Probe |
+| <code>protocol_version</code> | semver equal to Probe |
+| <code>backend_generation_digest</code> | digest equal to Probe |
+| <code>capability</code> | TerminalBackendCapability |
+| <code>value</code> | literal <code>true</code> |
+| <code>platform</code> | <code>macos|linux|wsl2|windows</code> equal to Probe |
+| <code>os_version</code> | string[1..256] equal to Probe |
+| <code>conformance_fixture_id</code> | digest equal to Manifest |
+| <code>observed_at</code> | timestamp |
+| <code>expires_at</code> | timestamp strictly after <code>observed_at</code> |
+| <code>issuer</code> | <code>ax_release|ax_local_probe</code> |
+| <code>issuer_id</code> | digest of the AX release signing identity for <code>ax_release</code>, or digest of the host-incarnation identity for <code>ax_local_probe</code> |
+| <code>attestation_signature</code> | <code>rsa-sha256:</code> plus Base64 RFC 4648 signature by the trusted <code>issuer_id</code> key over the domain-separated JCS object with <code>evidence_id</code> and this member omitted |
+| <code>facts</code> | sorted unique CapabilityEvidenceFact[1..7] |
+| <code>terminal_binding_id</code> | digest|null; required only for <code>credential_capable_execution_realm</code> and null otherwise |
+| <code>provider_id</code> | provider-id|null; required only for <code>credential_capable_execution_realm</code> and null otherwise |
+| <code>provider_build</code> | string[1..256]|null; required only for <code>credential_capable_execution_realm</code> and null otherwise |
+| <code>sentinel_result</code> | literal <code>passed</code>|null; required only for <code>credential_capable_execution_realm</code> and null otherwise |
+| <code>provider_auth_smoke_result</code> | literal <code>passed</code>|null; required only for <code>credential_capable_execution_realm</code> and null otherwise |
+| <code>extensions</code> | exact empty object <code>{}</code> |
+
+Credential-realm evidence binds the opaque Terminal Instance Binding digest,
+AX-owned sentinel result, provider ID/build, and provider-auth smoke result. It
+contains neither the Terminal Instance ID nor raw generation.
+The signed bytes are ASCII <code>ax-terminal-capability-evidence-v1</code>, one
+zero byte, and the Section 1.6 canonical bytes of the evidence object after
+omitting exactly <code>evidence_id</code> and <code>attestation_signature</code>.
+AX resolves <code>issuer_id</code> through its trusted release/host-incarnation
+key registry and MUST verify the signature before treating the object as
+evidence; a caller-supplied issuer ID is not authentication. Missing, malformed,
+unknown-key, or invalid signatures fail closed before capability admission.
+GUI/Aqua bootstrap alone is not proof. Missing, expired, self-minted,
+contradictory, or wrong-generation evidence disables the claim. Static claims
+never override a failed probe; generation-variable claims re-probe on generation
+change and before activation.
+
+Multi/remote/web attach never implies multiple authorized input sources or
+ownership. Multi-input is separately declared and policy-gated. Restore/resume
+MUST NOT silently fall back to another backend; defaults apply only to new
+activation when policy allows.
+
+### 4.E Persistence, transport, security, and compatibility
+
+| Classification | Members and rule |
+| --- | --- |
+| Safe immutable evidence | Sanitized backend identity/version/platform/conformance/capability evidence; MAY persist and replicate after validation. |
+| Host-local durable metadata | Instance/binding IDs, sanitized native reference, generation, idempotency receipt, last effect; host-local, non-replicable. |
+| Derived cache | Discovery/availability/attachability/process observations and probe views; rebuildable, non-authoritative. |
+| Sensitive runtime state | IPC, tmux sockets, named pipes, attach/relay credentials, backend auth/live databases, GUI/login attestations, provider credentials; owner-only and non-replicable. |
+| Forbidden | Raw native reference, PID/handle, endpoint/token, terminal output/scrollback, unrestricted environment, credential detail, and live-process facts MUST NOT replicate. |
+
+Presentation transport is exactly <code>local_only</code>,
+<code>trusted_private_mesh</code>, or <code>third_party_relay</code>. Current AX
+admits only the first two. A relay-required/public-service backend is unavailable
+pending explicit future product/contract approval. AX retains no permanent
+public TCP listener. Attach transport carries no AX authoritative state,
+provider store, workspace, Checkpoint, task-board data, or ownership change.
+
+The exact v0.4.3 Configuration 1/2 <code>tmux|conpty</code>, Provider Protocol 2
+TerminalDescriptor, Session Event 1 terminal payloads, and CLI Result 1 start/
+resume shapes and digests remain immutable. Version adapters deterministically
+map legacy <code>tmux</code> to <code>ax.tmux</code> and <code>conpty</code> to
+<code>ax.conpty</code>, with version/generation <code>legacy_unreported</code>
+and no inferred capabilities. Reverse projection exists only for those two IDs;
+other IDs return <code>incompatible_schema</code>, never fallback. Translation
+never rewrites or re-digests history.
+
+New readers accept old objects through the adapter. Old readers may browse/sync
+opaque newer immutable records but cannot activate, restore, or write them.
+Mixed peers negotiate each containing contract independently; no common backend
+major means browse/sync only. Unknown/unsupported IDs remain visible as unknown/
+unavailable; registry read failure is never absence. Lower-version writers are
+read-only and cannot write downgrade replacements. Bootstrap permits only a
+framed <code>manifest</code> call in an understood major. Capability negotiation
+is the intersection plus valid bound evidence, never union or inference.
+
+Mesh RPC 4.0.0 is defined normatively in Section 11.9: its exact 25-key hello
+map changes the RPC and Session Event arrays and adds exactly
+<code>terminal_backend_evidence=["1.0.0"]</code>; its exact eighth namespace
+contains only sanitized Manifest, Probe, and Capability Evidence objects.
+Terminal Instance Binding remains host-local durable metadata and is not a
+namespace member; replicated Session Events carry only its digest as an opaque
+audit reference. RPC 2/3 peers report this namespace unsupported, never empty.
+
+Provider Protocol 3.0.0 and its exact TerminalDescriptor are defined in
+Section 7.A. Session Event 4.0.0 and its exact
+<code>terminal.created</code>/<code>session.resumed</code> payloads are defined
+in Section 5.2; neither payload contains a Terminal Instance ID, backend
+generation, or native reference. CLI Result 4.0.0 local inspection and
+start/resume bodies are defined in Section 14.6. Structured Error 1.3.0 literal
+codes, exit classes, and bootstrap behavior are defined in Section 15.3. These
+canonical definitions, not this compatibility summary, determine their closed
+shapes.
+
+**Future candidate (non-normative; unavailable): Superlogical.** Dated public
+sources retrieved 2026-08-29 describe planned reconnect/share, web/native
+clients, software-driven structured actions, and libghostty use; the official
+GitHub organization exposed no public repositories that day. They establish no
+public release, AX adapter, API/SDK/protocol, backend ID/version, capability
+evidence, lifecycle, ownership, security, or replication contract. The label
+enables nothing. Admission requires dated evidence for create, attach/reconnect,
+status/generation, quiescence, graceful/stale stop, restore, exact
+<code>ax pane</code>, headless automation, credential proof, transport/auth,
+no AX ownership/authoritative-state transfer, and crash/security/conformance
+negative tests.
 
 ### 4.1 Terminal backend interface
 
@@ -1218,7 +1715,7 @@ place.
 This subsection defines the immutable Session Event <code>1.0.0</code> base
 variant used for post-creation changes under Session Record 1. It uses schema
 <code>urn:ax:schema:session-event</code> version <code>1.0.0</code>. Sections
-13.14.12 and 13.15 define the independently closed <code>2.0.0</code> and
+13.14.5 and 13.15 define the independently closed <code>2.0.0</code> and
 <code>3.0.0</code> event variants; a reader MUST select the exact registered
 major and MUST NOT interpret this base definition as their complete schema.
 
@@ -1361,6 +1858,37 @@ Normative example:
 }
 ~~~
 
+#### Session Event 4.0.0 Terminal Instance events
+
+Session Event 4.0.0 retains the exact v3 top-level closed shape, digest rules,
+lease ordering, predecessor rules, and complete v1-v3 event-type registry. It
+changes exactly the payload definitions for <code>terminal.created</code> and
+<code>session.resumed</code>; every other v1-v3 payload remains byte-for-byte
+the definition selected by v3. The two v4 payloads are:
+
+| Event type | Exact payload members |
+| --- | --- |
+| <code>terminal.created</code> | <code>terminal_binding_id:digest</code>, <code>terminal_backend_id:terminal-backend-id</code>, <code>implementation_version:semver</code>, <code>protocol_version:semver</code>, <code>evidence_ids:sorted unique digest[1..256]</code> |
+| <code>session.resumed</code> | <code>checkpoint_id:digest</code>, <code>execution_profile:standard&#124;yolo</code>, <code>profile_source_event_id:digest&#124;null</code>, <code>terminal_binding_id:digest</code>, <code>terminal_backend_id:terminal-backend-id</code>, <code>implementation_version:semver</code>, <code>protocol_version:semver</code>, <code>evidence_ids:sorted unique digest[1..256]</code> |
+
+The binding digest is an opaque audit reference to a host-local Terminal
+Instance Binding; the binding object itself is not an event member and is not
+replicated. The evidence IDs MUST resolve locally to validated, sanitized
+Manifest, Probe, and applicable Capability Evidence objects bound to the event's
+backend ID and versions. They MUST NOT resolve through the event to a native
+reference, generation string, socket, pipe, endpoint, token, credential,
+terminal output, PID/handle, or live-process fact.
+
+<code>terminal.created</code> records the backend selected for a new AX-
+authorized activation. <code>session.resumed</code> records the backend used by
+that owner resume. A valid takeover or owner resume MAY select a different
+admitted destination backend and emits a new binding digest and v4 event; it
+does not clone/fork the LogicalSession and never mutates an earlier event.
+Attach or presentation-client activity emits neither event and cannot change
+Owner/Replica, lease, or fencing state. A reader of v1-v3 may retain a v4 event
+as inert immutable history but MUST NOT derive runtime state or write a lower-
+version replacement.
+
 ### 5.3 Lease Record and ownership
 
 The Lease Record schema is <code>urn:ax:schema:lease</code> version
@@ -1432,7 +1960,7 @@ An owner process MUST revalidate its fencing token before:
 - resuming after any transport or sleep interruption longer than the configured
   lease refresh interval.
 
-There is no time-expiring ownership lease in v0.4.3. Liveness is not authority.
+There is no time-expiring ownership lease in v0.5.0. Liveness is not authority.
 A host being offline does not make a replica owner; only a takeover or fork
 does.
 
@@ -2043,6 +2571,51 @@ writes a complete v2 file to a same-directory temporary file, fsyncs it and the
 directory, and atomically replaces the original. Failure preserves v1 and the
 backup. Downgrading to a v1 binary is read-only; it MUST NOT discard directory
 tables or rewrite the file.
+
+### 6.5 Configuration 3.0.0 TerminalBackend extension
+
+Configuration 3.0.0 retains every v2 member and replaces only the closed
+<code>terminal</code> table. Its exact members are:
+
+| Key | Default / constraint |
+| --- | --- |
+| <code>backend_id</code> | Platform default for new activation: <code>ax.tmux</code> on macOS/Linux/WSL2 and <code>ax.conpty</code> on Windows; valid registered ID |
+| <code>safe_boundary_timeout_seconds</code> | v2 semantics, integer 1–3,600 |
+| <code>graceful_stop_timeout_seconds</code> | v2 semantics, integer 1–600 |
+| <code>required_capabilities</code> | Sorted unique closed capability names; default platform lane minimum |
+| <code>multiple_input_policy</code> | <code>deny|explicit_allow</code>; default deny |
+| <code>transport_policy</code> | Sorted unique subset of <code>local_only|trusted_private_mesh</code>; default both; relay is not configurable |
+| <code>external_trust</code> | Array of closed executable trust entries |
+| <code>backend_config</code> | Array of closed backend-specific tagged entries |
+
+Each external-trust entry contains exactly backend ID, absolute executable
+path, executable digest, and <code>enabled</code>. PATH-only discovery and a
+digest mismatch fail before probe. Each backend-config entry contains exactly
+backend ID, <code>config_version:semver</code>, and a backend-defined closed
+<code>settings</code> object registered by that exact implementation version.
+An arbitrary blob, raw command/argv, secret, token, endpoint credential,
+unrestricted environment, or environment passthrough is forbidden.
+
+Duplicate IDs or config entries, unknown IDs/settings, ambiguous discovery,
+manifest/probe/config mismatch, unsupported platform, unavailable required
+capability, or untrusted executable fails configuration/activation. Platform
+defaults select only a new Terminal Instance. Restore/resume uses the exact
+prior binding and fails with restore mismatch rather than using the current
+default. Policy may further restrict capabilities/transports but cannot enable
+an unsupported claim.
+
+<code>ax terminal backends list|show|probe|doctor</code> and <code>ax doctor</code>
+MUST safely show sanitized identity, versions, platform, availability,
+capability/evidence status, generation freshness, selection source, and
+remediation. They MUST NOT show native references, sockets/pipes, tokens,
+credentials, auth databases, raw evidence secrets, environment values, or live
+process handles. Inspection is read-only and never activates a backend.
+
+Configuration 1.0.0 and 2.0.0 retain their exact
+<code>terminal.backend=tmux|conpty</code> behavior. Migration to v3 maps only
+those two values as Section 4.E specifies, writes an owner-only backup and
+atomic replacement, and does not alter old bytes. A v1/v2 binary opening v3 is
+read-only diagnostic and MUST NOT discard tables or write a downgraded file.
 
 ## 7. Provider plugin protocol
 
@@ -2875,6 +3448,41 @@ confirmation controls still apply.
 
 The adapter MUST probe the exact provider version before applying a mapping.
 An absent or changed flag fails closed.
+
+### 7.A Provider Protocol 3.0.0 Terminal Instance binding
+
+Provider Protocol 3.0.0 retains the exact v2 framing, request/result envelopes,
+operation registry, idempotency rules, Provider authority, and embedded types,
+except that every occurrence of the v2 <code>TerminalDescriptor</code> is
+replaced by the following closed v3 object:
+
+| Member | Exact type and constraint |
+| --- | --- |
+| <code>terminal_binding_id</code> | digest of the validated Terminal Instance Binding 1.0.0 |
+| <code>terminal_instance_id</code> | AX-assigned UUIDv7; never a PID, socket, path, pipe, URL, handle, token, or native reference |
+| <code>terminal_backend_id</code> | Section 4.B registered backend ID |
+| <code>implementation_version</code> | Semantic Version equal to the admitted Manifest and Probe |
+| <code>protocol_version</code> | Semantic Version in Terminal Backend Protocol major 1 |
+| <code>backend_generation</code> | string[1..256] equal to the host-local binding generation; lengths 0 and 257 are invalid |
+| <code>interactive</code> | boolean |
+| <code>columns</code> / <code>rows</code> | uint16[1..1000] |
+
+No other member is permitted. The descriptor is AX-supplied delegated process-
+hosting context; it conveys no Session ownership, lease, provider identity,
+workspace, checkpoint, replication, or takeover authority to the Provider or
+TerminalBackend. The Provider MUST reject a descriptor whose binding digest,
+backend ID/version, or generation does not match the AX-validated host-local
+binding before launching or observing a provider process. The provider still
+receives the LeaseToken separately and MUST apply its v2 fencing rules.
+
+Provider Protocol 3.0.0 binds Structured Error 1.3.0. A syntactically valid v3
+request receives the v3 envelope with Error 1.3 on failure. A v2/v3 major
+mismatch, an unparseable or oversize first frame, or output that cannot be
+framed follows the Section 15.1 close/termination rule; the caller never trusts
+a different major's error. A dual-stack adapter advertises and validates v2 and
+v3 independently. It MAY translate only <code>ax.tmux</code> and
+<code>ax.conpty</code> to the immutable v2 descriptor under Section 4.E; every
+other backend is <code>incompatible_protocol</code>, not a fallback.
 
 ### 7.8 Companion Session Adapter protocol
 
@@ -4109,6 +4717,19 @@ The kind invariants are exact:
   null snapshot/provider fields; and
 - <code>composite</code> requires at least one child, empty entries, and all
   three tagged fields null.
+
+TerminalBackend runtime state is never a Transfer Manifest kind, child, or
+entry. Capture selection MUST exclude Terminal Instance Bindings and backend-
+local durable metadata; native references and generations; runtime IPC; Unix/
+tmux sockets; named pipes; attach endpoints/tokens; relay credentials; backend
+auth state/private live databases; GUI/login attestations; provider credentials;
+PIDs/handles; terminal state/output/scrollback; and live-process observations.
+Applicable exclusions MUST be named in <code>excluded_classes</code>; omission
+from that diagnostic array never permits the bytes to enter a manifest. Only
+the sanitized immutable evidence admitted to the Mesh RPC 4
+<code>terminal_backend_evidence</code> namespace is replicable, and it travels
+as schema objects through RPC inventory rather than as Transfer Manifest file
+entries.
 
 Every direct-session checkpoint references one <code>provider</code> manifest,
 even for a backend-only identity with zero entries. Every task-board checkpoint
@@ -7235,6 +7856,84 @@ evidence rather than last-writer-wins. Metadata disclosure is enforced before
 publication and again server-side before object return. Tightening policy stops
 future disclosure but MUST NOT claim remote erasure of bytes already replicated.
 
+### 11.9 Mesh RPC 4.0.0 TerminalBackend evidence replication
+
+Mesh RPC 4.0.0 retains RPC 3 framing, operations, limits, Merkle/JCS algorithm,
+authentication, source-authority rules, and the first seven namespaces. It
+binds Structured Error 1.3.0. Its <code>Namespace</code> enum is exactly
+<code>record</code>, <code>event</code>, <code>manifest</code>,
+<code>tombstone</code>, <code>tombstone_ack</code>, <code>blob</code>,
+<code>directory_record</code>, and <code>terminal_backend_evidence</code>.
+Therefore <code>inventory.roots.namespaces</code> and returned roots are sorted
+unique <code>Namespace[1..8]</code>; a complete v4 inventory has exactly eight.
+The v2 <code>[1..6]</code> and v3 <code>[1..7]</code> bounds remain historical
+syntax and are invalid in a v4 frame.
+
+The v4 hello request and response retain the exact v3 non-map members. Their
+<code>contracts</code> map has exactly 25 keys and exactly these values:
+
+~~~json
+{
+  "rpc": ["4.0.0"],
+  "session_record": ["1.0.0", "2.0.0", "3.0.0"],
+  "session_event": ["1.0.0", "2.0.0", "3.0.0", "4.0.0"],
+  "lease": ["1.0.0"],
+  "checkpoint": ["1.0.0"],
+  "workspace_group": ["1.0.0"],
+  "provider_identity": ["1.0.0"],
+  "blob": ["1.0.0"],
+  "transfer_manifest": ["1.0.0"],
+  "chunk": ["1.0.0"],
+  "materialization_plan": ["1.0.0", "2.0.0"],
+  "tombstone": ["1.0.0"],
+  "tombstone_ack": ["1.0.0"],
+  "task_board_bundle": ["1.0.0"],
+  "environment_observation": ["1.0.0"],
+  "native_session_observation": ["1.0.0"],
+  "session_inventory_batch": ["1.0.0"],
+  "conversation_lineage_link": ["1.0.0"],
+  "session_annotation": ["1.0.0"],
+  "session_enrichment_profile": ["1.0.0"],
+  "session_enrichment_job_request": ["1.0.0"],
+  "session_enrichment_job_receipt": ["1.0.0"],
+  "session_continuation_plan": ["1.0.0"],
+  "session_directory_operation_receipt": ["1.0.0"],
+  "terminal_backend_evidence": ["1.0.0"]
+}
+~~~
+
+Relative to the exact RPC 3 map, only <code>rpc</code> changes to
+<code>["4.0.0"]</code>, <code>session_event</code> appends
+<code>"4.0.0"</code>, and the one new
+<code>terminal_backend_evidence=["1.0.0"]</code> key is added; all other keys
+and arrays are identical. Missing/extra keys, a different version, duplicate or
+unsorted arrays, a 24-key v4 map, or a seven-namespace v4 inventory fails
+<code>incompatible_protocol</code> before object exchange.
+
+The <code>terminal_backend_evidence</code> namespace contains only schema-valid
+Terminal Backend Manifest 1.0.0, Terminal Backend Probe 1.0.0, and Terminal
+Capability Evidence 1.0.0 objects whose Section 4.B/4.D self ID is their
+inventory identity. It contains no Terminal Instance Binding. A Session Event
+4 binding digest remains an opaque audit reference and cannot cause the local
+binding to be fetched or reconstructed. Namespace validation rejects every
+other schema and any otherwise valid object containing a native reference,
+raw backend generation, socket, pipe, endpoint, attach/relay token, credential
+or auth state, PID/handle, terminal output/scrollback, or live-process fact.
+The schema-defined one-way <code>backend_generation_digest</code> and opaque
+binding digest are permitted only as validation/audit bindings.
+Placement in <code>manifest</code>, <code>directory_record</code>, or two roots
+is <code>integrity_failure</code>.
+
+A v4 implementation MUST serve RPC 3 dual stack for at least one stable
+release and MUST preserve RPC 2 interoperability required by Section 11.8. A
+v4/v3 negotiation performs directory/core sync, retains v4 Session Events as
+inert opaque history when the v3 reader permits it, and reports TerminalBackend
+evidence unsupported rather than empty; it cannot activate or restore from the
+unknown binding. A v4/v2 negotiation performs core sync under v2 and reports
+both directory and TerminalBackend evidence unsupported. No peer coerces a
+namespace, event, or backend identity across majors, and unsupported activation
+never prevents safe browse/sync of contracts that were negotiated.
+
 ## 12. Workspace replication
 
 ### 12.1 Workspace snapshot
@@ -9559,6 +10258,21 @@ ax pane SESSION_ID
 ax rpc serve --stdio
 ~~~
 
+The v0.5.0 release adds exactly these TerminalBackend inspection commands:
+
+~~~text
+ax terminal backends list
+ax terminal backends show BACKEND_ID
+ax terminal backends probe BACKEND_ID
+ax terminal backends doctor [BACKEND_ID]
+~~~
+
+They map respectively to CLI Result 4 command tags
+<code>terminal.backend.list</code>, <code>terminal.backend.show</code>,
+<code>terminal.backend.probe</code>, and
+<code>terminal.backend.doctor</code>. They are read-only and obey Sections 6.5
+and 14.6; none is an activation command.
+
 For the umbrella form, <code>--to</code> is permitted only with
 <code>takeover</code> or <code>fork</code>, and <code>--as</code> is required and
 permitted only with <code>fork</code>. <code>--workspace-mode</code> is permitted
@@ -10184,6 +10898,67 @@ controls, invalid width, and hostile grapheme sequences are removed or visibly
 escaped. Terminal transport, resize, reconnect, and process supervision remain
 Section 4 authority.
 
+### 14.6 CLI Result 4.0.0 TerminalBackend surfaces
+
+CLI Result 4.0.0 retains the exact CLI Result 3 top-level success envelope,
+every v1-v3 command/result body not named below, and their top-level ID rules.
+It adds the closed command tags <code>terminal.backend.list</code>,
+<code>terminal.backend.show</code>, <code>terminal.backend.probe</code>, and
+<code>terminal.backend.doctor</code>, and replaces only the v1
+<code>start</code> and <code>resume</code> success-body variants with the v4
+variants below. Failures bind Structured Error 1.3.0.
+
+<code>TerminalBackendSummary</code> is the closed object containing exactly:
+
+| Member | Exact type and constraint |
+| --- | --- |
+| <code>terminal_backend_id</code> | terminal-backend-id |
+| <code>implementation_version</code> / <code>protocol_version</code> | semver&#124;null; both null exactly when no trusted compatible implementation was identified |
+| <code>availability</code> | <code>available&#124;unavailable&#124;unknown&#124;ambiguous&#124;untrusted&#124;incompatible</code> |
+| <code>platform_compatible</code> | boolean; false for an identified wrong-platform implementation and for unknown identity |
+| <code>capabilities</code> | sorted unique TerminalBackend capability[0..16], containing only currently evidenced enabled claims |
+| <code>evidence_ids</code> | sorted unique digest[0..256] of sanitized Manifest/Probe/Capability Evidence |
+| <code>diagnostic_codes</code> | sorted unique Structured Error code[0..256] |
+
+Null versions, an empty capability/evidence set, or diagnostic output never
+means that an unknown backend is absent or that activation may use a default.
+<code>TerminalInstanceSummary</code> is the closed host-local object containing
+exactly <code>terminal_instance_id:UUIDv7</code>,
+<code>terminal_binding_id:digest</code>,
+<code>terminal_backend:TerminalBackendSummary</code>,
+<code>backend_generation:string[1..256]</code>,
+<code>state:absent&#124;creating&#124;parked&#124;active&#124;quiescing&#124;stopped&#124;stale_fenced&#124;unavailable</code>, and
+<code>attachable:boolean</code>. It never contains a native reference, PID,
+socket, pipe, endpoint, token, credential/auth state, terminal output, or live-
+process details.
+
+| Result tag | Exact body members |
+| --- | --- |
+| <code>terminal_backend_list</code> | <code>backends:TerminalBackendSummary[0..256]</code> sorted by backend ID, <code>registry_read:valid</code> |
+| <code>terminal_backend_show</code> | <code>backend:TerminalBackendSummary</code>, <code>manifest_id:digest&#124;null</code>, <code>probe_id:digest&#124;null</code> |
+| <code>terminal_backend_probe</code> | <code>backend:TerminalBackendSummary</code>, <code>probe_id:digest</code>, <code>probed_at:timestamp</code> |
+| <code>terminal_backend_doctor</code> | <code>healthy:boolean</code>, <code>backends:TerminalBackendSummary[0..256]</code>, <code>findings:CLIFinding[0..4096]</code> |
+| <code>start</code> | <code>session:SessionSummary</code>, <code>execution_profile:standard&#124;yolo</code>, <code>terminal_instance:TerminalInstanceSummary</code> |
+| <code>resume</code> | <code>session:SessionSummary</code>, <code>checkpoint_id:digest</code>, <code>terminal_instance:TerminalInstanceSummary</code> |
+
+The command/result mapping follows the table names exactly. The four inspection
+commands are read-only: they do not activate an implementation, create an
+instance, attach a client, change configuration, mutate ownership, or obtain a
+credential. <code>probe</code> may refresh only derived/local evidence under
+Section 4.B. Start/resume success requires an <code>active</code> or
+<code>parked</code> instance whose IDs/versions/generation match the validated
+binding and evidence. Restore mismatch is an Error 1.3 failure, never silent
+default selection.
+
+Legacy CLI Result 1 projection is deterministic only when the v4 summary has
+backend ID <code>ax.tmux</code> or <code>ax.conpty</code>; it emits the exact
+historical <code>tmux</code> or <code>conpty</code> field and, for resume, the
+host-local native reference required by the immutable v1 shape. Other IDs,
+missing native projection data, or an unrepresentable state return
+<code>incompatible_schema</code>. Projection never rewrites a v4 result or
+invents capabilities, and lower-version clients remain read-only for an
+unrepresentable backend.
+
 ## 15. Errors and exit semantics
 
 ### 15.1 Structured Error
@@ -10393,6 +11168,49 @@ close/termination without trusting a peer/child error; the caller emits a local
 <code>adapter_protocol_violation</code>/<code>transport_failure</code> as
 applicable. Error is a static binding and never a hello-contract key.
 
+#### Structured Error 1.3.0 TerminalBackend codes
+
+Structured Error 1.3.0 retains the exact 1.2 top-level shape and every 1.0–1.2
+code-to-exit mapping. It changes only <code>schema_version</code> to exact
+<code>1.3.0</code> and adds these literal codes:
+
+| Exit | TerminalBackend codes |
+| ---: | --- |
+| 4 | <code>terminal_backend_not_found</code>, <code>terminal_backend_ambiguous</code> |
+| 6 | <code>terminal_backend_unavailable</code>, <code>terminal_backend_protocol_incompatible</code>, <code>terminal_backend_capability_unproven</code>, <code>terminal_backend_restore_mismatch</code> |
+| 7 | <code>terminal_backend_untrusted</code>, <code>terminal_backend_unauthorized</code> |
+| 9 | <code>terminal_backend_integrity_failure</code>, <code>terminal_backend_implementation_drift</code>, <code>terminal_backend_manifest_probe_mismatch</code> |
+| 10 | <code>terminal_backend_stale_generation</code> |
+| 13 | <code>terminal_backend_protocol_error</code>, <code>terminal_backend_process_failed</code>, <code>terminal_backend_timeout</code> |
+
+<code>terminal_backend_not_found</code> is valid only after a complete valid
+registry/discovery read; a partial, failed, or malformed read is
+<code>terminal_backend_integrity_failure</code>.
+<code>terminal_backend_ambiguous</code> covers duplicate IDs or more than one
+trusted implementation resolving the same ID and never selects one by order.
+Unknown ID and known-but-unavailable implementation remain distinct.
+<code>terminal_backend_capability_unproven</code> covers missing, expired,
+self-minted, contradictory, or wrong-binding evidence.
+<code>terminal_backend_restore_mismatch</code> covers policy/default attempts to
+replace the persisted restore backend. <code>terminal_backend_unauthorized</code>
+covers an operation without current AX authorization; attach itself remains
+ownership-observational. <code>terminal_backend_stale_generation</code> requires
+status/recovery before retry and is never retryable solely because the caller
+can submit the same bytes.
+
+Terminal Backend Protocol 1.0.0, Provider Protocol 3.0.0, Mesh RPC 4.0.0, and
+CLI Result 4.0.0 statically bind Structured Error 1.3.0. A syntactically valid
+supported-major request receives the containing protocol's failure envelope
+with Error 1.3. A fresh TerminalBackend <code>manifest</code> bootstrap may
+return only the Section 4.C closed supported-major response. Unsupported major,
+unparseable/oversize first frame, missing framing identity, or unframeable
+output causes close/termination without trusting a backend/peer error; the AX
+caller emits a local Error 1.3
+<code>terminal_backend_protocol_incompatible</code> for a recognizable major
+mismatch and <code>terminal_backend_protocol_error</code> otherwise. Structured
+Error remains a static binding and MUST NOT appear as an RPC hello key or
+TerminalBackend capability.
+
 ## 16. Security and threat boundary
 
 ### 16.1 Trusted mesh model
@@ -10404,7 +11222,7 @@ provider plugin, or a compromised local user account.
 
 Peers MUST be explicitly allowlisted by stable host ID and SSH endpoint.
 Tailscale discovery MAY propose hosts but MUST NOT authorize them. SSH protects
-authentication, integrity, and confidentiality in transport. v0.4.3 provides no
+authentication, integrity, and confidentiality in transport. v0.5.0 provides no
 default payload encryption at rest and MUST NOT claim otherwise.
 
 Machine-local credentials are a prerequisite at the destination. A successful
@@ -10423,6 +11241,7 @@ No manifest or bundle generated by <code>ax</code> MAY intentionally include:
 | Machine authentication | Apple Keychain, Secret Service, Windows Credential Manager, task-board login tokens |
 | Live process identity | PIDs used for control, process handles, terminal IDs used as authority |
 | IPC/runtime | Unix sockets, named pipes, tmux server sockets, session-message tokens |
+| TerminalBackend runtime | Terminal Instance Bindings, backend native references/generations, attach endpoints/tokens, relay credentials, backend auth/private live databases, GUI/login attestations, terminal state/output/scrollback, process observations |
 | Transient locking | Lock files, live SQLite WAL/SHM/journals, updater locks, provider PID locks |
 | Mutable derived indexes | <code>ax</code> SQLite and provider caches not required by a documented import/resume contract |
 
@@ -10432,14 +11251,18 @@ sensitive history when required for native resume, but MUST remain inert and
 MUST NOT be treated as current process, ownership, or routing authority. This
 does not permit copying a live PID/lock control artifact.
 
-The tmux socket and provider authentication state are machine-local exclusions
-and MUST NOT be replicated. This applies even when a socket path is stable, an
-Aqua-started server survives a terminal disconnect, or authentication works in
-the source server realm; none of those facts makes socket or Keychain state a
-transfer member.
+The exclusions apply uniformly to every TerminalBackend. The tmux socket and
+provider authentication state remain machine-local and MUST NOT be replicated.
+The same rule covers ConPTY handles/named pipes and any future backend's local
+IPC, attach/auth material, generation, live database, or mutable endpoint. This
+applies even when an endpoint path is stable, an Aqua-started server survives a
+terminal disconnect, or authentication works in the source server realm; none
+of those facts makes runtime or credential state a transfer member. Section
+11.9 permits only validated sanitized identity/conformance/capability evidence;
+it does not permit reconstructing a Terminal Instance Binding.
 
 Transcripts and tool outputs can themselves contain secrets entered by an
-operator or printed by tools. v0.4.3 does not claim reliable content-level
+operator or printed by tools. v0.5.0 does not claim reliable content-level
 secret scrubbing. Operators MUST therefore treat all payloads as sensitive and
 authorize only trusted project peers. An implementation SHOULD offer a
 best-effort scanner and warning, but scanner success MUST NOT be described as a
@@ -10476,6 +11299,16 @@ unless compiled in. Plugin stdout is protocol input and MUST be validated.
 Plugin stderr, provider logs, and doctor output MUST be redacted before
 persistence.
 
+TerminalBackend implementations and local-program adapters are independently
+privileged. A built-in is selected only by its AX-shipped identity; an external
+executable requires the closed Configuration 3 trust tuple and an exact
+Manifest/Probe implementation digest. PATH lookup, basename trust, mutable
+symlink substitution, duplicate discovery, manifest/probe disagreement, and
+implementation drift fail before activation. Backend argv is fixed by the
+registered adapter and every delegated provider entry point is exactly
+<code>ax pane SESSION_ID</code>; configuration cannot supply a raw command,
+arbitrary blob, secret, or unrestricted environment passthrough.
+
 For cloning, historical instructions/messages/tool output are untrusted data
 and cannot select operations, paths, capabilities, or authority. The Session
 Adapter receives only operation-specific read handles and fresh sinks, never
@@ -10498,7 +11331,7 @@ Force takeover MUST therefore:
 
 ### 16.6 Out of scope
 
-v0.4.3 does not provide Byzantine consensus, hostile-peer isolation,
+v0.5.0 does not provide Byzantine consensus, hostile-peer isolation,
 multi-tenant access control, end-to-end snapshot encryption, secret
 distribution, provider-account migration, revocation of actions already sent
 to external services, live-process cloning, task-board authority cloning, or
@@ -10566,12 +11399,17 @@ Each contract in Section 1.5 versions independently:
 - a patch increment MAY clarify constraints or fix a validator defect without
   adding a field or changing behavior.
 
-Specification package v0.4.3 is a patch release over v0.4.2. It reconciles the
+Specification package v0.5.0 is a minor release over v0.4.3 because it adds the
+first-class TerminalBackend family and new independently versioned containing
+contracts. Published v0.4.3 remains the exact immutable terminal-realm
+baseline. It was a patch release over v0.4.2 that reconciled the
 already approved roadmap, ownership/continuation semantics, complete Git
 closure, and macOS execution-realm safety without adding or changing any
-independently consumed wire member. Every Section 1.5 contract version remains
-unchanged, including Structured Error 1.2.0; the release uses existing codes
-with typed details. Existing v0.4.2 and earlier tags remain immutable.
+independently consumed wire member. Every contract active in v0.4.2 remained
+unchanged in v0.4.3, including Structured Error 1.2.0; that release uses
+existing codes with typed details. The independently versioned additions and
+increments in v0.5.0 are exactly the Section 1.5 delta. Existing
+v0.4.3, v0.4.2, and earlier tags remain immutable.
 
 Within any negotiated major version, new object data MUST live under a namespaced
 <code>extensions</code> entry unless the consumer negotiated a newer minor
@@ -10581,9 +11419,11 @@ major by coercion.
 
 Independent release versions do not override an explicit embedding rule.
 Provider protocol and Mesh RPC major 2 and task-board bridge major 1 each bind
-Structured Error 1.0.0 as Section 15.1 specifies; those envelopes do not
-negotiate the error schema separately. Compatibility is evaluated first for the
-containing protocol and then against its fixed embedded-error validator.
+Structured Error 1.0.0 as Section 15.1 specifies. Provider Protocol 3, Mesh RPC
+4, Terminal Backend Protocol 1, and CLI Result 4 bind Structured Error 1.3.0;
+Directory/CLI/RPC 3 bindings to Error 1.2 remain exact. None negotiates the
+error schema separately. Compatibility is evaluated first for the containing
+protocol and then against its fixed embedded-error validator.
 
 The v0.2.0 correction is an explicit major-version boundary. Provider protocol
 1.0.0, Mesh RPC 1.0.0, and Materialization recovery state 1.0.0 remain the
@@ -10607,8 +11447,10 @@ A writer emits exactly the negotiated version. A reader:
    it.
 
 An <code>enabled = true</code> capability is valid only for the exact negotiated
-contract and provider tuple. Version range mismatch changes it to conditional
-or unsupported.
+contract and provider tuple or, for TerminalBackend capabilities, the exact
+backend ID/implementation/protocol/generation/platform/OS evidence binding.
+Version or binding mismatch changes it to conditional/unsupported and prevents
+dependent activation.
 
 ### 17.3 Immutable data migration
 
@@ -10640,6 +11482,15 @@ ownership, materialize, or write lower-version replacements.
 Provider upgrades invalidate prior tuple-specific acceptance until the adapter's
 declared version range and compatibility fixture cover the new version. Muse
 and Antigravity unknowns in Section 8 remain explicit version gates.
+
+TerminalBackend upgrade negotiates Manifest, Probe, Protocol, Provider,
+Configuration, Event, CLI Result, and Error versions independently. A peer that
+cannot activate the backend contract MAY still browse and synchronize sanitized
+immutable evidence; it MUST report activation unavailable rather than omit the
+Session. Restore binds the previously selected backend and generation, while a
+new owner activation may select another admitted backend. Downgrade is read-only
+for every unrepresentable binding or ID and never emits a lower-version
+replacement.
 
 ### 17.5 Directory release compatibility
 
@@ -10943,17 +11794,19 @@ Events are not.
 ### 19.1 Implementation phases
 
 These are ordered phases for an implementation that intends to claim
-<code>ax</code> product conformance version 0.4.3. They are not prerequisites
+<code>ax</code> product conformance version 0.5.0. They are not prerequisites
 for publishing this specification and are not permission to ship a required
 core target half-implemented:
 
 1. <strong>M0 — contract foundation</strong>: implement parsers, canonical
    identities, compatibility/error schemas, plugin wire contracts, internal
-   plugin interfaces, and the plugin conformance harness. M0 MUST NOT advertise
+   plugin interfaces, the TerminalBackend registry/identity/semantic boundary,
+   and the backend conformance harness. M0 MUST NOT advertise
    a public stable plugin SDK; that decision waits for Codex and Claude to
    validate the boundary in real implementations.
 2. <strong>M1 — single-host durability</strong>: implement the derived index,
-   direct plugin host, daemonless lifecycle, dedicated terminal backend,
+   direct plugin host, daemonless lifecycle, production built-in
+   <code>ax.tmux</code> with its private dedicated server,
    stop/resume, workspace engine, and complete Git closure across tracked,
    dirty-index, staged, unstaged, untracked, ignored-policy, symlink, and
    submodule state.
@@ -10962,7 +11815,7 @@ core target half-implemented:
    the minimum safety kernel: lease fencing, durable journal, idempotency,
    status-first recovery, and exhaustive crash-boundary classification. M2 is
    preview quality and is not the daily-driver gate.
-4. <strong>M3 — first daily-driver gate</strong>: pass the required macOS and
+4. <strong>M3 — first daily-driver tmux gate</strong>: pass the required macOS and
    Linux daily-driver lanes, including dedicated tmux/Aqua-broker functional
    evidence, complete graceful/force takeover recovery, destination readiness
    before ownership commit, and operator continuation UX with no implicit
@@ -11155,11 +12008,11 @@ signed Environment Tuple under Section 13.14.5.
 | <code>AC-OBS-001</code> | Required events/metrics exist and a secret/transcript canary never appears in logs. |
 | <code>AC-DOC-001</code> | All internal section references, local links, JSON/TOML examples, tables, and traceability rows validate. |
 | <code>AC-REF-001</code> | A schema-aware reference walker resolves every normative simple/dotted field expression and enum token against the containing closed registry (including MaterializationCohort fields), rejects aliases absent from that schema, and separately validates every extension key against Section 1.6. |
-| <code>AC-DIAG-001</code> | Structurizr and all eight focused PlantUML sources render to twelve committed SVGs; the fresh artifacts are visually inspected for clipping, width, contrast, readable labels, and arrow direction and match Sections 3, 10.8, 13, and 16.7. |
+| <code>AC-DIAG-001</code> | Structurizr and all nine focused PlantUML sources render to fifteen committed SVGs; the fresh artifacts are visually inspected for clipping, width, contrast, readable labels, and arrow direction and match Sections 3–4, 10.8, 13, and 16.7. |
 
 ### 19.5 <code>ax</code> implementation release acceptance rule
 
-An implementation MAY claim <code>ax</code> product conformance 0.4.3 only when:
+An implementation MAY claim <code>ax</code> product conformance 0.5.0 only when:
 
 1. all product-release-blocking core platform lanes pass;
 2. every A provider cell passes its suites;
@@ -11170,7 +12023,11 @@ An implementation MAY claim <code>ax</code> product conformance 0.4.3 only when:
    implementation checkout; and
 7. every Directory Node, record, query, planner/executor, RPC 3, CLI Result 3,
    Session Record/Event 3, Error 1.2, security, and all
-   <code>DIR-INV-01..45</code> acceptance fixture passes.
+   <code>DIR-INV-01..45</code> acceptance fixture passes; and
+8. every TerminalBackend registry, identity, operation, capability, credential,
+   compatibility, replication, CLI/Provider/Event/RPC/Error binding, tmux,
+   ConPTY, and expected-red conformance case passes for each claimed backend and
+   platform tuple.
 
 Unknown provider facts do not block an implementation release when, and only
 when, their cells remain disabled and truthful.
@@ -11187,7 +12044,7 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
 the default branch, and carry the MIT License. The current specification
-release is <code>v0.4.3</code>. Existing release tags are immutable history and
+release is <code>v0.5.0</code>. Existing release tags are immutable history and
 MUST NOT be moved or rewritten. The v0.3.0 specification baseline remains the
 normative cloning authority whether consumed from its release package or the
 accepted baseline commit; this sentence does not claim that a particular tag
@@ -11214,7 +12071,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-specification release <code>v0.4.3</code>, not an <code>ax</code> executable
+specification release <code>v0.5.0</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -11226,7 +12083,7 @@ release. The publication task MUST:
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
 4. verify <code>VERSION</code>, current document metadata, changelog, release
-   notes, and the proposed tag all say <code>v0.4.3</code>, while every existing
+   notes, and the proposed tag all say <code>v0.5.0</code>, while every existing
    historical tag remains unchanged;
 5. run the semantic crash/restart gate and its focused expected-red mutations;
    validation MUST emit an actionable diagnostic when the three-outcome
@@ -11237,14 +12094,14 @@ release. The publication task MUST:
    <code>Ivan Oparin &lt;oparin@me.com&gt;</code> and no AI trailer, and hand it
    to the user for explicit review; automation MUST NOT stage or commit before
    human approval;
-7. prepare the exact signed annotated <code>v0.4.3</code> tag command and hand it
+7. prepare the exact signed annotated <code>v0.5.0</code> tag command and hand it
    to the user for explicit review; automation MUST NOT create the tag before
    human approval;
 8. after the human creates the commit and tag, verify both signatures locally
    with <code>git log --show-signature -1</code> and
-   <code>git tag --verify v0.4.3</code>;
+   <code>git tag --verify v0.5.0</code>;
 9. hand the exact <code>git push</code> commands for <code>main</code> and the
-   <code>v0.4.3</code> tag to the user; automation MUST NOT push before explicit
+   <code>v0.5.0</code> tag to the user; automation MUST NOT push before explicit
    human approval and only after accepted validation/review;
 10. verify the public repository, default branch, license, commit signature, tag
    signature, and release URL; and
@@ -11376,7 +12233,7 @@ not a prerequisite for that publication.
 | No duplicate owner or silent fresh native session | Section 13.13 rejects two live/authoritative owners, unfenced continuation presented as safe recovery, new-session launch, fresh native handles/manager references, blank relabeling, and realm substitution. |
 | Runtime conformance acceptance | Section 19.4 <code>AC-CRASH-001</code> executes every applicable boundary with exact classification and evidence. |
 | Specification publication acceptance and mutation gate | Section 20.2 <code>SPEC-PUB-CRASH-001</code> requires semantic validation plus an actionable focused expected-red mutation. |
-| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version and its immutable history; Section 20.1 identifies <code>v0.4.3</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
+| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version from immutable history and introduce changed closed shapes only under independent versions; Section 20.1 identifies <code>v0.5.0</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
 
 ### A.9 Cross-environment cloning traceability
 
@@ -11437,6 +12294,29 @@ their committed SVGs, public-document metadata, diagram inventories, and
 frozen SHA-256 ledgers are one publication unit. Generated C4 intermediaries
 and SVGs are regenerated from those sources and are never edited by hand.
 
+### A.11 TerminalBackend modularity and release traceability
+
+The v0.5.0 owner brief is mapped exhaustively below. This table is normative
+traceability, not a second definition of the referenced contracts.
+
+| Owner requirement | Normative closure and conformance route |
+| --- | --- |
+| Preserve published v0.4.3 history; independently version changed closed contracts | Sections 1.5 and 17.1–17.4 define the immutable historical registry, the v0.5.0 delta, explicit negotiation, legacy translation, reader/writer behavior, and downgrade refusal; Appendix D retains the v0.4.3 fixture and adds the TerminalBackend families. |
+| AX retains LogicalSession, ownership, lease/fencing, provider, workspace, checkpoint, task-board, mesh, and takeover authority | Sections 2.2, 4.A, 4.E, 5, 7, 9–13, and 16; authority-inversion and presentation-replica mutations are mandatory expected-red cases. |
+| TerminalBackend owns only one host-local TerminalInstance and delegated hosting/presentation/observation | Sections 4.A–4.E define the boundary, identity, lifecycle, capabilities, evidence classes, and replication classification; the TerminalBackend fixture exercises both built-ins. |
+| Every backend executes exactly <code>ax pane SESSION_ID</code>; attach is ownership-neutral | Sections 4.A, 4.C, 13.4–13.11, and 14.6; raw-provider-entrypoint and attach-ownership-change mutations fail through the production validator. |
+| First-class registry, identity, versions, discovery, trust, and conformance | Sections 4.B, 6.5, 7.A, 15.3, and Appendix D define closed IDs, AX-reserved built-ins, manifest/probe agreement, trusted executable binding, drift refusal, and fixture identity. |
+| Exact lifecycle operations, states, idempotency, deadlines, recovery, evidence, and errors | Sections 4.C–4.D and 15.3 close all ten operations, eight states, capability dependencies, side effects, retry dispositions, and Error 1.3 bindings; Appendix D requires operation/body and narrowing negatives. |
+| Closed capabilities and independent multi-attach/input policy | Section 4.D defines all 16 capabilities, claim origins, generation variability, evidence requirements, dependent operations, and the separation of attach transport from input authorization. |
+| Security, transport classes, credential realm, and replication exclusions | Sections 4.D–4.E, 11.9, 12, and 16.1–16.4 exclude runtime IPC, sockets, pipes, tokens, relay/backend/provider credentials, private databases, GUI attestations, process facts, terminal state, and authoritative AX state; credential proof requires sentinel plus provider-auth smoke inside the exact instance. |
+| tmux remains mandatory Unix target with private <code>-S</code> and Aqua evidence | Sections 3.1–3.2, 4.2, 4.D, 13.11, 16.2, and 19.1–19.4; historical <code>AC-V043-REALM-*</code> and new TerminalBackend mutations reject ambient tmux, background creation, and GUI-only proof. |
+| ConPTY remains native-Windows path without tmux-equivalent durability claim | Sections 4.3, 4.D, 8.4, 13.11, and 19.2–19.4; the Windows positive fixture declares only evidenced ConPTY capabilities. |
+| Superlogical remains unavailable, non-normative, and future-only | Section 4.E and Appendix C admit only dated evidence as research; no normative ID/API/SDK/support claim exists, and an availability mutation is expected-red. |
+| Compatibility covers old/new readers, mixed peers, unsupported/unknown backends, bootstrap, and restore | Sections 4.B–4.E, 6.5, 7.A, 11.9, 14.6, and 17.2–17.4 define exact legacy translations, inert browse/sync, writer-version negotiation, no silent restore fallback, and no coercion. |
+| M0–M3 remain tmux-first and a stable public SDK is deferred | Sections 4.A, 7.1, 19.1, and 19.5 define the internal semantic boundary/conformance harness, production tmux path, preview safety kernel, daily-driver tmux gate, and deferred public SDK; premature-stability claims are expected-red. |
+| Public documents and release metadata make no implementation-availability claim | Sections 1.3, 19.5, and 20 separate specification publication from product conformance; README, changelog, and release notes carry the same caveat, and publication validation rejects unsupported availability prose. |
+| Diagrams preserve AX authority and show tmux/ConPTY as implementations | Sections 3.1, 4.A, and 19.4 <code>AC-DIAG-001</code>; the C4 and focused PlantUML sources are rendered, freshness-checked, and mutation-tested for authority, implementation synonym, and Superlogical status. |
+
 ## Appendix B. Explicit provider version gates
 
 The following are the only intentionally unsettled facts in this contract. They
@@ -11484,6 +12364,15 @@ surface while the matrices retain the stricter tuple-specific gates:
 7. [Pi usage/session documentation](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/usage.md)
    and [Pi settings/session-directory documentation](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/settings.md),
    plus locally probed Pi 0.73.1 help.
+8. Accepted <code>TASK-260829-1bhmis</code>
+   [Superlogical integration-surface report](.research/260829_superlogical-integration-surface.md),
+   based on the [official product site](https://www.superlogical.com/),
+   [Mitchell Hashimoto's product-direction note](https://mitchellh.com/writing/superlogical),
+   and the [official GitHub organization](https://github.com/superlogical), all
+   retrieved 2026-08-29. These sources establish only the bounded future-product
+   observations in Section 4.E; they establish no release, AX adapter, API, SDK,
+   backend ID, compatibility, capability, ownership, transport, or conformance
+   claim.
 
 Local help probes are evidence only for the exact installed versions and macOS
 host. They do not establish another platform cell.
@@ -11524,23 +12413,28 @@ display-language label.
 
 | Section 1.5 contract | Positive fixture anchor | Additional required negative mutation |
 | --- | --- | --- |
-| Configuration | Sections 6.2 and 6.4 TOML plus Section 3.2 path registry | Add root <code>unknown_root</code>; add secret value; set unsafe SSH host-key bypass; exercise all five flags/environment values plus empty and unknown <code>AX_*</code> cases; reject Config-2 directory bounds, tuple/profile/disclosure violations, silent major rewrite, or downgrade mutation |
-| Provider protocol | Section 7.2 envelopes and every Section 7.5 row | Mismatch request ID; success with both body/error; operation/body tag mismatch; compatible/major/invalid-first-output Error binding fixtures |
+| Configuration | Sections 6.2, 6.4, and 6.5 TOML plus Section 3.2 path registry | Add root <code>unknown_root</code>; add secret value or raw backend command/environment; set unsafe SSH host-key bypass; exercise all flags/environment values plus empty and unknown <code>AX_*</code> cases; reject Config-2 directory bounds, Config-3 duplicate/unknown/backend-policy/trust violations, restore fallback, silent major rewrite, or downgrade mutation |
+| Provider protocol | Section 7.2 envelopes, every Section 7.5 row, and Section 7.A v3 descriptor | Mismatch request ID; success with both body/error; operation/body tag mismatch; stale/mismatched Terminal Instance binding; v2 projection of a non-built-in ID; compatible/major/invalid-first-output Error binding fixtures |
 | Provider manifest | Section 7.3 with all fifteen operations | Remove <code>capture</code> or one transaction operation; duplicate provider ID discovery remains fatal |
 | Provider probe | Section 7.4 | Set <code>enabled=true</code> on conditional/unknown/unsupported; omit one requested capability |
+| Terminal Backend protocol | Sections 4.B–4.C envelope and all ten operation rows | Unknown operation/member; lost-result retry with changed bootstrap key; mutation without AX authorization/capability; attach ownership change; stale generation; restore fallback; raw provider entry point |
+| Terminal Backend manifest | Section 4.B exact manifest | Invalid/duplicate ID; AX namespace misuse; executable substitution; implementation/protocol/conformance drift; unknown or unproven static capability |
+| Terminal Backend probe | Section 4.B exact probe | Failed/partial/malformed read treated as absence; manifest/probe mismatch; raw generation instead of its digest; unavailable claim activated |
+| Terminal Instance binding | Sections 4.B and 4.E exact binding | PID/socket/path/pipe/URL/token identity; wrong host/incarnation/backend/version/generation; replication or use after supersession |
+| Terminal capability evidence | Section 4.D exact evidence and capability registry | Self-minted/missing/expired/wrong-binding evidence; unknown claim; operation without claim; GUI-only credential proof; raw generation/instance/credential detail |
 | Session Adapter protocol | Section 7.8 envelopes and every operation-body row | Duplicate or unknown operation; operation/body mismatch; request/context digest mismatch; partial, malformed, over-limit, or escaped output treated as absence |
 | Session Adapter manifest | Section 7.8 exact manifest table with the ordered fourteen-name registry | Duplicate, omit, reorder, or add an operation; mismatch provider/environment/executable binding |
 | Session Adapter probe | Section 7.8 exact probe table with all fifteen capabilities | Omit a capability; report an unrequested tuple; mismatch manifest, executable, provider, candidate kind, or environment version |
 | Directory Node protocol/request/response/manifest | Section 7.9 envelopes, exact manifest, and every operation row | Omit/reorder/add an operation or capability; request/body or response/body mismatch; changed idempotent mutation; escaped native authority; compatible/major/unframed Error 1.2 behavior |
-| Mesh RPC | Sections 11.2–11.3 v2 and Section 11.8 v3 | Send non-hello first; mismatch nonce; advertise an <code>error</code> key; change the exact 24-key v3 map; duplicate/omit a namespace member; violate cardinality; coerce v2/v3 or embedded record versions |
+| Mesh RPC | Sections 11.2–11.3 v2, Section 11.8 v3, and Section 11.9 v4 | Send non-hello first; mismatch nonce; advertise an <code>error</code> key; change the exact 24-key v3 or 25-key v4 map; omit/duplicate/relabel a namespace member; admit Binding/runtime/credential data to backend evidence; violate 6/7/8 cardinality; coerce v2/v3/v4 or embedded record versions |
 | Session Record | Section 5.1 direct/task-board major 1, clone major 2, and unified major 3 provenance | Cross-tag field leakage; reuse source Session/provider identity; carry final facts at creation; admit a major at the wrong Provider/clone/adoption boundary |
-| Session Event | Section 5.2 major-1 envelope, Section 13.14.5 major-2 clone payloads, and Section 13.15 major-3 adoption/move payloads | Payload/tag mismatch; lease sequence gap; profile/source mismatch; bootstrap or receipt nullability mismatch; cross-major payload leakage; source-release event before committed target |
+| Session Event | Section 5.2 major-1 envelope and major-4 Terminal Instance payloads, Section 13.14.5 major-2 clone payloads, and Section 13.15 major-3 adoption/move payloads | Payload/tag mismatch; lease sequence gap; profile/source mismatch; bootstrap or receipt nullability mismatch; cross-major payload leakage; native reference/instance/generation in v4 replicated payload; attach ownership event; source-release event before committed target |
 | Lease Record | Section 5.3 | Epoch 4 with null predecessor; epoch jump; checkpoint from another session |
 | Checkpoint Record | Section 5.4 and <code>CP-N1..N4</code> | Both persistence IDs null/non-null; unsafe boundary published as validated |
 | Workspace Group | Section 5.6 Git record and managed-tree fragment | <code>WG-N1..N4</code>; duplicate/case-colliding group path; conflicting same-group topology record |
 | Provider Identity | Section 5.5 and nested resume identity | Unknown identity kind; non-string opaque value; backend realm required but null |
 | Blob Descriptor | Section 10.2 | Chunk gap/overlap, wrong whole size, more than 32,768 chunks |
-| Transfer Manifest | Every Section 10.4 root/tree/provider and entry fragment | <code>TM-*</code> mutations, tag-field leakage, missing transitive child closure |
+| Transfer Manifest | Every Section 10.4 root/tree/provider and entry fragment | <code>TM-*</code> mutations, tag-field leakage, missing transitive child closure, TerminalBackend binding/runtime/socket/pipe/token/credential/generation/process data included |
 | Transfer Chunk Descriptor | Section 10.3 | Offset/index disagreement, non-final short chunk, raw digest mismatch |
 | Tombstone | Section 10.7 full workspace entry and three target fragments | Target/scope mismatch, wildcard/root path, losing-lease issuance |
 | Tombstone Acknowledgement | Section 10.7 acknowledgement | Conflict disposition with null checkpoint; non-conflict disposition with non-null checkpoint |
@@ -11549,9 +12443,9 @@ display-language label.
 | Clone materialization recovery state (journal variant) | Section 13.14.4 complete clone-only Journal 3 and every phase row | Journal-2 field inheritance; early, missing, or changed immutable clone fact; rollback token omitted before finalize; committed and rolled-back results together; phase/fact/nullability mismatch |
 | Task-board bridge | Section 9.2 launch pair, safe-boundary pair, and every operation row | Internal/new retry operation ID; unsafe proof marked safe; changed lost-response retry; graceful stop without token; force stop with token; compatible/major/invalid-first-output Error binding fixtures |
 | Task-board bundle | Section 9.3 primary, prompt, and profile-changed projections plus exact archive member set | <code>TB-BUNDLE-*</code> goal/binding/projection/profile mutations; full-digest leaf, wrong shard, missing/extra/directory member, noncanonical JSON, or blob mismatch |
-| Structured Error | Section 15.1 versions 1.0/1.1 and Section 15.3 version 1.2 bindings | Unknown top-level member; nesting depth 5; secret canary in details; wrong Error version for its statically bound protocol/command; compatible/major/unframed input; every directory code-to-exit mismatch |
+| Structured Error | Section 15.1 versions 1.0/1.1 and Section 15.3 versions 1.2/1.3 bindings | Unknown top-level member; nesting depth 5; secret canary in details; wrong Error version for its statically bound protocol/command; compatible/major/unframed input; every directory and TerminalBackend literal code-to-exit mismatch |
 | Observation Event | Section 18.1 and its listed negative fixtures | Partial/failure without error; incomplete counts; unsafe integer |
-| CLI Result | Sections 14.1–14.3 Result 1/2 rows and Section 14.5 Result 3 directory rows | Command/body tag mismatch; wrong null top-level IDs; false success invariant; cross-major tag leakage; archive carrying a target Session; directory mutation without exact plan/operation/receipt; raw content in default list/status |
+| CLI Result | Sections 14.1–14.3 Result 1/2 rows, Section 14.5 Result 3 directory rows, and Section 14.6 Result 4 TerminalBackend rows | Command/body tag mismatch; wrong null top-level IDs; false success invariant; cross-major tag leakage; archive carrying a target Session; directory mutation without exact plan/operation/receipt; legacy projection of an unknown backend; raw local runtime/credential/native data in list/show/doctor |
 | Clone Raw Object Manifest | Section 13.14.1 exact raw-manifest table and entry closure | Add forbidden <code>bundle_id</code> or source generation; mismatch descriptor/blob/byte count; omit or add an included Capture Item |
 | Clone Capture Manifest | Section 13.14.1 exact capture-manifest and source-basis/boundary variants | Source-basis nullability mismatch; raw-manifest closure drift; credential inclusion; size-only stable proof; unstable archive admitted to projection |
 | Clone Bundle Manifest | Section 13.14.3 complete G0, G1, A2, G2, G3, and G4 rows | Skip, fork, or reverse a generation; add a future-stage member; change predecessor bytes; introduce a report/receipt/manifest digest cycle |

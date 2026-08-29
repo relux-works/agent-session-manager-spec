@@ -5,6 +5,63 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.5.0] - 2026-08-29
+
+### Added
+
+- Added the first-class, transport-independent TerminalBackend semantic
+  contract, registry, manifest/probe, Terminal Instance binding, closed
+  capability/evidence model, lifecycle operations, and conformance harness.
+- Added independently versioned Configuration `3.0.0`, Provider Protocol
+  `3.0.0`, Session Event `4.0.0`, Mesh RPC `4.0.0`, Structured Error `1.3.0`,
+  and CLI Result `4.0.0` shapes without changing historical definitions.
+- Added focused TerminalBackend C4 and PlantUML views plus positive and
+  expected-red conformance coverage for authority, identity, compatibility,
+  credentials, replication exclusions, and backend selection.
+
+### Changed
+
+- Separated AX LogicalSession, ownership, lease/fencing, provider, workspace,
+  checkpoint, task-board, mesh, and takeover authority from the host-local
+  TerminalBackend boundary. A backend owns only one TerminalInstance plus
+  delegated PTY/process hosting, presentation, local IPC, and observation.
+- Kept `ax.tmux` as the mandatory built-in Unix target with a private dedicated
+  `tmux -S` server and macOS Aqua/provider-auth evidence. ConPTY remains the
+  native-Windows built-in under the common semantics without a
+  tmux-equivalent durability claim.
+- Reframed M0 around the internal semantic contract, registry, and conformance
+  harness; M1 delivers production tmux single-host durability; M2 remains the
+  multi-host preview safety kernel; M3 is the first daily-driver tmux gate.
+
+### Compatibility
+
+- Classified this specification-package change as a minor release over
+  `v0.4.3`. Every published `v0.4.3` contract, fixture, digest, and validator
+  meaning remains immutable and readable; changed closed shapes use new
+  independent versions and explicit legacy translations.
+- Unsupported or unknown backends may be browsed or synchronized as inert
+  history where their containing contract permits it, but cannot be activated,
+  silently substituted, or used as a restore fallback.
+
+### Security
+
+- Required every backend to execute exactly `ax pane SESSION_ID`; raw provider
+  commands are forbidden as durable entry points, and attach/client mirrors
+  never mutate ownership.
+- Kept sockets, pipes, attach tokens, relay/backend/provider credentials,
+  backend-private live databases, GUI/login attestations, process facts, and
+  terminal state machine-local and non-replicable. Only sanitized identity and
+  conformance evidence may enter AX records.
+- Kept Superlogical unavailable, non-normative, and future-only. This release
+  defines no Superlogical backend ID, API, SDK, support, compatibility, or
+  conformance claim.
+
+### Status
+
+- This repository still publishes specification artifacts only. It contains no
+  `ax` product binary, claims no TerminalBackend implementation availability,
+  and does not advertise a stable public TerminalBackend SDK.
+
 ## [v0.4.3] - 2026-08-28
 
 ### Changed

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for AX v0.4.3.
+"""Public, repository-only validation for AX v0.5.0.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
-and adds publication/metadata, recovery, cloning, Directory, and v0.4.3 realm closure.
+and adds publication/metadata, recovery, cloning, Directory, historical v0.4.3
+realm closure, and TerminalBackend conformance.
 Repository-only: no ax binary, provider CLI, or task-board runtime required.
 """
 
@@ -18,9 +19,11 @@ import tomllib
 from collections.abc import Iterator
 
 from validate_directory import validate as validate_directory
+from validate_terminal_backend import validate as validate_terminal_backend
 from validate_v043 import validate as validate_v043
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+CURRENT_RELEASE = "0.5.0"
 SPEC = ROOT / "SPEC.md"
 README = ROOT / "README.md"
 CONTRIBUTING = ROOT / "CONTRIBUTING.md"
@@ -32,17 +35,18 @@ RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
 TRACEABILITY = ROOT / "STANDALONE_TO_AX_TRACEABILITY.md"
 DIRECTORY_FIXTURE = ROOT / "fixtures" / "session_directory_conformance.json"
 V043_FIXTURE = ROOT / "fixtures" / "v0_4_3_roadmap_terminal_realm.json"
+TERMINAL_BACKEND_FIXTURE = ROOT / "fixtures" / "terminal_backend_conformance.json"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen v0.4.3 publication prose. Hashes use UTF-8 text with all line endings
-# normalized to LF, so the same checkout validates on Unix and Windows. Future
-# specification releases must deliberately replace this bounded map after the
-# semantic checks and expected-red suite have been reviewed for the new prose.
+# Frozen reviewed publication prose. Hashes use UTF-8 text with all line endings
+# normalized to LF, so the same checkout validates on Unix and Windows. A
+# specification revision must deliberately replace this bounded map after its
+# semantic checks and expected-red suite have been reviewed.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "bf9b1e792cfb546674a481f5fc2c585c26c440501c2a0ae75328e8e7ce0445e2",
-    "README.md": "582b55e7acae576b402a34df5d4147d9d3d59daa400fd2ba216299f95b1366d5",
-    "CONTRIBUTING.md": "3251eff22641706b2732798179fca284d4a69bbc44a86fb669247f69b36939d0",
-    "CHANGELOG.md": "5e95b29e18ed2bb31521bb26d86a6be307f0d50d6223a824de843f89ed369e4b",
-    "RELEASE_NOTES.md": "0992b875025e68262ee7fd9818b512b96556dd07ac29d19516aec29f90c421c9",
+    "SPEC.md": "562546d240f0fa3e71b47e6359a002f9892c0efd97e19eb55917527552ac484a",
+    "README.md": "da7ac589d05ae41a93d2b1d94a2d4a2a008304f51e0c63d9e8fab55c71e21c99",
+    "CONTRIBUTING.md": "6346872b89c114988e93c2ab4fd85f16045c09e4d87f6d534453d102f945c2ce",
+    "CHANGELOG.md": "b7243c372fd6e7e1ffdcf536fedd03318b50971230611a43ddfa92f80621c081",
+    "RELEASE_NOTES.md": "e544932452ea45222132e5743596bd55afefc7ed9b394da9489d1159b328bff9",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -61,10 +65,13 @@ EXPECTED_SVG_SHA256 = {
     "session_directory_continuation.svg": "38d0e77c3ecfc5b854a65a06306cffce168e03183d5aea7f635a64a66a1c7a2a",
     "session_directory_enrichment.svg": "4b61c7b2508a07e15f1bb3ef87a94f5cb85bda6d4bf4b552333a0c1b403b8813",
     "session_state.svg": "fae377f21fd374a40c2b831c6ced4e9f61c662a993c0b550d1c9ca0f0c0be507",
+    "terminal_backend_components.svg": "7cf99e3bf0b52cc3940a54b5041b355a4e809881bdfbc2f06da2137a5d71ce38",
     "structurizr-ContainerContext-key.svg": "8fb4a6237262cb4e01855f526741d1e752ae3063162ede47f527eab8cf705ebe",
-    "structurizr-ContainerContext.svg": "f7b193c502fc9564ec1ed812e77837e423ad7ed60866cb0a1bb85aa4cbe760e4",
+    "structurizr-ContainerContext.svg": "4cc365c3242af1bc93d753cf70b1e8658604e06c13b46d806cc5d3f1e0212fa5",
     "structurizr-SystemContext-key.svg": "d2b29e2efb08aa803166c8be5366933359c1b136d97fa01b0eedfce8406b65d1",
-    "structurizr-SystemContext.svg": "95d8a0c0ccbc88557b028d3089d616840a2cbd9d4c27f05ee50cda3a6a207d38",
+    "structurizr-SystemContext.svg": "9822f3bc4e90fe4d9ede96fa117f2d28aaeb87d530544473db31d81800dc6f54",
+    "structurizr-TerminalBackendComponents-key.svg": "57bf0ea4bed2c35fd6a58ff442f430e8cd8b0f2ec716efcbaef6f5f15a2ec874",
+    "structurizr-TerminalBackendComponents.svg": "9755f8d5835fa5afeaa5e9e71191e891029aacb104388df8a12abb9bca1a7013",
     "takeover.svg": "91afd16c0f043d7e138b2f9558b62b54a5daaea7a61792840939802e5204141f",
 }
 
@@ -77,11 +84,12 @@ EXPECTED_HANDWRITTEN_PLANTUML = {
     "session_directory_components.puml",
     "session_directory_enrichment.puml",
     "session_directory_continuation.puml",
+    "terminal_backend_components.puml",
 }
 
 FROZEN_ACCEPTED_INPUT_SHA256 = {
-    "STANDALONE_TO_AX_TRACEABILITY.md": "f46a943225333a228ecc9be19dd40eef8aa4d146e7f301dc1d8ec8a87161620f",
-    "diagrams/README.md": "1dcfcc6b54357d0ded343365bcaed4dc7c0948f8afdbe826480a18b2b7f89773",
+    "STANDALONE_TO_AX_TRACEABILITY.md": "af32e2f17ca43af7caf1d2ba585745d87b559a0f7070d8e0b517567eeb2a9a6e",
+    "diagrams/README.md": "cb17e97eaee86dcaf1f8daa16765964a81cf544fc3988b8d2ed795ff9b464acf",
     "diagrams/plantuml/cloning_components.puml": "50e728af2fddbc5f3b161d661068fc33c4fe341884c4c28a8ea541c24577118a",
     "diagrams/plantuml/cloning_transaction.puml": "aadeb780d4cbbe129059dd327bd67b42c1947e13660143f7b91a06c59c99887f",
 }
@@ -272,7 +280,7 @@ def check_required_files(errors: list[str]) -> None:
         VERSION_FILE, LICENSE_FILE, CHANGELOG, RELEASE_NOTES,
         SPEC, README, CONTRIBUTING, DIAGRAMS_README,
         C4_WORKSPACE, C4_MODEL, C4_VIEWS, C4_REL, C4_STYLES,
-        RESEARCH, DIRECTORY_FIXTURE, V043_FIXTURE,
+        RESEARCH, DIRECTORY_FIXTURE, V043_FIXTURE, TERMINAL_BACKEND_FIXTURE,
         ROOT / "diagrams" / "plantuml" / "takeover.puml",
         ROOT / "diagrams" / "plantuml" / "session_state.puml",
         ROOT / "diagrams" / "plantuml" / "mesh_deployment.puml",
@@ -281,6 +289,7 @@ def check_required_files(errors: list[str]) -> None:
         ROOT / "diagrams" / "plantuml" / "session_directory_components.puml",
         ROOT / "diagrams" / "plantuml" / "session_directory_enrichment.puml",
         ROOT / "diagrams" / "plantuml" / "session_directory_continuation.puml",
+        ROOT / "diagrams" / "plantuml" / "terminal_backend_components.puml",
         ROOT / "STANDALONE_TO_AX_TRACEABILITY.md",
         ROOT / ".github" / "workflows" / "validate.yml",
         ROOT / "scripts" / "validate_spec.py",
@@ -299,7 +308,7 @@ def normalized_release_document_sha256(path: pathlib.Path) -> str:
 
 
 def check_frozen_release_baseline(errors: list[str]) -> None:
-    """Protect the reviewed v0.4.3 claim prose without pretending to parse English."""
+    """Protect reviewed publication prose without pretending to parse English."""
     expected_names = {path.name for path in PUBLIC_CLAIM_DOCUMENTS}
     configured_names = set(FROZEN_RELEASE_DOCUMENT_SHA256)
     if configured_names != expected_names:
@@ -316,7 +325,7 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         actual = normalized_release_document_sha256(document)
         if actual != expected:
             errors.append(
-                f"{document.name}: frozen v0.4.3 release baseline mismatch "
+                f"{document.name}: frozen v{CURRENT_RELEASE} release baseline mismatch "
                 f"(expected LF-normalized SHA-256 {expected}, got {actual}); "
                 "review the prose and update FROZEN_RELEASE_DOCUMENT_SHA256 only for an intentional release revision"
             )
@@ -325,8 +334,10 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
         "cloning_components.svg", "cloning_transaction.svg",
         "session_directory_components.svg", "session_directory_enrichment.svg",
         "session_directory_continuation.svg",
+        "terminal_backend_components.svg",
         "structurizr-SystemContext.svg", "structurizr-SystemContext-key.svg",
         "structurizr-ContainerContext.svg", "structurizr-ContainerContext-key.svg",
+        "structurizr-TerminalBackendComponents.svg", "structurizr-TerminalBackendComponents-key.svg",
     }
     if ARTEFACTS.exists():
         actual_svgs = {f.name for f in ARTEFACTS.glob("*.svg")}
@@ -344,6 +355,7 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
     expected_pumls = {
         "structurizr-SystemContext.puml", "structurizr-SystemContext-key.puml",
         "structurizr-ContainerContext.puml", "structurizr-ContainerContext-key.puml",
+        "structurizr-TerminalBackendComponents.puml", "structurizr-TerminalBackendComponents-key.puml",
     }
     puml_dir = ROOT / "diagrams" / "c4"
     if puml_dir.exists():
@@ -365,8 +377,8 @@ def check_frozen_release_baseline(errors: list[str]) -> None:
 def check_publication_metadata(errors: list[str]) -> None:
     if VERSION_FILE.exists():
         v = VERSION_FILE.read_text(encoding="utf-8").strip()
-        if v != "0.4.3":
-            errors.append(f"VERSION must be exactly '0.4.3', got {v!r}")
+        if v != CURRENT_RELEASE:
+            errors.append(f"VERSION must be exactly {CURRENT_RELEASE!r}, got {v!r}")
     if LICENSE_FILE.exists():
         lic = LICENSE_FILE.read_text(encoding="utf-8")
         canonical_mit = """MIT License
@@ -396,6 +408,7 @@ SOFTWARE.
     if CHANGELOG.exists():
         cl = CHANGELOG.read_text(encoding="utf-8")
         for required in (
+            "## [v0.5.0] - 2026-08-29",
             "## [v0.4.3] - 2026-08-28",
             "## [v0.4.2] - 2026-08-28",
             "## [v0.4.1] - 2026-08-27",
@@ -411,8 +424,8 @@ SOFTWARE.
         # CHANGELOG must at least mention qwen prohibition (already checked), but also we check RELEASE_NOTES for full set
     if RELEASE_NOTES.exists():
         rn = RELEASE_NOTES.read_text(encoding="utf-8")
-        if "v0.4.3" not in rn:
-            errors.append("RELEASE_NOTES.md missing v0.4.3")
+        if f"v{CURRENT_RELEASE}" not in rn:
+            errors.append(f"RELEASE_NOTES.md missing v{CURRENT_RELEASE}")
         if "specification" not in rn.lower():
             errors.append("RELEASE_NOTES.md missing specification disclosure")
         if "specification artifacts only" not in rn.lower() and "specification only" not in rn.lower():
@@ -424,10 +437,55 @@ SOFTWARE.
                 errors.append(f"{p.relative_to(ROOT)} is empty")
 
 
+def check_terminal_backend_diagram_semantics(errors: list[str]) -> None:
+    """Keep the diagram entry points aligned with the TerminalBackend authority boundary."""
+    required_markers = {
+        C4_MODEL: (
+            'terminal_runtime = container "Terminal Runtime Core"',
+            'terminal_controller = component "AX Terminal Controller"',
+            'terminal_registry = component "Terminal Backend Registry"',
+            'terminal_backend = component "TerminalBackend Boundary"',
+            'tmux_backend = component "Built-in tmux Backend"',
+            'conpty_backend = component "Built-in ConPTY Backend"',
+            "Owns one host-local TerminalInstance",
+            "exactly ax pane SESSION_ID",
+        ),
+        C4_REL: (
+            'terminal_controller -> terminal_backend "Delegates authorized host-local operations"',
+            'aqua_broker -> tmux_backend "Creates/attests dedicated private -S server on macOS"',
+            'tb_session -> terminal_backend "Presents inside one host-local TerminalInstance without changing ownership"',
+        ),
+        C4_VIEWS: (
+            'component terminal_runtime "TerminalBackendComponents"',
+        ),
+        PLANTUML_DIR / "terminal_backend_components.puml": (
+            "AX authority (authoritative state and decisions)",
+            "TerminalBackend Boundary",
+            "Built-in tmux Backend",
+            "Built-in ConPTY Backend",
+            "ax pane SESSION_ID",
+            "Never owns or interprets LogicalSession",
+            "Client mirrors never mutate ownership",
+            "Superlogical is an illustrative future candidate only: unavailable",
+            "No API, backend ID, support",
+        ),
+    }
+    for path, markers in required_markers.items():
+        if not path.is_file():
+            errors.append(f"terminal backend diagram source missing: {path.relative_to(ROOT)}")
+            continue
+        source = path.read_text(encoding="utf-8")
+        for marker in markers:
+            if marker not in source:
+                errors.append(
+                    f"terminal backend diagram semantic marker missing in {path.relative_to(ROOT)}: {marker!r}"
+                )
+
+
 def check_public_diagram_ledgers(errors: list[str]) -> None:
-    """Keep public diagram inventories aligned with the v0.4.3 release sets."""
-    if len(EXPECTED_HANDWRITTEN_PLANTUML) != 8 or len(EXPECTED_SVG_SHA256) != 12:
-        errors.append("public diagram ledger validator configuration must contain eight PlantUML sources and twelve SVG artifacts")
+    """Keep public diagram inventories aligned with the reviewed diagram set."""
+    if len(EXPECTED_HANDWRITTEN_PLANTUML) != 9 or len(EXPECTED_SVG_SHA256) != 15:
+        errors.append("public diagram ledger validator configuration must contain nine PlantUML sources and fifteen SVG artifacts")
         return
 
     for document in (README, CONTRIBUTING):
@@ -436,14 +494,14 @@ def check_public_diagram_ledgers(errors: list[str]) -> None:
         text = document.read_text(encoding="utf-8")
         missing_sources = sorted(name for name in EXPECTED_HANDWRITTEN_PLANTUML if f"`{name}`" not in text)
         missing_svgs = sorted(name for name in EXPECTED_SVG_SHA256 if f"`{name}`" not in text)
-        if "eight handwritten PlantUML sources" not in text or missing_sources:
+        if "nine handwritten PlantUML sources" not in text or missing_sources:
             errors.append(
-                f"{document.name}: public diagram ledger must declare eight handwritten PlantUML sources; "
+                f"{document.name}: public diagram ledger must declare nine handwritten PlantUML sources; "
                 f"missing {missing_sources}"
             )
-        if "twelve committed SVG artifacts" not in text or missing_svgs:
+        if "fifteen committed SVG artifacts" not in text or missing_svgs:
             errors.append(
-                f"{document.name}: public diagram ledger must declare twelve committed SVG artifacts; "
+                f"{document.name}: public diagram ledger must declare fifteen committed SVG artifacts; "
                 f"missing {missing_svgs}"
             )
 
@@ -562,8 +620,8 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         txt = doc.read_text(encoding="utf-8")
         if "relux-works/agent-session-manager-spec" not in txt:
             errors.append(f"{doc.name}: missing repository identity relux-works/agent-session-manager-spec")
-        if "v0.4.3" not in txt and "0.4.3" not in txt:
-            errors.append(f"{doc.name}: missing version v0.4.3/0.4.3")
+        if f"v{CURRENT_RELEASE}" not in txt and CURRENT_RELEASE not in txt:
+            errors.append(f"{doc.name}: missing version v{CURRENT_RELEASE}/{CURRENT_RELEASE}")
     for doc in [SPEC, README, CONTRIBUTING]:
         if doc.exists():
             txt = doc.read_text(encoding="utf-8")
@@ -600,8 +658,40 @@ def check_cross_file_consistency(errors: list[str]) -> None:
         for marker in stale_publication_markers:
             if marker in content:
                 errors.append(
-                    f"{document.relative_to(ROOT)}: stale/internal v0.4.3 publication marker {marker!r}"
+                    f"{document.relative_to(ROOT)}: stale/internal v{CURRENT_RELEASE} publication marker {marker!r}"
                 )
+
+
+def check_readme_terminal_backend_milestones(errors: list[str]) -> None:
+    """Keep the public roadmap synchronized with normative SPEC Section 19.1."""
+    if not README.exists():
+        return
+    text = README.read_text(encoding="utf-8")
+    start = text.find("## v0.5.0 tmux-first roadmap and macOS terminal realm")
+    end = text.find("\n## ", start + 3) if start != -1 else -1
+    section = text[start:end] if start != -1 and end != -1 else ""
+    normalized = " ".join(section.split())
+    required = (
+        (
+            "M0",
+            "M0 establishes the TerminalBackend semantic contract, registry, identity and compatibility rules, internal interface, and conformance harness.",
+        ),
+        (
+            "historical provider-plugin SDK rule",
+            "the historical provider-plugin rule that M0 does not promise a stable public plugin SDK",
+        ),
+        (
+            "M1",
+            "M1 delivers the production built-in `ax.tmux` backend and single-host durability.",
+        ),
+        ("M3 tmux gate", "M3 is the first daily-driver tmux gate."),
+    )
+    for label, literal in required:
+        if literal not in normalized:
+            errors.append(
+                f"README.md: TerminalBackend roadmap {label} milestone missing or stale; "
+                "synchronize the public summary with normative SPEC.md Section 19.1"
+            )
 
 
 def check_ci_workflow(errors: list[str]) -> None:
@@ -1169,13 +1259,11 @@ def check_critical_protocol_contracts(text: str, errors: list[str]) -> None:
         ),
     )
     for name, identifier, version in contract_versions:
+        rows = [line for line in text.splitlines() if line.startswith("|") and f"<code>{identifier}</code>" in line]
         if name == "Mesh RPC":
-            row_present = (
-                f"| {name} | <code>{identifier}</code> | "
-                "<code>2.0.0</code>, <code>3.0.0</code> for directory replication |"
-            ) in text
+            row_present = any("<code>2.0.0</code>" in row and "<code>3.0.0</code>" in row for row in rows)
         else:
-            row_present = f"| {name} | <code>{identifier}</code> | <code>{version}</code> |" in text
+            row_present = any(f"<code>{version}</code>" in row for row in rows)
         if not row_present:
             errors.append(
                 f"critical contract version mismatch: {name} must expose {version} across the v0.3/v0.4 boundary"
@@ -2066,10 +2154,12 @@ def main() -> int:
     check_required_files(errors)
     check_frozen_release_baseline(errors)
     check_publication_metadata(errors)
+    check_terminal_backend_diagram_semantics(errors)
     check_public_diagram_ledgers(errors)
     check_changelog_release_caveats(errors)
     check_contextual_forbidden_claims(errors)
     check_cross_file_consistency(errors)
+    check_readme_terminal_backend_milestones(errors)
     check_ci_workflow(errors)
     check_markdown_links_and_anchors(errors)
     check_balanced_fences(errors)
@@ -2138,6 +2228,12 @@ def main() -> int:
     failed += v043_ledger["v043_failed_groups"]
     passed += v043_ledger["v043_gate_classes"] - v043_ledger["v043_failed_groups"]
     ledger.update(v043_ledger)
+    terminal_backend_errors, terminal_backend_ledger = validate_terminal_backend(ROOT, text)
+    errors.extend(terminal_backend_errors)
+    checks += terminal_backend_ledger["terminal_backend_gate_classes"]
+    failed += terminal_backend_ledger["terminal_backend_failed_groups"]
+    passed += terminal_backend_ledger["terminal_backend_gate_classes"] - terminal_backend_ledger["terminal_backend_failed_groups"]
+    ledger.update(terminal_backend_ledger)
 
     local_link_count = 0
     for doc in [SPEC, README, CONTRIBUTING, DIAGRAMS_README]:
@@ -2170,6 +2266,7 @@ def main() -> int:
     print(f"  Clone ledger: contracts={ledger.get('contracts',0)}, adapter_operations={ledger.get('adapter_operations',0)}, adapter_capabilities={ledger.get('adapter_capabilities',0)}, clone_commands={ledger.get('clone_commands',0)}, clone_events={ledger.get('clone_events',0)}, clone_error_classes={ledger.get('clone_error_classes',0)}, traceability_rows={ledger.get('traceability_rows',0)}")
     print(f"  Directory ledger: gate_classes={ledger.get('directory_gate_classes',0)}, contracts={ledger.get('directory_contracts',0)}, fixture_families={ledger.get('directory_fixture_families',0)}, expected_red_minimum={ledger.get('directory_expected_red_minimum',0)}")
     print(f"  v0.4.3 ledger: gate_classes={ledger.get('v043_gate_classes',0)}, positive_cases={ledger.get('v043_positive_cases',0)}, negative_cases={ledger.get('v043_negative_cases',0)}")
+    print(f"  TerminalBackend ledger: gate_classes={ledger.get('terminal_backend_gate_classes',0)}, positive_cases={ledger.get('terminal_backend_positive_cases',0)}, expected_red_minimum={ledger.get('terminal_backend_expected_red_minimum',0)}")
     print("  Registry evidence: parsed provider, bridge, RPC-body, CLI-body, SessionState, Git-payload, cloning contract/adapter/CLI/event/error, and standalone traceability registries; no aggregate parity count is claimed")
     return 0
 

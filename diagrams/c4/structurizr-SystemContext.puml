@@ -56,8 +56,8 @@ rectangle "==Agent Session Manager (ax)\n<size:16>[Software System]</size>\n\nMa
 Operator --> AgentSessionManagerax <<Relationship-UmVsYXRpb25zaGlw>> : "Browses, selects, confirms, launches, and attaches"
 AutomationAgent --> AgentSessionManagerax <<Relationship-UmVsYXRpb25zaGlw>> : "Submits typed projected reads and guarded mutations"
 AgentSessionManagerax --> NativeProviderStores <<Relationship-UmVsYXRpb25zaGlw>> : "Reads allowlisted source-local metadata and exact heads"
-TaskBoardSessionManager --> AgentSessionManagerax <<Relationship-UmVsYXRpb25zaGlw>> : "Provides task-board abstraction inside terminal"
-AgentSessionManagerax --> TaskBoardSessionManager <<Relationship-UmVsYXRpb25zaGlw>> : "Imports/exports opaque session bundles (Bridge Contract)"
-AgentSessionManagerax --> MeshNetwork <<Relationship-UmVsYXRpb25zaGlw>> : "Executes RPC (ax rpc serve --stdio) via SSH"
+AgentSessionManagerax --> TaskBoardSessionManager <<Relationship-UmVsYXRpb25zaGlw>> : "Owns task-board integration; backend has no task-board authority"
+AgentSessionManagerax --> MeshNetwork <<Relationship-UmVsYXRpb25zaGlw>> : "Owns replication and takeover; presentation transport carries no authority"
+TaskBoardSessionManager --> AgentSessionManagerax <<Relationship-UmVsYXRpb25zaGlw>> : "Presents inside one host-local TerminalInstance without changing ownership"
 
 @enduml

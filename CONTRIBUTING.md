@@ -1,13 +1,13 @@
 # Contributing to the Agent Session Manager specification
 
-This guide is for contributors editing the `v0.4.3` specification in `relux-works/agent-session-manager-spec` (public, MIT, default branch `main`). It summarizes and links to the normative rules in [SPEC.md](SPEC.md) — it does not create a second contract. When this guide and [SPEC.md](SPEC.md) disagree, [SPEC.md](SPEC.md) wins.
+This guide is for contributors editing the `v0.5.0` specification in `relux-works/agent-session-manager-spec` (public, MIT, default branch `main`). It summarizes and links to the normative rules in [SPEC.md](SPEC.md) — it does not create a second contract. When this guide and [SPEC.md](SPEC.md) disagree, [SPEC.md](SPEC.md) wins.
 
 ## Scope and publication target
 
-The repository is **specification only** in `v0.4.3`. It does not contain an `ax` product binary, and publishing the spec does not claim that any future product acceptance matrix has passed. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20](SPEC.md#20-specification-publication-and-governance).
+The repository is **specification only** in `v0.5.0`. It does not contain an `ax` product binary or TerminalBackend implementation, does not publish a stable TerminalBackend SDK, and does not claim that any future product acceptance matrix has passed. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20](SPEC.md#20-specification-publication-and-governance).
 
 The first specification release was `v0.1.0`; the current release is
-`v0.4.3`. Current release metadata and the proposed tag must say `v0.4.3`
+`v0.5.0`. Current release metadata and the proposed tag must say `v0.5.0`
 consistently without moving or rewriting any existing release tag — see
 [Signing, release, and attribution](#signing-release-and-attribution).
 
@@ -16,7 +16,7 @@ consistently without moving or rewriting any existing release tag — see
 ### 1 — Before editing
 
 - Read the settled product and architecture decisions (attached to `TASK-260819-1h306n` and summarized in [SPEC.md §1.4](SPEC.md#14-source-authority-and-evidence) and [Appendix A.1](SPEC.md#a1-settled-decision-traceability)). Preserve those decisions unless a contradiction makes implementation impossible; record any necessary refinement explicitly.
-- Read the accepted Muse and Antigravity evidence report at [`.research/260819_muse-antigravity-native-store-contracts.md`](.research/260819_muse-antigravity-native-store-contracts.md). Its retained unknowns must remain `unknown` or `unsupported` in `v0.4.3`.
+- Read the accepted Muse and Antigravity evidence report at [`.research/260819_muse-antigravity-native-store-contracts.md`](.research/260819_muse-antigravity-native-store-contracts.md). Its retained unknowns must remain `unknown` or `unsupported` in `v0.5.0`.
 - Check [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates) — the only intentionally unsettled facts. Do not invent parity for a gated cell.
 
 ### 2 — Making changes
@@ -27,6 +27,12 @@ consistently without moving or rewriting any existing release tag — see
 - Keep semantic conversion inside the companion Session Adapter `1.0.0` served by the same trusted provider executable. Do not add pairwise converters, move native transaction ownership out of Provider Protocol `2.0.0`, or infer target-write support from a provider name or probe alone. See [SPEC.md §7.8](SPEC.md#78-companion-session-adapter-protocol), [§13.14.5](SPEC.md#13145-events-state-and-tuple-admission), and [§19.3](SPEC.md#193-provider-acceptance-suites).
 - Do not add default payload encryption, do not auto-authorize Tailscale-discovered peers, do not replicate credentials/secrets/PIDs/sockets/locks/live SQLite, and do not claim a `tmux` backend on native Windows. See [§6.3](SPEC.md#63-field-constraints), [§11.1](SPEC.md#111-transport-and-peer-authentication), [§16](SPEC.md#16-security-and-threat-boundary), and [§4.3](SPEC.md#43-native-windows-backend).
 - Do not collapse WSL2 and native Windows into one provider/platform row. See [§8.4](SPEC.md#84-providerplatform-matrix).
+- Keep AX authority separate from TerminalBackend hosting/presentation. tmux
+  remains the mandatory Unix target, ConPTY remains the native-Windows path,
+  Superlogical remains unavailable and future-only, every backend runs exactly
+  `ax pane SESSION_ID`, and no internal adapter contract may be described as a
+  stable public SDK. See [§4.A–4.E](SPEC.md#4a-terminalbackend-authority-and-terminology)
+  and [§19.1](SPEC.md#191-implementation-phases).
 
 ### 3 — Traceability
 
@@ -46,14 +52,14 @@ All changes require an independent reviewer acceptance before publication. The `
 
 ### Sources
 
-- **C4**: `diagrams/c4/workspace.dsl` (includes `model.dsl`, `views.dsl`, `relationships.dsl`, `styles.dsl`). The required views are `SystemContext` and `ContainerContext` — see [SPEC.md §3.1](SPEC.md#31-required-components). The exported intermediaries `diagrams/c4/structurizr-*.puml` are generated from `workspace.dsl` and are not hand-edited.
-- **PlantUML**: `diagrams/plantuml/*.puml` — the eight handwritten PlantUML sources for `v0.4.3` are `takeover.puml`, `session_state.puml`, `mesh_deployment.puml`, `cloning_components.puml`, `cloning_transaction.puml`, `session_directory_components.puml`, `session_directory_enrichment.puml`, and `session_directory_continuation.puml`. The first three cover ownership, takeover/fork, and mesh/terminal boundaries; the next two cover Section 13.14 cloning; the three Directory views cover component authority, source-local inventory/enrichment, and pure-plan continuation execution from Sections 3.1, 10.8, 13.15, and 16.7.
+- **C4**: `diagrams/c4/workspace.dsl` (includes `model.dsl`, `views.dsl`, `relationships.dsl`, `styles.dsl`). The required views are `SystemContext`, `ContainerContext`, and `TerminalBackendComponents` — see [SPEC.md §3.1](SPEC.md#31-required-components) and Section 4.A. The exported intermediaries `diagrams/c4/structurizr-*.puml` are generated from `workspace.dsl` and are not hand-edited.
+- **PlantUML**: `diagrams/plantuml/*.puml` — the nine handwritten PlantUML sources are `takeover.puml`, `session_state.puml`, `mesh_deployment.puml`, `cloning_components.puml`, `cloning_transaction.puml`, `session_directory_components.puml`, `session_directory_enrichment.puml`, `session_directory_continuation.puml`, and `terminal_backend_components.puml`. The terminal-backend view isolates AX Controller/Registry authority from host-local implementations; the existing views retain ownership, takeover/fork, mesh/terminal, cloning, and Directory concerns.
 
 Committed `*.puml` and `*.dsl` sources are part of the spec artifact and must match [§3](SPEC.md#3-architecture-and-durable-local-layout), [§10.8](SPEC.md#108-directory-records-lineage-enrichment-query-and-continuation), [§13](SPEC.md#13-end-to-end-lifecycle-flows), and [§16.7](SPEC.md#167-directory-enrichment-query-and-terminal-safety) semantically.
 
 ### Render rules
 
-- Render C4 via Structurizr and PlantUML via the PlantUML renderer. The twelve committed SVG artifacts under `diagrams/artefacts/` for `v0.4.3` are `takeover.svg`, `session_state.svg`, `mesh_deployment.svg`, `cloning_components.svg`, `cloning_transaction.svg`, `session_directory_components.svg`, `session_directory_enrichment.svg`, `session_directory_continuation.svg`, `structurizr-SystemContext.svg`, `structurizr-SystemContext-key.svg`, `structurizr-ContainerContext.svg`, and `structurizr-ContainerContext-key.svg`; see acceptance case `AC-DIAG-001` in [SPEC.md §19.4](SPEC.md#194-end-to-end-acceptance-cases).
+- Render C4 via Structurizr and PlantUML via the PlantUML renderer. The fifteen committed SVG artifacts under `diagrams/artefacts/` are `takeover.svg`, `session_state.svg`, `mesh_deployment.svg`, `cloning_components.svg`, `cloning_transaction.svg`, `session_directory_components.svg`, `session_directory_enrichment.svg`, `session_directory_continuation.svg`, `terminal_backend_components.svg`, `structurizr-SystemContext.svg`, `structurizr-SystemContext-key.svg`, `structurizr-ContainerContext.svg`, `structurizr-ContainerContext-key.svg`, `structurizr-TerminalBackendComponents.svg`, and `structurizr-TerminalBackendComponents-key.svg`; see acceptance case `AC-DIAG-001` in [SPEC.md §19.4](SPEC.md#194-end-to-end-acceptance-cases).
 - Committed SVGs must be visually inspected for clipping, excessive width, contrast, readable labels, and correct arrow direction, and must match the cited normative sections. A source change without a re-rendered and re-inspected SVG is incomplete.
 - The render step must use the same sources that are committed — do not render from a stale or patched copy. Record the exact render commands and tool versions in the PR/task evidence (see [Validation](#validation)).
 
@@ -91,9 +97,9 @@ The exact flags are `validate -w`, `export -w ... -format plantuml -output`, and
 
 ### What the publication validator does and does not do
 
-For `v0.4.3` publication, the accepted validation entry point must check spec structure, contract fixtures, links, JCS identity and numeric-boundary vectors, schema/path common types, Directory Node major bindings, diagram presence, publication metadata, and the frozen `v0.4.3` content baseline for the five public claim documents. The baseline uses SHA-256 over UTF-8 text with line endings normalized to LF, making the check stable across supported checkout platforms. It is a bounded release-integrity control, not general natural-language theorem proving. The semantic validator must check the retained Section 13.13 recovery gate, Section 13.14 cloning closure, Directory conformance, and the eight v0.4.3 roadmap/terminal-realm safety classes. Focused expected-red mutations must produce actionable diagnostics. For a future specification revision, update the digest map in `scripts/validate_spec.py` only after the changed prose and expected-red coverage have been reviewed. The validator **must not** require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) product-conformance result. Any validator that tries to execute product acceptance cases fails publication case `SPEC-PUB-001`. See [SPEC.md §20.2](SPEC.md#202-publication-gate).
+For `v0.5.0` publication, the accepted validation entry point must check spec structure, contract fixtures, links, JCS identity and numeric-boundary vectors, schema/path common types, Directory Node and TerminalBackend bindings, diagram presence, publication metadata, and the frozen `v0.5.0` content baseline for the five public claim documents. The baseline uses SHA-256 over UTF-8 text with line endings normalized to LF, making the check stable across supported checkout platforms. It is a bounded release-integrity control, not general natural-language theorem proving. The semantic validator must check the retained Section 13.13 recovery gate, Section 13.14 cloning closure, Directory conformance, the eight historical v0.4.3 roadmap/terminal-realm safety classes, and the independently versioned TerminalBackend gate. Focused expected-red mutations must produce actionable diagnostics. For a future specification revision, update the digest map in `scripts/validate_spec.py` only after the changed prose and expected-red coverage have been reviewed. The validator **must not** require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) product-conformance result. Any validator that tries to execute product acceptance cases fails publication case `SPEC-PUB-001`. See [SPEC.md §20.2](SPEC.md#202-publication-gate).
 
-The repository scripts identify and freeze the reviewed `v0.4.3` baseline, check Directory, cloning, retained crash/restart, and roadmap/terminal-realm semantics, run focused mutations, and validate diagram freshness. Every command below must exit `0`; a nonzero result is a gate failure, never an expected success or publication evidence.
+The repository scripts identify and freeze the reviewed `v0.5.0` baseline, check TerminalBackend, Directory, cloning, retained crash/restart, and historical roadmap/terminal-realm semantics, run focused mutations, and validate diagram freshness. Every command below must exit `0`; a nonzero result is a gate failure, never an expected success or publication evidence.
 
 ### Exact commands
 
@@ -137,12 +143,17 @@ Observed after `TASK-260819-37heok` rework:
 | `structurizr-cli version` | `structurizr-cli 2025.11.09`, `structurizr-java 5.0.2` |
 | `plantuml -version` | `PlantUML 1.2026.6 / 6287b33` |
 
-Provider binaries are not required. Keep link, command, metadata, and terminology consistent with [SPEC.md](SPEC.md) — especially `v0.4.3` naming, repository `relux-works/agent-session-manager-spec`, default branch `main`, and capability values `available`/`conditional`/`unsupported`/`unknown`.
+Provider binaries are not required. Keep link, command, metadata, and terminology consistent with [SPEC.md](SPEC.md) — especially `v0.5.0` naming, repository `relux-works/agent-session-manager-spec`, default branch `main`, and capability values `available`/`conditional`/`unsupported`/`unknown`.
 
 ## Compatibility and versioning
 
 - Each contract in [§1.5](SPEC.md#15-normative-contract-registry) versions independently with SemVer. A major increment may break syntax/semantics and requires explicit negotiation/migration; a minor increment may add optional operations, enum values, or namespaced `extensions` fields but must preserve prior semantics; a patch clarifies constraints or fixes a validator defect. See [SPEC.md §17.1](SPEC.md#171-semantic-version-rules).
 - Protocol peers choose the highest mutually supported version and must not coerce a major. Provider Protocol 2 and task-board bridge 1 retain their explicit Structured Error 1.0 bindings; Mesh RPC 3, Directory Node 1/2, Directory Query 1, and CLI Result 3 bind Structured Error 1.2. Directory Node 1/Request 1 preserve `darwin|linux|windows`; Directory Node 2/Request 2 use `macos|linux|wsl2|windows`. RPC 2 remains dual-stack for core sync and cannot represent Directory support — see [§7.9](SPEC.md#79-companion-directory-node-protocol), [§11.8](SPEC.md#118-mesh-rpc-300-directory-replication), [§15.1](SPEC.md#151-structured-error), and [§17.5](SPEC.md#175-directory-release-compatibility).
+- Terminal Backend Protocol 1, Provider Protocol 3, Mesh RPC 4, and CLI Result
+  4 bind Structured Error 1.3. Configuration 3, Session Event 4, and the five
+  new TerminalBackend contract rows are independently versioned; their legacy
+  translations never rewrite historical v0.4.3 objects. See [§1.5](SPEC.md#15-normative-contract-registry)
+  and [§17.1–17.4](SPEC.md#171-semantic-version-rules).
 - A writer emits exactly the negotiated version. A reader rejects an unsupported major, accepts the same/lower minor, preserves unknown namespaced extensions byte-for-byte when forwarding immutable objects, rejects an unknown ownership/security enum, and may retain an unknown event as inert history without deriving state. An `enabled = true` capability is valid only for the exact negotiated contract and provider tuple. See [§17.2](SPEC.md#172-readerwriter-behavior).
 - Immutable objects are never edited in place. A migration creates a new schema-versioned object that references the prior object in `extensions["works.relux.ax.migrated-from"]`, a closed object containing exactly `schema_id`, `schema_version`, and `object_id`. The writer validates the new object and atomically advances a local reference. Old objects remain for rollback until retention allows collection. Configuration migration requires `ax migrate config` for a major change and a backup + atomic write. The derived SQLite index may be rebuilt at any time and is never a migration source of truth. See [§17.3](SPEC.md#173-immutable-data-migration).
 - Before upgrading, checkpoint locally owned sessions and run schema/plugin/task-board compatibility checks before auto-resume. A downgraded binary that cannot understand current records must enter read-only diagnostic mode and must not resume, transfer ownership, materialize, or write lower-version replacements. Provider upgrades invalidate prior tuple-specific acceptance until the adapter's declared version range and compatibility fixture cover the new version. See [§17.4](SPEC.md#174-upgrade-and-downgrade).
@@ -158,12 +169,12 @@ The full gate is normative in [SPEC.md §20.2](SPEC.md#202-publication-gate). In
 1. Verify a clean checkout contains `SPEC.md`, `README.md`, `CONTRIBUTING.md`, diagram sources and rendered SVGs, `VERSION`, `CHANGELOG`, release notes, and `LICENSE` (MIT).
 2. Run the accepted validation entry point as a standalone process and retain its real exit code.
 3. Explicitly verify that the validator does not require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) result.
-4. Verify `VERSION`, current document metadata, changelog, release notes, and the proposed tag all say `v0.4.3`; verify every existing release tag is unchanged.
+4. Verify `VERSION`, current document metadata, changelog, release notes, and the proposed tag all say `v0.5.0`; verify every existing release tag is unchanged.
 5. Run the semantic crash/restart gate and focused expected-red mutations; weakening the three outcomes, boundary registry, evidence, owner uniqueness, or native-identity preservation must produce an actionable diagnostic.
 6. Prepare the exact signed-commit command with author `Ivan Oparin <oparin@me.com>` and no AI trailer; hand it to the user for explicit review. Automation MUST NOT stage or commit before human approval.
-7. Prepare the exact signed annotated `v0.4.3` tag command; hand it to the user for explicit review. Automation MUST NOT create the tag before human approval.
+7. Prepare the exact signed annotated `v0.5.0` tag command; hand it to the user for explicit review. Automation MUST NOT create the tag before human approval.
 8. After the human creates the commit and tag, verify both signatures locally.
-9. Hand the exact `git push` commands for `main` and the `v0.4.3` tag to the user; automation MUST NOT push before explicit human approval and only after accepted validation/review.
+9. Hand the exact `git push` commands for `main` and the `v0.5.0` tag to the user; automation MUST NOT push before explicit human approval and only after accepted validation/review.
 10. Verify the public repository, default branch, license, commit signature, tag signature, and release URL.
 11. Attach publication evidence to the board.
 
@@ -172,13 +183,13 @@ No automation may publish, stage, commit, tag, or push before validation accepta
 ### Signing
 
 - **Author**: `Ivan Oparin <oparin@me.com>` — this is the commit author for the release commit. No AI `Co-Authored-By` trailer is included.
-- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Both the release commit and the annotated tag `v0.4.3` must be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
+- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Both the release commit and the annotated tag `v0.5.0` must be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
 - **Human commit gate**: Automation MUST NOT stage, commit, tag, or push. It MUST stop before those operations and hand the exact `git commit`, `git tag`, and `git push` commands to the user for explicit human execution.
 - Verify locally after the human signs:
 
 ```shell
 git log --show-signature -1
-git tag --verify v0.4.3
+git tag --verify v0.5.0
 ```
 
 ### AI attribution policy
@@ -193,7 +204,7 @@ README.md                       # operator summary — links to SPEC, no second 
 CONTRIBUTING.md                 # this file
 diagrams/c4/*.dsl               # C4 sources (Structurizr)
 diagrams/c4/structurizr-*.puml  # generated C4 intermediaries (from workspace.dsl, not hand-edited)
-diagrams/plantuml/*.puml        # eight focused PlantUML sources (ownership, mesh, cloning, Directory)
+diagrams/plantuml/*.puml        # nine focused PlantUML sources (TerminalBackend, ownership, mesh, cloning, Directory)
 diagrams/artefacts/*.svg        # rendered SVGs (committed, visually inspected)
 scripts/validate_spec.py        # public repository-only validator (contracts, links, matrices, examples, metadata, fences, license)
 scripts/test_expected_red.sh    # expected-red mutation suite (proves both validator and whole-package entry point fail nonzero with actionable diagnostics)

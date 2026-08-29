@@ -12,6 +12,10 @@ styles {
         background #438dd5
         color #ffffff
     }
+    element "Component" {
+        background #85bbf0
+        color #000000
+    }
     element "Database" {
         shape Cylinder
     }

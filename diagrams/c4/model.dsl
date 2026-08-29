@@ -17,7 +17,14 @@ model {
         daemon = container "Background Control Plane" "Optional service for sync, health, inventory, and enrichment; cannot create a credential-dependent macOS tmux server." "Go"
         aqua_broker = container "macOS Aqua Terminal Broker" "Minimal same-user GUI-realm broker that creates and attests the dedicated AX tmux server and provider-auth readiness." "Go + launchd agent"
         providers = container "Provider Plugins" "Executable plugins (ax-provider-<id>) via JSON-over-stdio." "Binary"
-        terminal = container "Terminal Backend" "Dedicated -S tmux server (macOS/Linux/WSL2) or process/ConPTY (Windows); sockets remain machine-local." "System"
+        terminal_runtime = container "Terminal Runtime Core" "AX controller, backend registry, and transport-independent backend boundary. Terminal backends remain host-local presentation/process hosts below AX authority." "Go + native adapters" {
+            terminal_controller = component "AX Terminal Controller" "Owns LogicalSession identity and lineage, Owner/Replica, leases and fencing, provider lifecycle/native state, workspaces, checkpoints/evidence, task-board integration, mesh, and takeover."
+            terminal_registry = component "Terminal Backend Registry" "Validates backend identity, implementation and semantic-contract versions, platform availability, capabilities, and conformance evidence before activation."
+            terminal_backend = component "TerminalBackend Boundary" "Owns one host-local TerminalInstance: delegated PTY/process hosting, presentation/attach/reconnect, local IPC, and process observation only."
+            tmux_backend = component "Built-in tmux Backend" "Mandatory Unix implementation for macOS, Linux, and WSL2 using a dedicated private -S server; never the ambient/default server."
+            conpty_backend = component "Built-in ConPTY Backend" "Native-Windows implementation under the same TerminalBackend semantics without claiming tmux-equivalent durability."
+            pane_entrypoint = component "AX Pane Entrypoint" "The only durable backend-hosted entrypoint: exactly ax pane SESSION_ID under AX authorization."
+        }
         local_db = container "Derived SQLite Index" "Rebuildable transactional index for AX state, directory catalog, and search." "SQLite" {
             tags "Database"
         }
