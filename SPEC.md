@@ -1498,6 +1498,26 @@ shell fragments are forbidden. A name such as <code>OPENAI_API_KEY</code> in
 <code>env_names</code> is a destination-local lookup instruction, not a stored
 value.
 
+Curator environment-manager integration is OPTIONAL. When a session is
+launched through the Curator environment manager
+(<code>relux-works/curator-spec</code>, <code>protocol/environments.md</code>),
+an implementation supporting that integration SHOULD record the launch-time
+environment provenance in the Session Record <code>extensions</code> map under
+exactly these reverse-DNS keys: <code>works.relux.curator.profile-name</code>
+(the resolved Curator profile name),
+<code>works.relux.curator.profile-pin</code> (the profile's effective pin as
+resolved at launch: the full lowercase-hex commit of a git profile or the
+state hash of a local profile, never both), and
+<code>works.relux.curator.fragment-digest</code> (the
+<code>sha256:</code>-prefixed lowercase-hex digest of the exact
+<code>launch-env-fragment-v1</code> JSON bytes consumed at launch). All three
+values are non-secret strings, are recorded once at creation, and are
+immutable with the record. Absent keys mean the session was not launched
+through Curator. These keys obey every Section 1.6 extensions rule: they MUST
+NOT alter core ownership, launch, fencing, or replication semantics, and an
+implementation without the Curator integration preserves them as opaque
+extension data.
+
 The Task-board Reference is a closed object:
 
 | Field | Type | Constraint |
@@ -2913,6 +2933,19 @@ The <code>SafeBoundaryProof.blockers</code> enum is
 store generation. <code>ValidationEvidence</code> arrays MUST be sorted by
 <code>code</code> with no duplicate code. Opaque process handles are valid only
 for the operation lifetime and MUST NOT be persisted or replicated.
+
+When the OPTIONAL Curator integration of Section 5.1 launches or resumes a
+session, the launcher merges the <code>env</code> variables of the resolved
+Curator <code>launch-env-fragment-v1</code> object into the Launch Plan and
+resulting <code>SpawnPlan</code> <code>env_literals</code> map. Fragment
+variable names are a closed set declared by the Curator environment adapter
+registry (<code>relux-works/curator-spec</code>,
+<code>protocol/environments.md</code>, Section 10); fragment values are
+non-secret absolute paths below the Curator-managed environments root. Merged
+entries remain subject to the unchanged Section 5.1 <code>env_literals</code>
+name grammar, count and byte limits, and secret-exclusion rules. The
+integration adds no member to <code>SpawnPlan</code> and no obligation to a
+plugin or deployment that does not use Curator.
 
 The <code>root-id</code> grammar is
 <code>[a-z][a-z0-9_-]{0,63}</code>. Capture authorities are sorted by
@@ -9019,6 +9052,25 @@ It MUST not create a new native session under the old logical identity.
 Antigravity backend <code>not found</code> is
 <code>unsupported_backend_identity</code>, not a successful blank resume.
 
+When the Session Record carries the OPTIONAL Section 5.1
+<code>works.relux.curator.*</code> extension keys and the implementation
+supports the Curator integration, the owner SHOULD re-resolve the recorded
+profile with <code>curator env resolve ENVIRONMENT --profile PROFILE
+--format json</code> before invoking plugin <code>resume</code>, and a
+Section 13.8 fork SHOULD do the same before launching the new session,
+recording the fresh values in the new Session Record. A resolved profile pin
+that differs from the recorded
+<code>works.relux.curator.profile-pin</code> value is environment drift: the
+default behavior is to warn and continue with the freshly resolved fragment,
+and an implementation MAY offer a strict mode that refuses the operation
+instead. A failed resolution is a distinct fact from both drift and an
+unchanged environment: it is reported as a warning (or a refusal under strict
+mode) and MUST NOT be treated as proof that the environment is current. A
+Session Record without these keys performs no drift check, and an
+implementation without the Curator integration behaves exactly as specified
+above; the integration never changes lease, fencing, checkpoint, or
+materialization semantics.
+
 ### 13.11 Reboot restore
 
 On wrapper/service restore:
@@ -10467,6 +10519,16 @@ mutually exclusive:
 copy/worktree path is destination-native and MUST be transmitted as one safely
 encoded argument, never a shell fragment. A replica materialization remains
 dormant even after success.
+
+Informative: the Curator umbrella CLI may expose this specification's
+implementation as <code>curator session</code> through its
+external-subcommand convention, which resolves an unknown subcommand NAME to
+a <code>curator-NAME</code> executable on <code>PATH</code>
+(<code>relux-works/curator-spec</code>, <code>protocol/environments.md</code>,
+Section 11); a <code>curator-session</code> shim delegates its arguments to
+<code>ax</code> verbatim. This is a packaging convention of the Curator
+umbrella. It adds no command, flag, or semantics to <code>ax</code> and has
+no normative impact on this specification.
 
 ### 14.2 Common flags and output
 
