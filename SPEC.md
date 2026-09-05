@@ -137,6 +137,7 @@ immutable; a version shown here never widens an earlier version in place.
 | Directory Node response | <code>urn:ax:schema:session-directory-node-response</code> | <code>1.0.0</code> |
 | Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code>, <code>3.0.0</code> for directory replication, <code>4.0.0</code> for sanitized TerminalBackend evidence replication |
 | Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone targets, <code>3.0.0</code> for unified creation provenance |
+| Launch Plan request | <code>urn:ax:schema:launch-plan-request</code> | <code>1.0.0</code> |
 | Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone lifecycle, <code>3.0.0</code> for adoption and move lifecycle, <code>4.0.0</code> for Terminal Instance bindings |
 | Lease record | <code>urn:ax:schema:lease</code> | <code>1.0.0</code> |
 | Checkpoint record | <code>urn:ax:schema:checkpoint</code> | <code>1.0.0</code> |
@@ -181,7 +182,8 @@ immutable; a version shown here never widens an earlier version in place.
 | Session Directory Query | <code>urn:ax:schema:session-directory-query</code> | <code>1.0.0</code> |
 
 The exact historical v0.4.3 registry is the table above with the five Terminal
-Backend contract rows absent and with exactly these six rows pinned to their
+Backend contract rows and the Launch Plan request row absent and with exactly
+these six rows pinned to their
 then-active versions: Configuration <code>1.0.0,2.0.0</code>; Provider protocol
 <code>2.0.0</code>; Mesh RPC <code>2.0.0,3.0.0</code>; Session event
 <code>1.0.0,2.0.0,3.0.0</code>; Structured error
@@ -192,7 +194,12 @@ substitution is permitted when validating v0.4.3 history. The v0.5.0 release
 activates the five Terminal Backend contracts plus Configuration
 <code>3.0.0</code>, Provider Protocol <code>3.0.0</code>, Mesh RPC
 <code>4.0.0</code>, Session Event <code>4.0.0</code>, CLI Result
-<code>4.0.0</code>, and Structured Error <code>1.3.0</code>.
+<code>4.0.0</code>, and Structured Error <code>1.3.0</code>. The proposed
+revision carrying Section 14.1 <code>ax start --launch-plan</code> adds the
+Launch Plan request row (the caller-supplied plan document) and activates no
+other row; the compatible minor consequences it proposes for existing rows
+(Sections 5.1, 7.3, 7.5, and 15.3) are the <code>ax</code> maintainer's
+decision and are not entered here until that decision is made.
 
 No contract version is implied by the <code>ax</code> executable version.
 Section 17 defines compatibility and migration. Independent versioning means
@@ -1489,8 +1496,30 @@ The embedded Launch Plan is a closed object with exactly these members:
 | <code>cwd_relative</code> | string | <code>.</code> for the workspace root or a path satisfying Section 1.6 |
 | <code>env_names</code> | array&lt;string&gt;[0..64] | Sorted, unique names matching <code>[A-Za-z_][A-Za-z0-9_]{0,127}</code>; values resolve only from destination-local state |
 | <code>env_literals</code> | map(environment-name,string)[0..64] | Non-secret literals of at most 4,096 UTF-8 bytes each; keys sorted in canonical form and disjoint from <code>env_names</code> |
+| <code>stdin</code> | Launch Stdin or null? | OPTIONAL; absent or null means the child's standard input is the terminal, exactly as before this member existed; present means the terminal backend delivers the decoded payload as the child's complete standard input and closes it after the last byte, while output and signals stay on the terminal; closed shape below |
 | <code>contains_secrets</code> | boolean | MUST be false |
 | <code>extensions</code> | object | Reverse-DNS extension keys only |
+
+Launch Stdin is a closed object:
+
+| Field | Type | Constraint |
+| --- | --- | --- |
+| <code>encoding</code> | enum | <code>utf-8</code> or <code>base64url</code> |
+| <code>bytes</code> | string | The payload in that encoding; <code>base64url</code> is the unpadded Section 1.6 form and admits bytes that are not valid UTF-8; the decoded payload is at most 65,536 bytes, the same bound as the total encoded argv |
+
+The payload is non-secret under exactly the <code>env_literals</code> rule
+above and the Section 16.2 exclusions; <code>contains_secrets</code> covers
+it. A decoded payload above the bound is <code>launch_plan_invalid</code>
+with <code>field: "stdin"</code> (Section 14.1); a payload the secret rule
+classifies is <code>secret_policy_violation</code>. A writer omits
+<code>stdin</code> when there is no payload, so a record without a payload is
+byte-identical to a v0.5.0 record and keeps its identity; a writer MUST NOT
+emit the member as null. A resume does not replay <code>stdin</code> by
+default; Section 7.5 <code>stdin_resume_replay</code> governs replay.
+Attaching keyboard input after a payload is not specified in this revision.
+The optional member is a compatible addition; whether it ships as Session
+Record <code>1.1.0</code> or is admitted under <code>1.0.0</code> is the
+<code>ax</code> maintainer's decision recorded with this revision.
 
 Arguments MUST contain only sanitized provider/task-board arguments. Secret
 values, inline credential-bearing URLs, response files containing secrets, and
@@ -1501,19 +1530,35 @@ value.
 Curator environment-manager integration is OPTIONAL. When a session is
 launched through the Curator environment manager
 (<code>relux-works/curator-spec</code>, <code>protocol/environments.md</code>),
-an implementation supporting that integration SHOULD record the launch-time
-environment provenance in the Session Record <code>extensions</code> map under
-exactly these reverse-DNS keys: <code>works.relux.curator.profile-name</code>
-(the resolved Curator profile name),
-<code>works.relux.curator.profile-pin</code> (the profile's effective pin as
-resolved at launch: the full lowercase-hex commit of a git profile or the
-state hash of a local profile, never both), and
-<code>works.relux.curator.fragment-digest</code> (the
-<code>sha256:</code>-prefixed lowercase-hex digest of the exact
-<code>launch-env-fragment-v1</code> JSON bytes consumed at launch). All three
-values are non-secret strings, are recorded once at creation, and are
-immutable with the record. Absent keys mean the session was not launched
-through Curator. These keys obey every Section 1.6 extensions rule: they MUST
+the Curator-side composer supplies the launch-time environment provenance in
+the <code>extensions</code> of the Section 14.1 <code>--launch-plan</code>
+document, and <code>ax</code> copies it verbatim into the Session Record
+<code>extensions</code> map; an implementation supporting that integration
+SHOULD therefore find it under exactly these reverse-DNS keys:
+<code>works.relux.curator.profile-name</code> (the resolved Curator profile
+name); <code>works.relux.curator.profile-pin</code> (the
+<code>sha256:</code>-prefixed lock hash of the profile as resolved at launch,
+the fragment's <code>profile.lock_sha256</code>, which under curator-spec
+Decision 0012 is the profile's effective pin everywhere a commit was used
+before); <code>works.relux.curator.fragment-digest</code> (the
+<code>sha256:</code>-prefixed lowercase-hex digest over the Curator Canonical
+JSON 1 bytes — <code>CCJ-1</code>, <code>relux-works/curator-spec</code>
+<code>protocol/registry.md</code> Section 1 — of the parsed
+<code>launch-env-fragment-v1</code> object consumed at launch, never of the
+pretty-printed <code>--format json</code> output, so a printer change is not
+drift); and <code>works.relux.curator.system-modules</code> (boolean, true
+exactly when the fragment carries a <code>system_prompt</code> section, which
+<code>protocol/environments.md</code> Section 10.2 makes equivalent to "the
+resolved chain carries at least one applicable system module"). The three
+string values and the boolean are non-secret, are recorded once at creation,
+and are immutable with the record. Absent keys mean the session was not
+launched through Curator. A record written before this revision carries a
+<code>profile-pin</code> without the <code>sha256:</code> prefix (a bare commit
+or state hash); the prefix is what distinguishes the two, and Section 13.10
+compares only like with like. <code>ax</code> is generic and knows no such
+key class: these keys are bounded by Section 1.6 together with every other
+caller extension and the <code>ax.launch-plan-request</code> key of Section
+13.1. They obey every Section 1.6 extensions rule: they MUST
 NOT alter core ownership, launch, fencing, or replication semantics, and an
 implementation without the Curator integration preserves them as opaque
 extension data.
@@ -2800,7 +2845,9 @@ The <code>manifest</code> operation requires an empty body and returns
     "appserver",
     "task_board_primary",
     "prompt_spawn",
-    "native_goal_binding"
+    "native_goal_binding",
+    "caller_launch_plan",
+    "stdin_resume_replay"
   ]
 }
 ~~~
@@ -2811,8 +2858,25 @@ The manifest is closed and every displayed member is required.
 1–256 character provider-adapter constraint; <code>platforms</code> is a sorted,
 unique non-empty subset of the four platform enums; <code>operations</code> is
 the ordered registry shown in Section 7.5 with no duplicates; and
-<code>capability_names</code> is the exact seven-name ordered registry shown.
+<code>capability_names</code> is the exact nine-name ordered registry shown.
 The manifest declares possible surfaces, not runtime availability.
+
+The eighth and ninth names, <code>caller_launch_plan</code> and
+<code>stdin_resume_replay</code>, are appended in that order by the revision
+carrying Section 14.1 <code>--launch-plan</code>; Section 7.5 defines what
+each declares. Manifest schema consequence for the <code>ax</code>
+maintainer's decision: a reader of Provider manifest <code>1.0.0</code>
+validates <code>capability_names</code> as the exact seven-name registry and
+rejects a nine-name manifest, and a Provider probe <code>1.0.0</code> response
+carries exactly seven capability keys. The revision therefore proposes
+Provider manifest and Provider probe <code>1.1.0</code> — a compatible minor
+that adds two registry names and widens the Section 7.5 <code>probe</code>
+request bound and the Section 14.2 <code>SessionSummary</code> capability
+bound to nine (Section 17.1) — with <code>1.0.0</code> readers continuing to
+accept seven-name manifests; the maintainer may instead retain
+<code>1.0.0</code> with the registry widened in place. The Section 1.5 rows
+record the choice when the revision lands. A plugin that declares neither
+name is unaffected.
 
 ### 7.4 Capability result
 
@@ -2871,6 +2935,18 @@ identify the exact provider version and emit every known capability using
       "enabled": false,
       "evidence": "provider_contract",
       "detail": "no native task-board goal binding"
+    },
+    "caller_launch_plan": {
+      "status": "unknown",
+      "enabled": false,
+      "evidence": "none",
+      "detail": "caller-supplied launch plan not claimed for this plugin version"
+    },
+    "stdin_resume_replay": {
+      "status": "unknown",
+      "enabled": false,
+      "evidence": "none",
+      "detail": "stdin replay on resume not claimed for this plugin version"
     }
   },
   "warnings": []
@@ -2880,7 +2956,7 @@ identify the exact provider version and emit every known capability using
 The probe object is closed and every displayed member is required.
 <code>provider_version</code> is a 1–128 character exact version string,
 architecture is <code>amd64</code> or <code>arm64</code>, and
-<code>capabilities</code> contains exactly the seven requested registry keys.
+<code>capabilities</code> contains exactly the nine requested registry keys.
 Each capability value contains exactly <code>status</code>,
 <code>enabled</code>, <code>evidence</code>, and a 0–2,048 character
 <code>detail</code>. <code>warnings</code> is a sorted, unique array of at most
@@ -2907,7 +2983,7 @@ embedded types are part of provider protocol 2.0.0:
 | <code>WorkspacePaths</code> | <code>map(UUIDv7,absolute-path)[1..256]</code>; paths are destination-native, canonical, and contain no NUL |
 | <code>TerminalDescriptor</code> | <code>backend:tmux&#124;conpty</code>, <code>terminal_id:string[1..512]</code>, <code>interactive:boolean</code>, <code>columns:uint16[1..1000]</code>, <code>rows:uint16[1..1000]</code> |
 | <code>ProcessObservation</code> | <code>terminal_id:string[1..512]</code>, <code>executable_path:absolute-path</code>, <code>started_at:timestamp</code>, <code>candidate_store_paths:sorted unique absolute-path[0..256]</code>, <code>candidate_native_ids:sorted unique string[0..256]</code>; no PID is carried |
-| <code>SpawnPlan</code> | <code>argv:array&lt;string&gt;[1..128]</code>, <code>cwd:absolute-path</code>, <code>env_names:sorted unique environment-name[0..64]</code>, <code>env_literals:map(environment-name,string)[0..64]</code>, <code>native_session_id:string[1..512]&#124;null</code>, <code>profile_mapping:string[1..512]</code>, <code>extensions:object</code>; argv/literal limits and secret rules equal Section 5.1 |
+| <code>SpawnPlan</code> | <code>argv:array&lt;string&gt;[1..128]</code>, <code>cwd:absolute-path</code>, <code>env_names:sorted unique environment-name[0..64]</code>, <code>env_literals:map(environment-name,string)[0..64]</code>, <code>stdin:Launch Stdin&#124;null</code> (OPTIONAL; absent means null; Section 5.1), <code>native_session_id:string[1..512]&#124;null</code>, <code>profile_mapping:string[1..512]</code>, <code>extensions:object</code>; argv/literal/stdin limits and secret rules equal Section 5.1 |
 | <code>SafeBoundaryProof</code> | <code>provider_id:provider-id</code>, <code>provider_version:string[1..128]</code>, <code>input_blocked:boolean</code>, <code>boundary_ref:string[1..1024]&#124;null</code>, <code>foreground_idle:boolean</code>, <code>background_idle:boolean&#124;null</code>, <code>open_child_count:uint53</code>, <code>open_database_handle_count:uint53</code>, <code>store_generation:string[1..512]&#124;null</code>, <code>safe:boolean</code>, <code>blockers:sorted unique enum[0..5]</code> |
 | <code>ValidationEvidence</code> | <code>code:string[1..128]</code>, <code>status:passed&#124;skipped</code>, <code>detail:string[0..2048]</code> |
 | <code>NativeDiscoveryProof</code> | <code>native_session_id:string[1..512]</code>, <code>discovered:boolean</code>, <code>discovery_root:absolute-path&#124;null</code>, <code>backend_resolved:boolean</code> |
@@ -2934,18 +3010,67 @@ store generation. <code>ValidationEvidence</code> arrays MUST be sorted by
 <code>code</code> with no duplicate code. Opaque process handles are valid only
 for the operation lifetime and MUST NOT be persisted or replicated.
 
-When the OPTIONAL Curator integration of Section 5.1 launches or resumes a
-session, the launcher merges the <code>env</code> variables of the resolved
-Curator <code>launch-env-fragment-v1</code> object into the Launch Plan and
-resulting <code>SpawnPlan</code> <code>env_literals</code> map. Fragment
-variable names are a closed set declared by the Curator environment adapter
-registry (<code>relux-works/curator-spec</code>,
-<code>protocol/environments.md</code>, Section 10); fragment values are
-non-secret absolute paths below the Curator-managed environments root. Merged
-entries remain subject to the unchanged Section 5.1 <code>env_literals</code>
-name grammar, count and byte limits, and secret-exclusion rules. The
-integration adds no member to <code>SpawnPlan</code> and no obligation to a
-plugin or deployment that does not use Curator.
+A caller-supplied launch plan reaches a plugin only through
+<code>ax start --launch-plan</code> (Section 14.1): a caller outside
+<code>ax</code> — the Curator launcher is the first such caller, not the only
+one — supplies a validated plan document, <code>ax</code> validates it under
+Section 5.1, embeds its resolved form into the immutable Session Record
+(Section 13.1), and calls <code>launch</code> with the record's plan exactly
+as for every other record. Nothing merges anything inside <code>ax</code>, and
+<code>ax</code> knows nothing of the caller's environment manager beyond the
+opaque extension keys it copies. Two capability names govern the plugin side:
+
+- <code>caller_launch_plan</code>. A <code>launch</code> or <code>resume</code>
+  for a Session Record carrying the <code>ax.launch-plan-request</code>
+  extension key (Section 13.1) against a plugin whose manifest does not
+  declare <code>caller_launch_plan</code> is refused by <code>ax</code> with
+  <code>capability_unavailable</code> (Section 15.3, exit 6) and
+  <code>details.capability: "caller_launch_plan"</code>, before the plugin is
+  invoked and before any process exists. A plugin that declares it MUST
+  translate the record's plan onto its <code>SpawnPlan</code> verbatim:
+  <code>argv</code> as recorded, <code>env_names</code> and
+  <code>env_literals</code> as recorded, <code>stdin</code> as recorded. It
+  MUST NOT reorder, deduplicate, or rewrite a caller element, and it MUST NOT
+  emit a second spelling of a flag the caller supplied. Its own contribution
+  is bounded to element 0 and its base flags in the <code>argv_suffix</code>
+  form, <code>cwd</code>, <code>native_session_id</code>, and
+  <code>profile_mapping</code>. It MUST refuse, before process creation, any
+  caller element equal to a flag of its own Section 7.7 <code>yolo</code>
+  mapping (Section 14.1: <code>launch_plan_invalid</code>,
+  <code>reason: "profile_flag"</code>). A caller element that collides with a
+  base flag other than a profile flag is the plugin's to refuse
+  (<code>capability_unavailable</code> with <code>details.argv_index</code>) or
+  to pass through and record in <code>provider.launched</code>; this revision
+  fixes no rule for that collision. The <code>resume</code> request carries
+  <code>launch_plan</code>, the record's Launch Plan, so the plugin has what it
+  must replay: resume argv stays plugin-owned — the plugin builds its native
+  resume argv as today and appends the recorded suffix
+  <code>launch_plan.argv[base_argv_length:]</code>, with
+  <code>base_argv_length</code> read from <code>ax.launch-plan-request</code>
+  (for the <code>argv</code> form nothing is appended and the recorded argv is
+  informative to resume) — while <code>env_names</code> and
+  <code>env_literals</code> are replayed from the record on every resume. A
+  plugin without <code>caller_launch_plan</code> never sees such a record; the
+  refusal above applies to resume and fork as to launch.
+- <code>stdin_resume_replay</code>. A resume does not replay a recorded
+  <code>stdin</code> payload by default: the child's standard input is the
+  terminal. A plugin replays it, verbatim into <code>SpawnPlan.stdin</code>,
+  only when its manifest declares <code>stdin_resume_replay</code>; which
+  plugins declare it, and whether a payload-then-terminal shape is needed for
+  an interactive provider whose effort rides stdin, is the plugin's to answer
+  with its pinned provider release.
+
+<code>SpawnPlan.stdin</code> is the Section 5.1 Launch Stdin object; the
+terminal backend delivers the decoded bytes as the child's complete standard
+input and closes it after the last byte. It is an <code>ax</code>-generic
+member, not a Curator one. A plugin that declares neither capability and a
+deployment without a caller-plan composer are unaffected: <code>stdin</code>
+is absent, no record carries <code>ax.launch-plan-request</code>, and the
+new <code>resume</code> member is the record's plan the plugin already
+received at launch. The members are compatible additions; the revision
+proposes Provider Protocol <code>2.1.0</code> and <code>3.1.0</code> for
+<code>SpawnPlan.stdin</code> and <code>resume.launch_plan</code>, and the
+<code>ax</code> maintainer decides the numbering.
 
 The <code>root-id</code> grammar is
 <code>[a-z][a-z0-9_-]{0,63}</code>. Capture authorities are sorted by
@@ -3103,7 +3228,7 @@ their canonical identity field and contain no duplicate identity:
 | Operation | Exact request body | Exact success body |
 | --- | --- | --- |
 | <code>manifest</code> | <code>{}</code> | Provider Manifest object (Section 7.3) |
-| <code>probe</code> | <code>{platform:macos&#124;linux&#124;wsl2&#124;windows, architecture:amd64&#124;arm64, provider_executable:absolute-path&#124;null, requested_capabilities:sorted unique capability-name[0..7]}</code> | Provider Probe object (Section 7.4) |
+| <code>probe</code> | <code>{platform:macos&#124;linux&#124;wsl2&#124;windows, architecture:amd64&#124;arm64, provider_executable:absolute-path&#124;null, requested_capabilities:sorted unique capability-name[0..9]}</code> | Provider Probe object (Section 7.4) |
 | <code>launch</code> | <code>{session_record:Session Record, workspace_paths:WorkspacePaths, execution_profile:standard&#124;yolo, launch_plan:Launch Plan, terminal:TerminalDescriptor}</code> | <code>SpawnPlan</code> |
 | <code>identify-session</code> | <code>{session_id:UUIDv7, provider_id:provider-id, observation:ProcessObservation}</code> | <code>{identity:Provider Identity Record, confidence:exact&#124;strong&#124;weak, matched_evidence:sorted unique native_id&#124;store_path&#124;provider_event&#124;backend_lookup[1..4]}</code> |
 | <code>quiesce</code> | <code>{identity:Provider Identity Record, terminal:TerminalDescriptor, timeout_ms:uint53[1..3600000], lease:LeaseToken}</code> | <code>{proof:SafeBoundaryProof}</code> |
@@ -3113,7 +3238,7 @@ their canonical identity field and contain no duplicate identity:
 | <code>materialize-status</code> | <code>{materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority}</code> | <code>ProviderTransactionStatus</code> |
 | <code>materialize-commit</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority, rollback_token:base64url-256+, activation:dormant_validated&#124;owner_resumed, lease:LeaseToken}</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan_id:digest, state:committed, backup_removed:boolean, committed_at:timestamp}</code> |
 | <code>materialize-rollback</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, transaction:ProviderTransactionAuthority, rollback_token:base64url-256+, reason:lease_lost&#124;validation_failed&#124;resume_failed&#124;operator_abort&#124;crash_recovery}</code> | <code>{operation_id:UUIDv7, materialization_id:UUIDv7, transaction_id:UUIDv7, plan_id:digest, state:rolled_back, restored_paths:sorted unique absolute-path[0..65536], removed_paths:sorted unique absolute-path[0..65536], native_discovery_absent:boolean}</code> |
-| <code>resume</code> | <code>{identity:Provider Identity Record, workspace_paths:WorkspacePaths, execution_profile:standard&#124;yolo, terminal:TerminalDescriptor, lease:LeaseToken}</code> | <code>SpawnPlan</code> |
+| <code>resume</code> | <code>{identity:Provider Identity Record, workspace_paths:WorkspacePaths, execution_profile:standard&#124;yolo, launch_plan:Launch Plan, terminal:TerminalDescriptor, lease:LeaseToken}</code> | <code>SpawnPlan</code> |
 | <code>fork</code> | <code>{operation_id:UUIDv7, source_identity:Provider Identity Record, source_checkpoint:Checkpoint Record, new_session_record:Session Record, destination_workspace_paths:WorkspacePaths, execution_profile:standard&#124;yolo, terminal:TerminalDescriptor}</code> | <code>{operation_id:UUIDv7, result_kind:native_fork&#124;supported_import, planned_native_session_id:string[1..512]&#124;null, spawn_plan:SpawnPlan, requires_provider_materialization:boolean, provenance_verified:boolean}</code> |
 | <code>stop</code> | <code>{identity:Provider Identity Record, terminal:TerminalDescriptor, mode:graceful&#124;force, timeout_ms:uint53[1..3600000], lease:LeaseToken}</code> | <code>{closure:ProcessClosure}</code> |
 | <code>doctor</code> | <code>{platform:macos&#124;linux&#124;wsl2&#124;windows, architecture:amd64&#124;arm64, provider_executable:absolute-path&#124;null, identity:Provider Identity Record&#124;null}</code> | <code>{provider_id:provider-id, provider_version:string[1..128]&#124;null, findings:DoctorFinding[0..1024]}</code> |
@@ -3386,6 +3511,15 @@ Normative <code>resume</code> request body and success body:
       "0198f4c8-6c30-7d44-8d5e-1234567890ab": "/srv/relux/payments-api"
     },
     "execution_profile": "yolo",
+    "launch_plan": {
+      "argv": ["codex"],
+      "cwd_workspace_id": "0198f4c8-6c30-7d44-8d5e-1234567890ab",
+      "cwd_relative": "src",
+      "env_names": ["OPENAI_API_KEY"],
+      "env_literals": {},
+      "contains_secrets": false,
+      "extensions": {}
+    },
     "terminal": {
       "backend": "tmux",
       "terminal_id": "ax-payments-api",
@@ -8171,6 +8305,71 @@ Transitions:
 8. Publish immutable objects for replica sync and report <code>running</code>
    or <code>idle</code>.
 
+When the launch carries a caller-supplied plan (Section 14.1
+<code>--launch-plan</code>), one step precedes step 2 for both document forms.
+<code>ax</code> calls provider <code>launch</code> with the candidate Session
+Record in planning role — provider <code>launch</code> is already a
+plan-returning operation that creates no process (Section 7.5) — takes the
+returned <code>SpawnPlan.argv</code> as the resolved final argv (the plugin's
+base argv followed by the document's <code>argv_suffix</code>; for the
+<code>argv</code> form, the plugin's verbatim translation after its Section
+7.7 profile-flag check), validates it under the Section 5.1 argv limits
+(1..128 elements, each 1–4,096 bytes, at most 65,536 encoded bytes), and only
+then persists the record with <code>launch_plan.argv</code> equal to that
+final argv, so the immutable record answers "what launched" without
+re-deriving anything. Every refusal of this step — shape, limit, exclusivity,
+unknown member, extension collision or bound, secret, profile flag, or
+missing capability — fires before any Session Record, lease, terminal entry,
+or process exists. A plugin declaring <code>caller_launch_plan</code> MUST
+answer the planning call deterministically, and step 4's <code>launch</code>
+against the persisted record MUST return an argv equal to the recorded one;
+a mismatch is <code>provider_protocol_error</code> and no process is created.
+
+The record carries the caller document under the <code>ax</code>-generic
+top-level <code>extensions</code> key <code>ax.launch-plan-request</code>, a
+closed object
+<code>{form: "argv" | "argv_suffix", base_argv_length: uint53, request_digest: digest}</code>.
+The <code>ax</code> label mirrors the <code>urn:ax</code> authority of every
+schema identifier in Section 1.5. The document itself is not stored: the
+Section 1.6 extension bound is 65,536 canonical bytes, and a document may
+carry 65,536 bytes of argv plus 65,536 bytes of stdin. For the same reason the
+value carries no copy of the suffix: <code>launch_plan.argv</code> already
+holds it, and the suffix is defined as
+<code>launch_plan.argv[base_argv_length:]</code> (for the <code>argv</code>
+form <code>base_argv_length</code> is 0 and the suffix is the whole argv).
+That definition is what resume replays (Section 7.5) and what lets a reader
+split the recorded final argv into its two owners; the value is a few dozen
+bytes regardless of the plan's size. <code>request_digest</code> is the
+Section 1.6 SHA-256 digest of the JCS canonical bytes of the caller document
+and lets an operator prove which document produced the record; it is a record,
+not a signature. The caller's own <code>extensions</code> — for a
+Curator-composed document the four <code>works.relux.curator.*</code> keys of
+Section 5.1 are among them; <code>ax</code> is generic and knows no such class
+— together with this key MUST fit the Section 1.6 extensions bound (at most 64
+keys, canonical object at most 65,536 bytes) as they will be persisted; a
+document that would not is refused in the planning step with
+<code>launch_plan_invalid</code>, <code>field: "extensions"</code>, so no
+document that passes validation can yield a record <code>ax</code> cannot
+persist.
+
+The caller-plan path has these required conformance cases; Appendix D binds
+them to <code>fixtures/launch_plan_request_conformance.json</code>:
+
+| Fixture | Input | Required result |
+| --- | --- | --- |
+| <code>LAUNCH-PLAN-SUFFIX-POS</code> | <code>argv_suffix</code> document under <code>--profile standard</code> against a <code>caller_launch_plan</code> plugin | Record persisted with <code>launch_plan.argv</code> equal to the plugin's base argv followed by the suffix and <code>ax.launch-plan-request</code> <code>{form: "argv_suffix", base_argv_length: &lt;base length&gt;, request_digest}</code>; step 4 returns the recorded argv |
+| <code>LAUNCH-PLAN-ARGV-POS</code> | <code>argv</code> document whose element 0 is the plugin-resolved executable, <code>--profile standard</code> | Plugin appends nothing; <code>base_argv_length</code> is 0; recorded argv equals the document's |
+| <code>LAUNCH-PLAN-PROFILE-FLAG-NEG</code> | <code>argv</code> or <code>argv_suffix</code> carries the provider's own Section 7.7 <code>yolo</code> flag, long form or documented alias, under <code>--profile standard</code> | <code>launch_plan_invalid</code>, <code>reason: "profile_flag"</code>, <code>details.argv_index</code> the element's index in the final argv; no Session Record or process |
+| <code>LAUNCH-PLAN-SECRET-NEG</code> | An <code>env_literals</code> value or <code>stdin</code> payload the Section 5.1 secret rule or Section 16.2 exclusions classify | <code>secret_policy_violation</code> (exit 16), <code>details.field</code> naming the member; no Session Record |
+| <code>LAUNCH-PLAN-EXTENSIONS-NEG</code> | Caller <code>extensions</code> that with <code>ax.launch-plan-request</code> and the Curator keys exceed the Section 1.6 bound | <code>launch_plan_invalid</code>, <code>field: "extensions"</code>; no Session Record |
+| <code>LAUNCH-PLAN-CAPABILITY-NEG</code> | Any document against a plugin whose manifest does not declare <code>caller_launch_plan</code> | <code>capability_unavailable</code>, <code>details.capability: "caller_launch_plan"</code>, before the plugin is invoked |
+| <code>LAUNCH-PLAN-DETERMINISM-NEG</code> | Plugin returns at step 4 an argv different from its planning-role answer | <code>provider_protocol_error</code>; no process |
+
+Each negative case is proven by a test that fails when the gate admits the
+input, driven through the real <code>ax start --launch-plan</code> entry point;
+a delete-only mutant is insufficient (Appendix D.1), and the profile-flag case
+MUST also survive a narrowing mutant that drops one documented alias.
+
 The first-checkpoint operation ID keys the capture/export and checkpoint-
 publication transaction even when a backend-only provider emits a zero-entry
 manifest. An identical retry reuses the same immutable objects and event;
@@ -9058,12 +9257,24 @@ supports the Curator integration, the owner SHOULD re-resolve the recorded
 profile with <code>curator env resolve ENVIRONMENT --profile PROFILE
 --format json</code> before invoking plugin <code>resume</code>, and a
 Section 13.8 fork SHOULD do the same before launching the new session,
-recording the fresh values in the new Session Record. A resolved profile pin
-that differs from the recorded
-<code>works.relux.curator.profile-pin</code> value is environment drift: the
-default behavior is to warn and continue with the freshly resolved fragment,
-and an implementation MAY offer a strict mode that refuses the operation
-instead. A failed resolution is a distinct fact from both drift and an
+recording the fresh values in the new Session Record. A resolved
+<code>profile.lock_sha256</code> that differs from the recorded
+<code>works.relux.curator.profile-pin</code> value is environment drift. When
+the record carries <code>works.relux.curator.system-modules: true</code>,
+drift MUST refuse the resume or fork by default with
+<code>policy_refused</code> (Section 15.3, exit 16) and
+<code>details.reason: "environment_drift"</code>, because a system module is
+instructions the agent cannot see through and a drifted set is a different
+agent; the record knows through that boolean because a drift check must not
+re-resolve to learn what it is checking against — the fragment is not stored,
+and the fresh resolution is the thing being compared. Otherwise the default
+behavior is to warn and continue with the freshly resolved fragment. An
+implementation MAY offer a strict mode that refuses the operation on any
+drift regardless of the boolean. The comparison is like with like: a record
+written before this revision carries a pin without the <code>sha256:</code>
+prefix, and its resume against a fragment carrying a lock hash is drift by
+construction and is reported as such, never silently normalized. A failed
+resolution is a distinct fact from both drift and an
 unchanged environment: it is reported as a warning (or a refusal under strict
 mode) and MUST NOT be treated as proof that the environment is current. A
 Session Record without these keys performs no drift check, and an
@@ -10282,6 +10493,7 @@ The v0.3.0 command surface is:
 ~~~text
 ax NAME [--action attach|takeover|fork|cancel] [--to HOST] [--as NEW_NAME] [--workspace-mode whole-group|separate-worktrees]
 ax start NAME --provider ID [--profile standard|yolo] [--workspace PATH]
+ax start NAME --provider ID --launch-plan FILE|- [--profile standard|yolo] [--workspace PATH]
 ax start NAME --task-board --provider ID --task ELEMENT_ID --board-id BOARD_ID [--board-url HTTPS_URL] --launch-mode primary-owner|tracked-prompt [--goal GOAL_ID --goal-revision REVISION] [--binding prompt|none] [--profile PROFILE] [--workspace PATH]
 ax list [--all-peers]
 ax status NAME
@@ -10340,6 +10552,106 @@ a pure plan with its ownership/runtime effects and required confirmation. It
 MUST NOT mutate while presenting the choice. Structured non-interactive mode
 returns <code>interactive_choice_required</code> when the exact action was not
 selected.
+
+<code>--launch-plan FILE|-</code> names a file holding a Launch Plan request
+document, or <code>-</code> to read the document from <code>ax</code>'s own
+standard input; it is the plan document that is read, never the child's
+stdin. <code>--launch-plan</code> and <code>--task-board</code> are mutually
+exclusive in this revision: a command carrying both is
+<code>invalid_arguments</code> (exit 2), and task-board launches keep building
+their plan inside <code>ax</code> (Section 13.2) unchanged. The document uses
+schema <code>urn:ax:schema:launch-plan-request</code> version
+<code>1.0.0</code> and is closed: a reader MUST reject an unknown member, an
+unknown <code>schema</code>, and a <code>schema_version</code> other than
+<code>1.0.0</code>, before any Session Record exists.
+
+~~~json
+{
+  "schema": "urn:ax:schema:launch-plan-request",
+  "schema_version": "1.0.0",
+  "argv_suffix": ["--model", "claude-opus-5", "--effort", "high", "--mcp-config", "/srv/relux/managed/mcp/claude_code.json", "--strict-mcp-config"],
+  "env_names": ["FIGMA_API_KEY"],
+  "env_literals": { "CLAUDE_CONFIG_DIR": "/srv/relux/managed/home" },
+  "stdin": null,
+  "extensions": {
+    "works.relux.curator.profile-name": "companyA-root-context-ios-developer-umbrella",
+    "works.relux.curator.profile-pin": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "works.relux.curator.fragment-digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "works.relux.curator.system-modules": false
+  }
+}
+~~~
+
+| Member | Type | Constraint |
+| --- | --- | --- |
+| <code>schema</code> | string | Exactly <code>urn:ax:schema:launch-plan-request</code> |
+| <code>schema_version</code> | semver | Exactly <code>1.0.0</code> |
+| <code>argv_suffix</code> | array&lt;string&gt;[0..128]? | Present exactly when <code>argv</code> is absent; appended after the plugin's base argv — the provider executable as the plugin resolves it, followed by the flags the plugin emits for the persisted execution profile (Sections 2.4, 7.7) |
+| <code>argv</code> | array&lt;string&gt;[1..128]? | Present exactly when <code>argv_suffix</code> is absent; the complete argv, whose element 0 is the provider executable spelled as the plugin would resolve it (the bare name of the Section 5.1 example, or the absolute path the plugin's <code>doctor</code> reports); the plugin MUST append nothing. Because the execution-profile flags are plugin-owned and this form admits no plugin contribution, <code>argv</code> combined with <code>--profile yolo</code> is <code>invalid_arguments</code>: a caller that owns the whole line owns the whole line |
+| <code>env_names</code> | array&lt;string&gt;[0..64]? | Absent means empty; the Section 5.1 grammar, sorted, unique; values resolve destination-locally and are never in the document |
+| <code>env_literals</code> | map(environment-name,string)[0..64]? | Absent means empty; the Section 5.1 limits, non-secret, keys sorted in canonical form and disjoint from <code>env_names</code> |
+| <code>stdin</code> | Launch Stdin or null? | Absent means null; the Section 5.1 shape and bound |
+| <code>extensions</code> | object? | Absent means empty; the Section 1.6 rules; copied verbatim into the Session Record's top-level <code>extensions</code>; a key that collides with one <code>ax</code> sets itself is <code>launch_plan_invalid</code> with <code>field: "extensions"</code> |
+
+The document carries no <code>contains_secrets</code>,
+<code>cwd_workspace_id</code>, or <code>cwd_relative</code>: <code>ax</code>
+derives the workspace members from <code>--workspace</code> as today and
+records <code>contains_secrets: false</code> only after its own check. Why
+element 0 is never caller-invented in the suffix form: the plugin's
+executable-resolution knowledge is the one fact two components would
+otherwise both own. Exactly one of <code>argv</code> and
+<code>argv_suffix</code> MUST be present; both or neither is
+<code>launch_plan_invalid</code>.
+
+Every Section 5.1 limit and secret rule applies to the caller-supplied members
+exactly as it applies to a plan <code>ax</code> builds itself: argv elements
+1–4,096 bytes each, 1..128 elements and at most 65,536 encoded bytes for the
+resolved final argv; <code>env_names</code> 0..64; <code>env_literals</code>
+0..64 × 4,096 bytes and non-secret; <code>stdin</code> at most 65,536 decoded
+bytes and non-secret; the Section 16.2 environment-secret and credential
+exclusions. A violation refuses <code>ax start</code> before any Session
+Record, lease, terminal entry, or process exists with the Structured Error
+code <code>launch_plan_invalid</code> (Section 15.3, exit class 2 alongside
+<code>invalid_arguments</code>) and a <code>details</code> map carrying
+<code>field</code>, the JSON member name at fault (<code>argv</code>,
+<code>argv_suffix</code>, <code>env_names</code>, <code>env_literals</code>,
+<code>stdin</code>, <code>extensions</code>, <code>schema</code>,
+<code>schema_version</code>, or the unknown member's name).
+<code>launch_plan_invalid</code> covers shape, limits, <code>argv</code> /
+<code>argv_suffix</code> exclusivity, unknown members, extension-key
+collisions, the Section 13.1 persisted-extensions bound, and the profile-flag
+refusal below only. A secret-rule violation in a caller document — an
+<code>env_literals</code> value or a <code>stdin</code> payload that the
+Section 5.1 rule or the Section 16.2 exclusions classify as a secret —
+refuses with the existing code <code>secret_policy_violation</code>, exit
+class 16, with <code>details.field</code> naming the member: one condition
+keeps one code and one exit class across every path that reaches it. A
+document against a plugin that does not declare
+<code>caller_launch_plan</code> is <code>capability_unavailable</code>
+(Section 7.5).
+
+<code>--profile standard|yolo</code> remains <code>ax</code>'s (Section 2.4):
+the plugin's Section 7.7 mapping is the only source of a permission-bypass or
+unrestricted-mode spelling in the final argv, and a caller plan MUST NOT carry
+one. A <code>caller_launch_plan</code> plugin MUST refuse, before process
+creation, any caller-supplied element — in <code>argv</code> or in
+<code>argv_suffix</code> — that equals a flag of its own Section 7.7
+<code>yolo</code> profile mapping, in the long form or a documented alias
+(Section 7.7 names <code>--yolo</code> as the accepted Codex alias), with
+<code>launch_plan_invalid</code>, <code>details.reason: "profile_flag"</code>,
+and <code>details.argv_index</code> the element's index in the final argv.
+This specification lists no spelling for the rule: it keys on the mapping the
+plugin already emits under <code>--profile yolo</code>, so the information
+needed to refuse is inside the plugin and a new provider's spelling is
+covered the day its mapping is. The refusal is required, not optional: a
+bypass flag arriving through the caller plan would launch an unrestricted
+process under a record that says <code>execution_profile: standard</code>,
+skipping the Section 2.4 confirmation, and the immutable record would
+misstate the one fact the caller-plan path relies on it for. Section 13.1
+<code>LAUNCH-PLAN-PROFILE-FLAG-NEG</code> is the required negative
+conformance case. The persisted record, the planning-role
+<code>launch</code>, and the <code>ax.launch-plan-request</code> extension are
+Section 13.1; the plugin contract and resume replay are Section 7.5.
 
 Internal commands <code>pane</code> and <code>rpc serve</code> MAY be hidden
 from short help but MUST have documented <code>--help</code>.
@@ -10576,7 +10888,7 @@ The following embedded CLI types are closed:
 | Type | Exact members and constraints |
 | --- | --- |
 | <code>CapabilitySummary</code> | <code>status:available&#124;conditional&#124;unsupported&#124;unknown</code>, <code>enabled:boolean</code>, <code>detail:string[0..2048]</code> |
-| <code>SessionSummary</code> | <code>session_id:UUIDv7</code>, <code>name:string[1..64]</code>, <code>kind:direct&#124;task_board</code>, <code>provider_id:provider-id</code>, <code>owner_host_id:UUIDv7</code>, <code>owner_host_name:string[1..64]</code>, <code>lease_epoch:uint53&gt;0</code>, <code>lease_id:UUIDv4</code>, <code>local_role:owner&#124;replica</code>, <code>state:SessionState</code>, <code>newest_checkpoint_id:digest&#124;null</code>, <code>newest_checkpoint_created_at:timestamp&#124;null</code>, <code>workspace_status:absent&#124;current&#124;staged&#124;conflict&#124;unsupported</code>, <code>capabilities:map(capability-name,CapabilitySummary)[0..7]</code>, <code>warnings:sorted unique string[0..1024]</code> |
+| <code>SessionSummary</code> | <code>session_id:UUIDv7</code>, <code>name:string[1..64]</code>, <code>kind:direct&#124;task_board</code>, <code>provider_id:provider-id</code>, <code>owner_host_id:UUIDv7</code>, <code>owner_host_name:string[1..64]</code>, <code>lease_epoch:uint53&gt;0</code>, <code>lease_id:UUIDv4</code>, <code>local_role:owner&#124;replica</code>, <code>state:SessionState</code>, <code>newest_checkpoint_id:digest&#124;null</code>, <code>newest_checkpoint_created_at:timestamp&#124;null</code>, <code>workspace_status:absent&#124;current&#124;staged&#124;conflict&#124;unsupported</code>, <code>capabilities:map(capability-name,CapabilitySummary)[0..9]</code>, <code>warnings:sorted unique string[0..1024]</code> |
 | <code>PathDiff</code> | <code>path:path</code>, <code>classification:added&#124;removed&#124;modified&#124;type_changed&#124;mode_changed&#124;conflict</code>, <code>source_digest:digest&#124;null</code>, <code>destination_digest:digest&#124;null</code> |
 | <code>PeerSummary</code> | <code>host_id:UUIDv7</code>, <code>name:string[1..64]</code>, <code>platform:macos&#124;linux&#124;wsl2&#124;windows</code>, <code>reachable:boolean</code>, <code>last_successful_sync_at:timestamp&#124;null</code>, <code>degraded_codes:sorted unique string[0..1024]</code> |
 | <code>CLIFinding</code> | <code>severity:info&#124;warning&#124;error</code>, <code>code:string[1..128]</code>, <code>message:string[1..4096]</code>, <code>remediation:string[1..4096]&#124;null</code>, <code>source:core&#124;terminal&#124;provider&#124;mesh&#124;workspace&#124;task_board</code> |
@@ -11229,6 +11541,31 @@ close/termination without trusting a peer/child error; the caller emits a local
 1.2 <code>incompatible_protocol</code> or
 <code>adapter_protocol_violation</code>/<code>transport_failure</code> as
 applicable. Error is a static binding and never a hello-contract key.
+
+#### Caller launch-plan code
+
+The revision carrying Section 14.1 <code>ax start --launch-plan</code> adds
+exactly one literal code:
+
+| Exit | Caller launch-plan code |
+| ---: | --- |
+| 2 | <code>launch_plan_invalid</code> |
+
+It sits in exit class 2 alongside <code>invalid_arguments</code>; its
+<code>details</code> map carries <code>field</code> (the JSON member name at
+fault) and, for the Section 7.7 profile-flag refusal,
+<code>reason: "profile_flag"</code> and <code>argv_index</code>. It is a
+compatible minor addition under the rule above, proposed as Structured Error
+<code>1.4.0</code> retaining the exact 1.3 shape and every prior mapping; the
+<code>ax</code> maintainer decides the numbering. A secret-rule violation in
+a caller document keeps the existing <code>secret_policy_violation</code>
+(exit 16), a plugin without <code>caller_launch_plan</code> keeps
+<code>capability_unavailable</code> (exit 6), a Section 13.10 drift refusal
+keeps <code>policy_refused</code> (exit 16) with
+<code>details.reason: "environment_drift"</code>, and a caller plan combined
+with <code>--task-board</code> or an <code>argv</code> form combined with
+<code>--profile yolo</code> keeps <code>invalid_arguments</code>; no other
+code is minted.
 
 #### Structured Error 1.3.0 TerminalBackend codes
 
@@ -11981,6 +12318,7 @@ signed Environment Tuple under Section 13.14.5.
 | <code>AC-OWN-002</code> | Lower and losing same-epoch events cannot affect authoritative state and remain preserved. |
 | <code>AC-LAUNCH-001</code> | Direct launch creates record/lease/wrapper/provider identity/checkpoint and native resume works outside <code>ax</code>. |
 | <code>AC-LAUNCH-002</code> | Task-board public launch starts from a null creation-record manager ref, persists <code>task_board.launched</code>, survives a lost response with the same caller operation ID, exports an opaque bundle, and never reads private manager bytes. |
+| <code>AC-LAUNCH-003</code> | <code>ax start --launch-plan</code> in both document forms records the final argv, the suffix split, and the request digest under <code>ax.launch-plan-request</code>; every Section 13.1 <code>LAUNCH-PLAN-*-NEG</code> case refuses before a Session Record exists; and a mutant that admits the provider's Section 7.7 <code>yolo</code> flag under <code>standard</code>, or that drops one documented alias, fails the suite. |
 | <code>AC-PATH-001</code> | Flags, the exact five-variable environment registry, configuration loading, platform defaults, and every process component resolve identical roots; empty and unknown <code>AX_*</code> values follow Section 3.2. |
 | <code>AC-TB-BOUNDARY-001</code> | Safe and unsafe bridge proofs map field-for-field into Checkpoint and RPC evidence; provider version/generation mismatch, background work, and a lost export response cannot publish a checkpoint or duplicate a bundle. |
 | <code>AC-SYNC-001</code> | Set-union converges independent of peer/order/retry; live SQLite is absent from manifests. |
@@ -12203,6 +12541,7 @@ requirement rather than only reporting a generic document digest mismatch.
 | Attach, takeover, failure, and fork | Sections 5.3–5.7, 13, 14, 15, 16.5, 19.4 |
 | Implementation stack and delivery | Sections 1.3–1.6, 3–7, 10–12, 17–20 |
 | Publication metadata | Section 20 |
+| curator-spec Decision 0013 (execution ownership and launch plans), Decisions 3, 4, 7, and 8 | Sections 1.5, 5.1, 7.3–7.5, 13.1, 13.10, 14.1, 15.3, 19.4, Appendix A.12, and Appendix D |
 
 ### A.2 Story acceptance traceability
 
@@ -12379,6 +12718,27 @@ traceability, not a second definition of the referenced contracts.
 | Public documents and release metadata make no implementation-availability claim | Sections 1.3, 19.5, and 20 separate specification publication from product conformance; README, changelog, and release notes carry the same caveat, and publication validation rejects unsupported availability prose. |
 | Diagrams preserve AX authority and show tmux/ConPTY as implementations | Sections 3.1, 4.A, and 19.4 <code>AC-DIAG-001</code>; the C4 and focused PlantUML sources are rendered, freshness-checked, and mutation-tested for authority, implementation synonym, and Superlogical status. |
 
+### A.12 Curator launch-plan revision traceability
+
+The revision of this specification's Curator integration is authorized by
+curator-spec Decision 0013 (<code>relux-works/curator-spec</code>,
+<code>decisions/0013-execution-ownership-and-launch-plans.md</code>): Decision
+3 (<code>ax start --launch-plan</code>), Decision 4 (<code>stdin</code>),
+Decision 7 (the revision items), and Decision 8 (reconciliation with Decision
+0012's lock identity). Its eight items map exhaustively below; this table is
+traceability, not a second definition.
+
+| Decision 0013 Decision 7 item | Normative closure |
+| --- | --- |
+| 1 — the Section 7.5 merge paragraph is replaced by the <code>--launch-plan</code> operation; "adds no member to <code>SpawnPlan</code>" is withdrawn | Section 7.5 caller-plan paragraphs and <code>SpawnPlan.stdin</code> |
+| 2 — Section 5.1 gains the <code>stdin</code> row, the fourth key <code>works.relux.curator.system-modules</code>, and the lock-hash <code>profile-pin</code> | Section 5.1 Launch Plan table, Launch Stdin object, and Curator extension paragraph |
+| 3 — <code>caller_launch_plan</code> and <code>stdin_resume_replay</code> join <code>capability_names</code>; <code>SpawnPlan</code> gains <code>stdin</code>; <code>resume</code> gains <code>launch_plan</code>; the manifest schema consequence is stated | Sections 7.3, 7.4, and 7.5 |
+| 4 — the planning-role <code>launch</code> step, <code>ax.launch-plan-request</code>, the persisted-extensions bound, determinism, and the required negative cases | Section 13.1, Section 19.4 <code>AC-LAUNCH-003</code>, Appendix D |
+| 5 — refuse-on-drift by default when <code>system-modules</code> is true; warn-and-continue otherwise; strict mode stays; failed resolution stays distinct | Section 13.10 |
+| 6 — <code>fragment-digest</code> over CCJ-1 canonical bytes of the parsed fragment | Section 5.1 |
+| 7 — the <code>ax start --launch-plan</code> grammar row, exclusivity, document shape, validation, <code>launch_plan_invalid</code>, and the profile-flag rule; the <code>curator session</code> note stands | Sections 14.1 and 15.3 |
+| 8 — the version proposal, the new error code, the Section 1.5 row, the Appendix D catalog and fixture, and these traceability rows | Sections 1.5 and 15.3, Appendix A.1, Appendix D, <code>fixtures/launch_plan_request_conformance.json</code>; the version is proposed in the pull request only |
+
 ## Appendix B. Explicit provider version gates
 
 The following are the only intentionally unsettled facts in this contract. They
@@ -12477,8 +12837,9 @@ display-language label.
 | --- | --- | --- |
 | Configuration | Sections 6.2, 6.4, and 6.5 TOML plus Section 3.2 path registry | Add root <code>unknown_root</code>; add secret value or raw backend command/environment; set unsafe SSH host-key bypass; exercise all flags/environment values plus empty and unknown <code>AX_*</code> cases; reject Config-2 directory bounds, Config-3 duplicate/unknown/backend-policy/trust violations, restore fallback, silent major rewrite, or downgrade mutation |
 | Provider protocol | Section 7.2 envelopes, every Section 7.5 row, and Section 7.A v3 descriptor | Mismatch request ID; success with both body/error; operation/body tag mismatch; stale/mismatched Terminal Instance binding; v2 projection of a non-built-in ID; compatible/major/invalid-first-output Error binding fixtures |
-| Provider manifest | Section 7.3 with all fifteen operations | Remove <code>capture</code> or one transaction operation; duplicate provider ID discovery remains fatal |
+| Provider manifest | Section 7.3 with all fifteen operations and the nine-name capability registry | Remove <code>capture</code> or one transaction operation; add, omit, or reorder a capability name; duplicate provider ID discovery remains fatal |
 | Provider probe | Section 7.4 | Set <code>enabled=true</code> on conditional/unknown/unsupported; omit one requested capability |
+| Launch Plan request | Section 14.1 exact document in both forms and the Section 13.1 <code>LAUNCH-PLAN-*</code> cases, bound to <code>fixtures/launch_plan_request_conformance.json</code> | Unknown member, schema, or version; both or neither of <code>argv</code>/<code>argv_suffix</code>; <code>argv</code> with <code>--profile yolo</code>; a provider <code>yolo</code> flag or documented alias in a caller element; a secret literal or payload; an over-bound <code>stdin</code>; extensions that with the <code>ax</code> and Curator keys exceed the Section 1.6 bound; a plugin without <code>caller_launch_plan</code>; a planning/launch argv mismatch |
 | Terminal Backend protocol | Sections 4.B–4.C envelope and all ten operation rows | Unknown operation/member; lost-result retry with changed bootstrap key; mutation without AX authorization/capability; attach ownership change; stale generation; restore fallback; raw provider entry point |
 | Terminal Backend manifest | Section 4.B exact manifest | Invalid/duplicate ID; AX namespace misuse; executable substitution; implementation/protocol/conformance drift; unknown or unproven static capability |
 | Terminal Backend probe | Section 4.B exact probe | Failed/partial/malformed read treated as absence; manifest/probe mismatch; raw generation instead of its digest; unavailable claim activated |
@@ -12694,6 +13055,14 @@ MUST also run, without substituting mocks for the relevant state boundary:
   the real production entry point. Focused negatives MUST narrow identity,
   source authority, head equality, field authorization, route eligibility,
   readiness, or idempotency rather than merely delete the checked clause.
+- every <code>LAUNCH-PLAN-*</code> case from
+  <code>fixtures/launch_plan_request_conformance.json</code> through the real
+  <code>ax start --launch-plan</code> entry point, with the fixture's provider
+  profile mappings equal to the Section 7.7 table. Narrowing mutants MUST
+  drop one documented alias from the profile-flag refusal, admit the
+  <code>argv</code> form under <code>--profile yolo</code>, or admit a
+  persisted-extensions object one byte over the Section 1.6 bound, and each
+  MUST fail; and
 - every <code>AC-V043-*</code> case from
   <code>fixtures/v0_4_3_roadmap_terminal_realm.json</code> through its named
   production entry point. Independent narrowing mutations MUST reject unsafe
