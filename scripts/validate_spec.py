@@ -19,6 +19,7 @@ import tomllib
 from collections.abc import Iterator
 
 from validate_directory import validate as validate_directory
+from validate_launch_plan import validate as validate_launch_plan
 from validate_terminal_backend import validate as validate_terminal_backend
 from validate_v043 import validate as validate_v043
 
@@ -36,13 +37,14 @@ TRACEABILITY = ROOT / "STANDALONE_TO_AX_TRACEABILITY.md"
 DIRECTORY_FIXTURE = ROOT / "fixtures" / "session_directory_conformance.json"
 V043_FIXTURE = ROOT / "fixtures" / "v0_4_3_roadmap_terminal_realm.json"
 TERMINAL_BACKEND_FIXTURE = ROOT / "fixtures" / "terminal_backend_conformance.json"
+LAUNCH_PLAN_FIXTURE = ROOT / "fixtures" / "launch_plan_request_conformance.json"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
 # Frozen reviewed publication prose. Hashes use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. A
 # specification revision must deliberately replace this bounded map after its
 # semantic checks and expected-red suite have been reviewed.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "562546d240f0fa3e71b47e6359a002f9892c0efd97e19eb55917527552ac484a",
+    "SPEC.md": "f474b10b0ecd072ad087cd7acb60b4189ec8eaf88244304c7d0d70340e01f489",
     "README.md": "da7ac589d05ae41a93d2b1d94a2d4a2a008304f51e0c63d9e8fab55c71e21c99",
     "CONTRIBUTING.md": "6346872b89c114988e93c2ab4fd85f16045c09e4d87f6d534453d102f945c2ce",
     "CHANGELOG.md": "b7243c372fd6e7e1ffdcf536fedd03318b50971230611a43ddfa92f80621c081",
@@ -280,7 +282,7 @@ def check_required_files(errors: list[str]) -> None:
         VERSION_FILE, LICENSE_FILE, CHANGELOG, RELEASE_NOTES,
         SPEC, README, CONTRIBUTING, DIAGRAMS_README,
         C4_WORKSPACE, C4_MODEL, C4_VIEWS, C4_REL, C4_STYLES,
-        RESEARCH, DIRECTORY_FIXTURE, V043_FIXTURE, TERMINAL_BACKEND_FIXTURE,
+        RESEARCH, DIRECTORY_FIXTURE, V043_FIXTURE, TERMINAL_BACKEND_FIXTURE, LAUNCH_PLAN_FIXTURE,
         ROOT / "diagrams" / "plantuml" / "takeover.puml",
         ROOT / "diagrams" / "plantuml" / "session_state.puml",
         ROOT / "diagrams" / "plantuml" / "mesh_deployment.puml",
@@ -2234,6 +2236,12 @@ def main() -> int:
     failed += terminal_backend_ledger["terminal_backend_failed_groups"]
     passed += terminal_backend_ledger["terminal_backend_gate_classes"] - terminal_backend_ledger["terminal_backend_failed_groups"]
     ledger.update(terminal_backend_ledger)
+    launch_plan_errors, launch_plan_ledger = validate_launch_plan(ROOT, text, canonical)
+    errors.extend(launch_plan_errors)
+    checks += launch_plan_ledger["launch_plan_gate_classes"]
+    failed += launch_plan_ledger["launch_plan_failed_groups"]
+    passed += launch_plan_ledger["launch_plan_gate_classes"] - launch_plan_ledger["launch_plan_failed_groups"]
+    ledger.update(launch_plan_ledger)
 
     local_link_count = 0
     for doc in [SPEC, README, CONTRIBUTING, DIAGRAMS_README]:
@@ -2267,6 +2275,7 @@ def main() -> int:
     print(f"  Directory ledger: gate_classes={ledger.get('directory_gate_classes',0)}, contracts={ledger.get('directory_contracts',0)}, fixture_families={ledger.get('directory_fixture_families',0)}, expected_red_minimum={ledger.get('directory_expected_red_minimum',0)}")
     print(f"  v0.4.3 ledger: gate_classes={ledger.get('v043_gate_classes',0)}, positive_cases={ledger.get('v043_positive_cases',0)}, negative_cases={ledger.get('v043_negative_cases',0)}")
     print(f"  TerminalBackend ledger: gate_classes={ledger.get('terminal_backend_gate_classes',0)}, positive_cases={ledger.get('terminal_backend_positive_cases',0)}, expected_red_minimum={ledger.get('terminal_backend_expected_red_minimum',0)}")
+    print(f"  Launch-plan ledger: gate_classes={ledger.get('launch_plan_gate_classes',0)}, positive_cases={ledger.get('launch_plan_positive_cases',0)}, negative_cases={ledger.get('launch_plan_negative_cases',0)}")
     print("  Registry evidence: parsed provider, bridge, RPC-body, CLI-body, SessionState, Git-payload, cloning contract/adapter/CLI/event/error, and standalone traceability registries; no aggregate parity count is claimed")
     return 0
 

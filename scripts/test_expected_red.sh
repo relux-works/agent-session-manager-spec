@@ -2816,6 +2816,169 @@ PY
 refresh_frozen_spec_digest "$FIX"
 expect_fail "modified actual historical Configuration definition" "historical definition fingerprint drift: Configuration 1.0.0 field constraints" "$FIX"
 
+
+# --- Launch Plan request gate (ax start --launch-plan; curator-spec Decision 0013) ---
+mutate_launch_plan_fixture() {
+  local fixture_dir="$1"
+  local mutation="$2"
+  python3 - "$fixture_dir" "$mutation" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+path = Path(sys.argv[1]) / "fixtures" / "launch_plan_request_conformance.json"
+mutation = sys.argv[2]
+data = json.loads(path.read_text(encoding="utf-8"))
+positive = {row["id"]: row for row in data["positive_cases"]}
+negative = {row["id"]: row for row in data["negative_cases"]}
+
+if mutation == "profile-flag-admitted":
+    row = negative["LAUNCH-PLAN-PROFILE-FLAG-NEG"]
+    data["negative_cases"] = [r for r in data["negative_cases"] if r["id"] != row["id"]]
+    data["positive_cases"].append({
+        "id": row["id"].replace("-NEG", "-ADMITTED"),
+        "provider": row["provider"], "profile": row["profile"],
+        "plugin_declares_caller_launch_plan": True, "document": row["document"],
+        "expected": {"form": "argv_suffix", "base_argv_length": 1,
+                     "final_argv": ["claude"] + row["document"]["argv_suffix"],
+                     "request_digest": "sha256:" + "0" * 64},
+    })
+elif mutation == "alias-narrowed":
+    data["profile_mappings"]["codex"].remove("--yolo")
+elif mutation == "secret-relabeled":
+    negative["LAUNCH-PLAN-SECRET-NEG"]["expected_error"] = "launch_plan_invalid"
+elif mutation == "extensions-bound-relaxed":
+    negative["LAUNCH-PLAN-EXTENSIONS-NEG"]["document"]["extensions"]["works.relux.example.padding"] = "p" * 100
+elif mutation == "extensions-pos-widened":
+    # One byte more and the 65,536-byte positive object is over the Section 1.6 bound.
+    negative_doc = positive["LAUNCH-PLAN-EXTENSIONS-POS"]["document"]
+    negative_doc["extensions"]["works.relux.example.padding"] += "p"
+elif mutation == "determinism-relabeled":
+    negative["LAUNCH-PLAN-DETERMINISM-NEG"]["expected_error"] = "launch_plan_invalid"
+elif mutation == "positive-final-argv-drift":
+    positive["LAUNCH-PLAN-SUFFIX-POS"]["expected"]["final_argv"].pop()
+elif mutation == "capability-admitted":
+    negative["LAUNCH-PLAN-CAPABILITY-NEG"]["plugin_declares_caller_launch_plan"] = True
+elif mutation == "argv-yolo-relabeled":
+    negative["LAUNCH-PLAN-ARGV-YOLO-PROFILE-NEG"]["expected_error"] = "launch_plan_invalid"
+else:
+    raise SystemExit(f"unknown launch-plan mutation {mutation}")
+
+path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+}
+
+run_launch_plan_mutation() {
+  local mutation="$1"
+  local label="$2"
+  local diagnostic="$3"
+  local fix
+  fix=$(fixture_copy "launch-plan-$mutation")
+  mutate_launch_plan_fixture "$fix" "$mutation"
+  expect_fail "$label" "$diagnostic" "$fix"
+}
+
+run_launch_plan_mutation "profile-flag-admitted" "caller plan carrying the provider yolo flag must not be admitted" "launch-plan gate positive_cases: LAUNCH-PLAN-PROFILE-FLAG-ADMITTED refused with launch_plan_invalid"
+run_launch_plan_mutation "alias-narrowed" "profile-flag refusal narrowed to the long form only" "profile mapping must equal the Section 7.7 table"
+run_launch_plan_mutation "secret-relabeled" "secret literal must keep secret_policy_violation" "LAUNCH-PLAN-SECRET-NEG expected launch_plan_invalid, gate refused with secret_policy_violation"
+run_launch_plan_mutation "extensions-bound-relaxed" "persisted extensions inside the bound must not be recorded as refused" "LAUNCH-PLAN-EXTENSIONS-NEG was admitted by the gate"
+run_launch_plan_mutation "positive-final-argv-drift" "recorded final argv must equal base argv plus suffix" "LAUNCH-PLAN-SUFFIX-POS final_argv"
+run_launch_plan_mutation "capability-admitted" "plugin without caller_launch_plan must not receive a caller plan" "LAUNCH-PLAN-CAPABILITY-NEG was admitted by the gate"
+run_launch_plan_mutation "argv-yolo-relabeled" "argv form under --profile yolo must keep invalid_arguments" "LAUNCH-PLAN-ARGV-YOLO-PROFILE-NEG expected launch_plan_invalid, gate refused with invalid_arguments"
+run_launch_plan_mutation "extensions-pos-widened" "persisted extensions one byte over the bound must not be admitted as positive" "LAUNCH-PLAN-EXTENSIONS-POS refused with launch_plan_invalid {'field': 'extensions'}"
+run_launch_plan_mutation "determinism-relabeled" "planning/step-4 argv mismatch must keep provider_protocol_error" "LAUNCH-PLAN-DETERMINISM-NEG expected launch_plan_invalid, gate refused with provider_protocol_error"
+
+# Gate-narrowing mutants: edit the reference gate itself (bytecode cache
+# removed and disabled so a same-size edit cannot reuse a stale pyc) and
+# require the matching boundary case to go red.
+mutate_launch_plan_gate() {
+  local fixture_dir="$1"
+  local old="$2"
+  local new="$3"
+  rm -rf "$fixture_dir/scripts/__pycache__"
+  python3 - "$fixture_dir/scripts/validate_launch_plan.py" "$old" "$new" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+if text.count(sys.argv[2]) != 1:
+    raise SystemExit(f"launch-plan gate mutation target cardinality mismatch: {sys.argv[2]!r}")
+path.write_text(text.replace(sys.argv[2], sys.argv[3], 1), encoding="utf-8")
+PY
+}
+
+run_launch_plan_gate_mutation() {
+  local name="$1"
+  local old="$2"
+  local new="$3"
+  local label="$4"
+  local diagnostic="$5"
+  local fix
+  fix=$(fixture_copy "launch-plan-gate-$name")
+  mutate_launch_plan_gate "$fix" "$old" "$new"
+  PYTHONDONTWRITEBYTECODE=1 expect_fail "$label" "$diagnostic" "$fix"
+}
+
+run_launch_plan_gate_mutation "extensions-bytes" "EXTENSIONS_MAX_BYTES = 65536" "EXTENSIONS_MAX_BYTES = 65537" "extensions byte bound widened by one" "LAUNCH-PLAN-EXTENSIONS-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "extensions-keys" "EXTENSIONS_MAX_KEYS = 64" "EXTENSIONS_MAX_KEYS = 65" "extensions key bound widened by one" "LAUNCH-PLAN-EXTENSIONS-KEYS-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "argv-elements" "ARGV_MAX_ELEMENTS = 128" "ARGV_MAX_ELEMENTS = 129" "argv element-count bound widened by one" "LAUNCH-PLAN-ARGV-ELEMENTS-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "argv-element-bytes" "ARGV_ELEMENT_MAX_BYTES = 4096" "ARGV_ELEMENT_MAX_BYTES = 4097" "argv element byte bound widened by one" "LAUNCH-PLAN-ARGV-ELEMENT-BYTES-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "argv-total-bytes" "ARGV_TOTAL_MAX_BYTES = 65536" "ARGV_TOTAL_MAX_BYTES = 65537" "argv total byte bound widened by one" "LAUNCH-PLAN-ARGV-BYTES-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "env-max" "ENV_MAX = 64" "ENV_MAX = 65" "env_names bound widened by one" "LAUNCH-PLAN-ENV-NAMES-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "literal-bytes" "LITERAL_MAX_BYTES = 4096" "LITERAL_MAX_BYTES = 4097" "env_literals value bound widened by one" "LAUNCH-PLAN-LITERAL-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "stdin-bytes" "STDIN_MAX_BYTES = 65536" "STDIN_MAX_BYTES = 65537" "stdin decoded bound widened by one" "LAUNCH-PLAN-STDIN-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "schema-unchecked" '    if document.get("schema") != SCHEMA:
+        raise Refusal("launch_plan_invalid", {"field": "schema"})
+' '' "unknown schema value admitted" "LAUNCH-PLAN-SCHEMA-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "determinism-admitted" "        if step_4 != planning:" "        if False and step_4 != planning:" "step-4 argv mismatch admitted" "LAUNCH-PLAN-DETERMINISM-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "determinism-length-only" "        if step_4 != planning:" "        if len(step_4) != len(planning):" "step-4 argv compared by length only" "LAUNCH-PLAN-DETERMINISM-NEG was admitted by the gate"
+
+FIX=$(fixture_copy "launch-plan-exit2-code-dropped")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = "| 2 | <code>launch_plan_invalid</code> |\n"
+if text.count(old) != 1:
+    raise SystemExit("launch_plan_invalid exit-class row cardinality mismatch")
+path.write_text(text.replace(old, "| 3 | <code>launch_plan_invalid</code> |\n", 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "launch_plan_invalid moved out of exit class 2" "SPEC semantic marker missing (exit class 2 code)" "$FIX"
+
+FIX=$(fixture_copy "launch-plan-drift-weakened")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = "drift MUST refuse the resume or fork by default with\n<code>policy_refused</code>"
+if text.count(old) != 1:
+    raise SystemExit("system-modules drift refusal cardinality mismatch")
+path.write_text(text.replace(old, "drift SHOULD warn and continue by default instead of\n<code>policy_refused</code>", 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "system-modules drift refusal weakened to warn" "SPEC semantic marker missing (drift refusal)" "$FIX"
+
+FIX=$(fixture_copy "launch-plan-registry-seven")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = "<code>capability_names</code> is the exact nine-name ordered registry shown."
+if text.count(old) != 1:
+    raise SystemExit("nine-name registry sentence cardinality mismatch")
+path.write_text(text.replace(old, "<code>capability_names</code> is the exact seven-name ordered registry shown.", 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "capability registry reverted to seven names" "SPEC semantic marker missing (nine-name registry)" "$FIX"
+
 echo ""
 echo "=========================================="
 echo "Results: $PASS passed, $FAIL failed out of $TOTAL mutations"
