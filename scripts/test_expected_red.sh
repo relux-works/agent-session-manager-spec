@@ -2849,6 +2849,12 @@ elif mutation == "secret-relabeled":
     negative["LAUNCH-PLAN-SECRET-NEG"]["expected_error"] = "launch_plan_invalid"
 elif mutation == "extensions-bound-relaxed":
     negative["LAUNCH-PLAN-EXTENSIONS-NEG"]["document"]["extensions"]["works.relux.example.padding"] = "p" * 100
+elif mutation == "extensions-pos-widened":
+    # One byte more and the 65,536-byte positive object is over the Section 1.6 bound.
+    negative_doc = positive["LAUNCH-PLAN-EXTENSIONS-POS"]["document"]
+    negative_doc["extensions"]["works.relux.example.padding"] += "p"
+elif mutation == "determinism-relabeled":
+    negative["LAUNCH-PLAN-DETERMINISM-NEG"]["expected_error"] = "launch_plan_invalid"
 elif mutation == "positive-final-argv-drift":
     positive["LAUNCH-PLAN-SUFFIX-POS"]["expected"]["final_argv"].pop()
 elif mutation == "capability-admitted":
@@ -2879,6 +2885,54 @@ run_launch_plan_mutation "extensions-bound-relaxed" "persisted extensions inside
 run_launch_plan_mutation "positive-final-argv-drift" "recorded final argv must equal base argv plus suffix" "LAUNCH-PLAN-SUFFIX-POS final_argv"
 run_launch_plan_mutation "capability-admitted" "plugin without caller_launch_plan must not receive a caller plan" "LAUNCH-PLAN-CAPABILITY-NEG was admitted by the gate"
 run_launch_plan_mutation "argv-yolo-relabeled" "argv form under --profile yolo must keep invalid_arguments" "LAUNCH-PLAN-ARGV-YOLO-PROFILE-NEG expected launch_plan_invalid, gate refused with invalid_arguments"
+run_launch_plan_mutation "extensions-pos-widened" "persisted extensions one byte over the bound must not be admitted as positive" "LAUNCH-PLAN-EXTENSIONS-POS refused with launch_plan_invalid {'field': 'extensions'}"
+run_launch_plan_mutation "determinism-relabeled" "planning/step-4 argv mismatch must keep provider_protocol_error" "LAUNCH-PLAN-DETERMINISM-NEG expected launch_plan_invalid, gate refused with provider_protocol_error"
+
+# Gate-narrowing mutants: edit the reference gate itself (bytecode cache
+# removed and disabled so a same-size edit cannot reuse a stale pyc) and
+# require the matching boundary case to go red.
+mutate_launch_plan_gate() {
+  local fixture_dir="$1"
+  local old="$2"
+  local new="$3"
+  rm -rf "$fixture_dir/scripts/__pycache__"
+  python3 - "$fixture_dir/scripts/validate_launch_plan.py" "$old" "$new" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+if text.count(sys.argv[2]) != 1:
+    raise SystemExit(f"launch-plan gate mutation target cardinality mismatch: {sys.argv[2]!r}")
+path.write_text(text.replace(sys.argv[2], sys.argv[3], 1), encoding="utf-8")
+PY
+}
+
+run_launch_plan_gate_mutation() {
+  local name="$1"
+  local old="$2"
+  local new="$3"
+  local label="$4"
+  local diagnostic="$5"
+  local fix
+  fix=$(fixture_copy "launch-plan-gate-$name")
+  mutate_launch_plan_gate "$fix" "$old" "$new"
+  PYTHONDONTWRITEBYTECODE=1 expect_fail "$label" "$diagnostic" "$fix"
+}
+
+run_launch_plan_gate_mutation "extensions-bytes" "EXTENSIONS_MAX_BYTES = 65536" "EXTENSIONS_MAX_BYTES = 65537" "extensions byte bound widened by one" "LAUNCH-PLAN-EXTENSIONS-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "extensions-keys" "EXTENSIONS_MAX_KEYS = 64" "EXTENSIONS_MAX_KEYS = 65" "extensions key bound widened by one" "LAUNCH-PLAN-EXTENSIONS-KEYS-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "argv-elements" "ARGV_MAX_ELEMENTS = 128" "ARGV_MAX_ELEMENTS = 129" "argv element-count bound widened by one" "LAUNCH-PLAN-ARGV-ELEMENTS-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "argv-element-bytes" "ARGV_ELEMENT_MAX_BYTES = 4096" "ARGV_ELEMENT_MAX_BYTES = 4097" "argv element byte bound widened by one" "LAUNCH-PLAN-ARGV-ELEMENT-BYTES-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "argv-total-bytes" "ARGV_TOTAL_MAX_BYTES = 65536" "ARGV_TOTAL_MAX_BYTES = 65537" "argv total byte bound widened by one" "LAUNCH-PLAN-ARGV-BYTES-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "env-max" "ENV_MAX = 64" "ENV_MAX = 65" "env_names bound widened by one" "LAUNCH-PLAN-ENV-NAMES-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "literal-bytes" "LITERAL_MAX_BYTES = 4096" "LITERAL_MAX_BYTES = 4097" "env_literals value bound widened by one" "LAUNCH-PLAN-LITERAL-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "stdin-bytes" "STDIN_MAX_BYTES = 65536" "STDIN_MAX_BYTES = 65537" "stdin decoded bound widened by one" "LAUNCH-PLAN-STDIN-BOUND-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "schema-unchecked" '    if document.get("schema") != SCHEMA:
+        raise Refusal("launch_plan_invalid", {"field": "schema"})
+' '' "unknown schema value admitted" "LAUNCH-PLAN-SCHEMA-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "determinism-admitted" "        if step_4 != planning:" "        if False and step_4 != planning:" "step-4 argv mismatch admitted" "LAUNCH-PLAN-DETERMINISM-NEG was admitted by the gate"
+run_launch_plan_gate_mutation "determinism-length-only" "        if step_4 != planning:" "        if len(step_4) != len(planning):" "step-4 argv compared by length only" "LAUNCH-PLAN-DETERMINISM-NEG was admitted by the gate"
 
 FIX=$(fixture_copy "launch-plan-exit2-code-dropped")
 python3 - "$FIX" <<'PY'

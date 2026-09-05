@@ -13060,9 +13060,11 @@ MUST also run, without substituting mocks for the relevant state boundary:
   <code>ax start --launch-plan</code> entry point, with the fixture's provider
   profile mappings equal to the Section 7.7 table. Narrowing mutants MUST
   drop one documented alias from the profile-flag refusal, admit the
-  <code>argv</code> form under <code>--profile yolo</code>, or admit a
-  persisted-extensions object one byte over the Section 1.6 bound, and each
-  MUST fail; and
+  <code>argv</code> form under <code>--profile yolo</code>, admit a
+  persisted-extensions object one byte over the Section 1.6 bound, widen any
+  one Section 5.1 or Section 1.6 numeric bound by one, admit an unknown
+  <code>schema</code>, or admit a step-4 <code>launch</code> argv that
+  differs from the planning-role answer, and each MUST fail; and
 - every <code>AC-V043-*</code> case from
   <code>fixtures/v0_4_3_roadmap_terminal_realm.json</code> through its named
   production entry point. Independent narrowing mutations MUST reject unsafe
