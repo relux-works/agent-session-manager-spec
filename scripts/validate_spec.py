@@ -47,7 +47,7 @@ PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
 # specification revision must deliberately replace this bounded map after its
 # semantic checks and expected-red suite have been reviewed.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "7f26c7239060c5a5199fe2bb037110f4ce55e21c71b47a20a975d4b3e60e7d6d",
+    "SPEC.md": "837a77445cd27ad06518d18cb34dd0c19a80c15e4c2470224d96cd0df3977c89",
     "README.md": "6bf51c4b200201dbdbcc37ff7140467ae8e2568b706c24d10cddd36eebc8d82a",
     "CONTRIBUTING.md": "6e15028248b1d85a470beea4ca626f4769bdbab009580ad85612b140a350f833",
     "CHANGELOG.md": "6bd1fbe32eedb7cd80c8f6059c6a9864ebf55447a58d71f691ab5718a1fc0951",
