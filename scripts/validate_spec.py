@@ -21,6 +21,7 @@ from collections.abc import Iterator
 from validate_selector import validate as validate_selector
 from validate_host_channel import validate as validate_host_channel
 from validate_directory import validate as validate_directory
+from validate_launch_plan import validate as validate_launch_plan
 from validate_terminal_backend import validate as validate_terminal_backend
 from validate_v043 import validate as validate_v043
 
@@ -38,6 +39,7 @@ TRACEABILITY = ROOT / "STANDALONE_TO_AX_TRACEABILITY.md"
 DIRECTORY_FIXTURE = ROOT / "fixtures" / "session_directory_conformance.json"
 V043_FIXTURE = ROOT / "fixtures" / "v0_4_3_roadmap_terminal_realm.json"
 TERMINAL_BACKEND_FIXTURE = ROOT / "fixtures" / "terminal_backend_conformance.json"
+LAUNCH_PLAN_FIXTURE = ROOT / "fixtures" / "launch_plan_request_conformance.json"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
 # Prepared candidate publication prose, subject to exact-head review. Hashes
 # use UTF-8 text with all line endings
@@ -45,7 +47,7 @@ PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
 # specification revision must deliberately replace this bounded map after its
 # semantic checks and expected-red suite have been reviewed.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "d8c98f10c919bc5bbb8f34b12ec404d606e7627f1c6214992005ca507555333f",
+    "SPEC.md": "7f26c7239060c5a5199fe2bb037110f4ce55e21c71b47a20a975d4b3e60e7d6d",
     "README.md": "6bf51c4b200201dbdbcc37ff7140467ae8e2568b706c24d10cddd36eebc8d82a",
     "CONTRIBUTING.md": "6e15028248b1d85a470beea4ca626f4769bdbab009580ad85612b140a350f833",
     "CHANGELOG.md": "6bd1fbe32eedb7cd80c8f6059c6a9864ebf55447a58d71f691ab5718a1fc0951",
@@ -283,7 +285,7 @@ def check_required_files(errors: list[str]) -> None:
         VERSION_FILE, LICENSE_FILE, CHANGELOG, RELEASE_NOTES,
         SPEC, README, CONTRIBUTING, DIAGRAMS_README,
         C4_WORKSPACE, C4_MODEL, C4_VIEWS, C4_REL, C4_STYLES,
-        RESEARCH, DIRECTORY_FIXTURE, V043_FIXTURE, TERMINAL_BACKEND_FIXTURE,
+        RESEARCH, DIRECTORY_FIXTURE, V043_FIXTURE, TERMINAL_BACKEND_FIXTURE, LAUNCH_PLAN_FIXTURE,
         ROOT / "diagrams" / "plantuml" / "takeover.puml",
         ROOT / "diagrams" / "plantuml" / "session_state.puml",
         ROOT / "diagrams" / "plantuml" / "mesh_deployment.puml",
@@ -2258,6 +2260,12 @@ def main() -> int:
     failed += terminal_backend_ledger["terminal_backend_failed_groups"]
     passed += terminal_backend_ledger["terminal_backend_gate_classes"] - terminal_backend_ledger["terminal_backend_failed_groups"]
     ledger.update(terminal_backend_ledger)
+    launch_plan_errors, launch_plan_ledger = validate_launch_plan(ROOT, text, canonical)
+    errors.extend(launch_plan_errors)
+    checks += launch_plan_ledger["launch_plan_gate_classes"]
+    failed += launch_plan_ledger["launch_plan_failed_groups"]
+    passed += launch_plan_ledger["launch_plan_gate_classes"] - launch_plan_ledger["launch_plan_failed_groups"]
+    ledger.update(launch_plan_ledger)
 
     errors.extend(validate_selector(ROOT, text, canonical))
 
@@ -2301,6 +2309,7 @@ def main() -> int:
     print(f"  Host Channel closed facts: {ledger.get('host_closed_contexts_witnessed',0)}/{ledger.get('host_closed_contexts',0)} isolated unknown-field context witnesses")
     print(f"  Host Channel executable obligations: {ledger.get('host_obligations_witnessed',0)}/{ledger.get('host_obligations',0)} isolated negative witnesses; unstructured prose/runtime semantic coverage unknown")
     print(f"  Host Channel source families: {ledger.get('host_channel_covered',0)}/{ledger.get('host_channel_families',0)}, synthetic vectors={ledger.get('host_channel_vectors',0)}; runtime/TLS acceptance not executed")
+    print(f"  Launch-plan ledger: gate_classes={ledger.get('launch_plan_gate_classes',0)}, positive_cases={ledger.get('launch_plan_positive_cases',0)}, negative_cases={ledger.get('launch_plan_negative_cases',0)}")
     print("  Registry evidence: parsed provider, bridge, RPC-body, CLI-body, SessionState, Git-payload, cloning contract/adapter/CLI/event/error, and standalone traceability registries; no aggregate parity count is claimed")
     return 0
 
