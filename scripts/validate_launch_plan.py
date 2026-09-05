@@ -5,9 +5,13 @@ Executes ``fixtures/launch_plan_request_conformance.json`` through a reference
 implementation of the Section 14.1 document validation, the Section 13.1
 planning-role resolution, and the Section 7.7 profile-flag refusal. Positive
 cases must resolve to the recorded final argv, suffix split, and request
-digest; negative cases must be refused with the recorded code and details. The
-fixture's provider profile mappings must equal the Section 7.7 table, and the
-SPEC prose must retain the semantic markers the gate depends on.
+digest; negative cases must be refused with the recorded code and details. A case may carry
+``plugin_answers`` -- the argv the plugin returns to the Section 13.1
+planning-role ``launch`` call and to the step-4 ``launch`` against the
+persisted record -- and a step-4 answer that differs from the planning answer
+is refused with ``provider_protocol_error``. The fixture's provider profile
+mappings must equal the Section 7.7 table, and the SPEC prose must retain the
+semantic markers the gate depends on.
 """
 
 from __future__ import annotations
@@ -35,6 +39,9 @@ GATE_CLASSES = [
 DOCUMENT_MEMBERS = {"schema", "schema_version", "argv", "argv_suffix", "env_names", "env_literals", "stdin", "extensions"}
 CASE_KEYS = {"id", "provider", "profile", "plugin_declares_caller_launch_plan", "document", "expected"}
 NEGATIVE_KEYS = {"id", "provider", "profile", "plugin_declares_caller_launch_plan", "document", "expected_error", "expected_details", "mutation"}
+# Optional per-case member: the two Section 13.1 ``launch`` answers of the plugin.
+PLUGIN_ANSWERS_KEY = "plugin_answers"
+PLUGIN_ANSWER_MEMBERS = {"planning_launch_argv", "step_4_launch_argv"}
 ENV_NAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,127}\Z", re.ASCII)
 REVERSE_DNS_RE = re.compile(r"[a-z][a-z0-9-]{0,62}(?:\.[a-z][a-z0-9-]{0,62})+\Z", re.ASCII)
 DIGEST_RE = re.compile(r"sha256:[0-9a-f]{64}\Z", re.ASCII)
@@ -72,6 +79,10 @@ SPEC_MARKERS = {
     "fragment digest CCJ-1": "never of the\npretty-printed <code>--format json</code> output",
     "registry row": "| Launch Plan request | <code>urn:ax:schema:launch-plan-request</code> | <code>1.0.0</code> |",
 }
+
+
+class FixtureError(ValueError):
+    """The fixture contradicts itself (not a gate refusal)."""
 
 
 class Refusal(Exception):
@@ -120,8 +131,16 @@ def resolve(
     base_argv: dict[str, dict[str, list[str]]],
     curator_keys: dict[str, Any],
     canonical: Callable[[object], bytes],
+    plugin_answers: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
-    """Reference ``ax start --launch-plan`` validation and planning-role resolution."""
+    """Reference ``ax start --launch-plan`` validation and planning-role resolution.
+
+    ``plugin_answers`` models the plugin's two Section 13.1 ``launch`` answers:
+    ``planning_launch_argv`` (the planning-role call before persistence, which
+    by definition is the resolved final argv) and ``step_4_launch_argv`` (the
+    call against the persisted record). A step-4 answer that differs from the
+    planning answer is ``provider_protocol_error`` and no process is created.
+    """
 
     if not isinstance(document, dict):
         raise Refusal("launch_plan_invalid", {"field": "schema"})
@@ -209,6 +228,18 @@ def resolve(
     if len(persisted_extensions) > EXTENSIONS_MAX_KEYS or len(canonical(persisted_extensions)) > EXTENSIONS_MAX_BYTES:
         raise Refusal("launch_plan_invalid", {"field": "extensions"})
 
+    # Section 13.1 determinism: the planning-role answer is the recorded argv;
+    # step 4's launch against the persisted record must return the same argv.
+    if plugin_answers is not None:
+        if not isinstance(plugin_answers, dict) or set(plugin_answers) != PLUGIN_ANSWER_MEMBERS:
+            raise FixtureError(f"{PLUGIN_ANSWERS_KEY} must carry exactly {sorted(PLUGIN_ANSWER_MEMBERS)}")
+        planning, step_4 = plugin_answers["planning_launch_argv"], plugin_answers["step_4_launch_argv"]
+        if planning != final_argv:
+            raise FixtureError(f"planning_launch_argv {planning!r} is not the resolved final argv {final_argv!r}")
+        if step_4 != planning:
+            mismatch = next((index for index, pair in enumerate(zip(step_4, planning)) if pair[0] != pair[1]), min(len(step_4), len(planning)))
+            raise Refusal("provider_protocol_error", {"reason": "launch_argv_mismatch", "argv_index": mismatch})
+
     return {
         "form": form,
         "base_argv_length": base_length,
@@ -281,16 +312,16 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
     seen_ids: set[str] = set()
     for row in positive if isinstance(positive, list) else []:
         case_id = row.get("id") if isinstance(row, dict) else None
-        need("positive_cases", isinstance(row, dict) and set(row) == CASE_KEYS, f"positive case {case_id} members are closed")
-        if not isinstance(row, dict) or set(row) != CASE_KEYS:
+        need("positive_cases", isinstance(row, dict) and set(row) - {PLUGIN_ANSWERS_KEY} == CASE_KEYS, f"positive case {case_id} members are closed")
+        if not isinstance(row, dict) or set(row) - {PLUGIN_ANSWERS_KEY} != CASE_KEYS:
             continue
         seen_ids.add(case_id)
         try:
-            result = resolve(row["document"], row["provider"], row["profile"], row["plugin_declares_caller_launch_plan"], mappings, base_argv, curator_keys, canonical)
+            result = resolve(row["document"], row["provider"], row["profile"], row["plugin_declares_caller_launch_plan"], mappings, base_argv, curator_keys, canonical, row.get(PLUGIN_ANSWERS_KEY))
         except Refusal as refusal:
             need("positive_cases", False, f"{case_id} refused with {refusal.code} {refusal.details}")
             continue
-        except (KeyError, TypeError) as exc:
+        except (KeyError, TypeError, FixtureError) as exc:
             need("positive_cases", False, f"{case_id} fixture reference error: {exc!r}")
             continue
         expected = row["expected"]
@@ -300,25 +331,26 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         need("positive_cases", result["final_argv"][result["base_argv_length"]:] == row["document"].get("argv_suffix", row["document"].get("argv")), f"{case_id} suffix split must reproduce the caller elements")
         need("positive_cases", row["profile"] == "standard" or result["form"] == "argv_suffix", f"{case_id} argv form is never positive under yolo")
     ledger["launch_plan_positive_cases"] = len(seen_ids)
-    need("coverage", {"LAUNCH-PLAN-SUFFIX-POS", "LAUNCH-PLAN-ARGV-POS"} <= seen_ids, "positive coverage must include the suffix and argv forms")
+    required_positives = {"LAUNCH-PLAN-SUFFIX-POS", "LAUNCH-PLAN-ARGV-POS", "LAUNCH-PLAN-EXTENSIONS-POS", "LAUNCH-PLAN-EXTENSIONS-KEYS-POS"}
+    need("coverage", required_positives <= seen_ids, f"positive coverage missing {sorted(required_positives - seen_ids)}")
 
     negative = data.get("negative_cases", [])
     negative_ids: set[str] = set()
     observed_codes: set[str] = set()
     for row in negative if isinstance(negative, list) else []:
         case_id = row.get("id") if isinstance(row, dict) else None
-        need("negative_cases", isinstance(row, dict) and set(row) == NEGATIVE_KEYS, f"negative case {case_id} members are closed")
-        if not isinstance(row, dict) or set(row) != NEGATIVE_KEYS:
+        need("negative_cases", isinstance(row, dict) and set(row) - {PLUGIN_ANSWERS_KEY} == NEGATIVE_KEYS, f"negative case {case_id} members are closed")
+        if not isinstance(row, dict) or set(row) - {PLUGIN_ANSWERS_KEY} != NEGATIVE_KEYS:
             continue
         negative_ids.add(case_id)
         need("negative_cases", isinstance(row.get("mutation"), str) and bool(row.get("mutation")), f"{case_id} mutation description is required")
         try:
-            result = resolve(row["document"], row["provider"], row["profile"], row["plugin_declares_caller_launch_plan"], mappings, base_argv, curator_keys, canonical)
+            result = resolve(row["document"], row["provider"], row["profile"], row["plugin_declares_caller_launch_plan"], mappings, base_argv, curator_keys, canonical, row.get(PLUGIN_ANSWERS_KEY))
         except Refusal as refusal:
             observed_codes.add(refusal.code)
             need("negative_cases", refusal.code == row["expected_error"], f"{case_id} expected {row['expected_error']}, gate refused with {refusal.code} {refusal.details}")
             need("negative_cases", refusal.details == row["expected_details"], f"{case_id} expected details {row['expected_details']}, gate produced {refusal.details}")
-        except (KeyError, TypeError) as exc:
+        except (KeyError, TypeError, FixtureError) as exc:
             need("negative_cases", False, f"{case_id} fixture reference error: {exc!r}")
         else:
             need("negative_cases", False, f"{case_id} was admitted by the gate: resolved {result['final_argv']} (expected {row['expected_error']})")
@@ -337,9 +369,17 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
         "LAUNCH-PLAN-ARGV-YOLO-PROFILE-NEG",
         "LAUNCH-PLAN-STDIN-BOUND-NEG",
         "LAUNCH-PLAN-AX-KEY-COLLISION-NEG",
+        "LAUNCH-PLAN-DETERMINISM-NEG",
+        "LAUNCH-PLAN-SCHEMA-NEG",
+        "LAUNCH-PLAN-ARGV-ELEMENTS-BOUND-NEG",
+        "LAUNCH-PLAN-ARGV-ELEMENT-BYTES-BOUND-NEG",
+        "LAUNCH-PLAN-ARGV-BYTES-BOUND-NEG",
+        "LAUNCH-PLAN-ENV-NAMES-BOUND-NEG",
+        "LAUNCH-PLAN-LITERAL-BOUND-NEG",
+        "LAUNCH-PLAN-EXTENSIONS-KEYS-BOUND-NEG",
     }
     need("coverage", required_negatives <= negative_ids, f"negative coverage missing {sorted(required_negatives - negative_ids)}")
-    need("coverage", {"launch_plan_invalid", "secret_policy_violation", "capability_unavailable", "invalid_arguments"} <= observed_codes, f"negative cases must exercise every caller-plan refusal code, observed {sorted(observed_codes)}")
+    need("coverage", {"launch_plan_invalid", "secret_policy_violation", "capability_unavailable", "invalid_arguments", "provider_protocol_error"} <= observed_codes, f"negative cases must exercise every caller-plan refusal code, observed {sorted(observed_codes)}")
     need("coverage", not (seen_ids & negative_ids), "positive and negative case IDs must be disjoint")
 
     ledger["launch_plan_failed_groups"] = min(len(GATE_CLASSES), len({error.split(":", 1)[0] for error in errors}))
