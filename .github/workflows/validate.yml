@@ -1,10 +1,8 @@
 name: Validate Specification
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+# Local-only CI policy: no automatic hosted execution. Keep the pinned tool
+# inventory and commands reproducible; the hosted workflow is disabled in settings.
+on: workflow_dispatch
 
 jobs:
   validate:
@@ -83,3 +81,8 @@ jobs:
 
       - name: Run expected-red mutation suite
         run: ./scripts/test_expected_red.sh
+
+      - name: Verify complete no-AX publication tool identities (local inventory)
+        run: |
+          python3 -B scripts/publication_gate/drive.py --source . --out "$RUNNER_TEMP/publication-identity-path" --branch path --pinned-java "$JAVA_HOME" --structurizr /opt/structurizr-cli-2025.11.09/structurizr.sh --plantuml-jar /opt/plantuml-1.2026.6.jar
+          python3 -B scripts/publication_gate/drive.py --source . --out "$RUNNER_TEMP/publication-identity-home" --branch home --pinned-java "$JAVA_HOME" --structurizr /opt/structurizr-cli-2025.11.09/structurizr.sh --plantuml-jar /opt/plantuml-1.2026.6.jar

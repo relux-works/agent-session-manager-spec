@@ -1,6 +1,24 @@
 #!/bin/bash
 set -euo pipefail
 
+# Bounded local runs retain the same mutation construction and public gates.
+FIRST=1
+LAST=2147483647
+RANGED=0
+if [ "$#" -ne 0 ]; then
+  if [ "$#" -ne 2 ] || [ "$1" != "--legacy-range" ] || ! [[ "$2" =~ ^[1-9][0-9]*:[1-9][0-9]*$ ]]; then
+    echo "usage: $0 [--legacy-range FIRST:LAST]" >&2
+    exit 2
+  fi
+  FIRST=${2%:*}
+  LAST=${2#*:}
+  if [ "$FIRST" -gt "$LAST" ]; then
+    echo "invalid legacy range: FIRST exceeds LAST" >&2
+    exit 2
+  fi
+  RANGED=1
+fi
+
 echo "=== Expected-red mutation suite for v0.6.0 (including immutable v0.4.3 history) ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
@@ -20,6 +38,9 @@ expect_fail() {
   local fixture_dir="${3:-.}"
   local cmd="${4:-./scripts/validate_spec.py}"
   TOTAL=$((TOTAL+1))
+  if [ "$TOTAL" -lt "$FIRST" ] || [ "$TOTAL" -gt "$LAST" ]; then
+    return 0
+  fi
   echo "  [$TOTAL] $label"
   set +e
   output=$(cd "$fixture_dir" && $cmd 2>&1)
@@ -2819,9 +2840,20 @@ expect_fail "modified actual historical Configuration definition" "historical de
 echo ""
 echo "=========================================="
 echo "Results: $PASS passed, $FAIL failed out of $TOTAL mutations"
+if [ "$RANGED" -eq 1 ] && { [ "$LAST" -gt "$TOTAL" ] || [ "$((PASS+FAIL))" -ne "$((LAST-FIRST+1))" ]; }; then
+  echo "Requested range was not fully exercised: $FIRST:$LAST"
+  exit 1
+fi
 if [ $FAIL -ne 0 ]; then
   echo "Expected-red suite FAILED"
   exit 1
 fi
-echo "Retained expected-red suite PASSED — all mutations correctly rejected with actionable diagnostics."
-python3 "$REPO_DIR/scripts/test_host_channel.py"
+if [ "$RANGED" -eq 0 ]; then
+  echo "Retained expected-red suite PASSED — all mutations correctly rejected with actionable diagnostics."
+  python3 "$REPO_DIR/scripts/test_host_channel.py"
+  python3 "$REPO_DIR/scripts/test_svg_rendering.py" --report "$TEMP_ROOT/svg-rendering.json"
+  python3 "$REPO_DIR/scripts/publication_gate/drive.py" --source "$REPO_DIR" --out "$TEMP_ROOT/identity-path" --branch path
+  python3 "$REPO_DIR/scripts/publication_gate/drive.py" --source "$REPO_DIR" --out "$TEMP_ROOT/identity-home" --branch home
+else
+  echo "Selected legacy range $FIRST:$LAST passed; host groups require separate execution."
+fi

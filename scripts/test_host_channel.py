@@ -14,6 +14,7 @@ import os
 import pathlib
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -23,9 +24,79 @@ from validate_host_channel import CLAUSES
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
+def find_tool(command, path):
+    """Resolve a tool without treating an unreadable search path as absence."""
+    for directory in path.split(os.pathsep):
+        parent = pathlib.Path(directory or '.')
+        try:
+            # which() silently skips search/read failures; those are not absence.
+            list(parent.iterdir())
+        except FileNotFoundError:
+            continue
+        candidate = parent / command
+        try:
+            info = candidate.stat()
+        except FileNotFoundError:
+            if candidate.is_symlink():
+                raise ValueError(f'unreadable publication tool: {candidate}')
+            continue
+        if stat.S_ISREG(info.st_mode) and os.access(candidate, os.X_OK):
+            return str(candidate.absolute())
+    return None
+
+
+def traced_tool(bin_dir, command, executable):
+    """Record the actual exec target in this private test fixture, then exec it.
+
+    This observes trusted local tools, not malicious wrappers or replacement
+    between hashing and exec. The public control never accepts caller receipts.
+    """
+    wrapper = bin_dir / command
+    wrapper.write_text(f"""#!{sys.executable}
+import glob, hashlib, json, os, pathlib, sys
+target = pathlib.Path({executable!r}).resolve(strict=True)
+artifacts = {{}}
+if {command!r} == 'java':
+    paths = []
+    if '-jar' in sys.argv:
+        paths = [sys.argv[sys.argv.index('-jar') + 1]]
+    elif '-cp' in sys.argv:
+        for entry in sys.argv[sys.argv.index('-cp') + 1].split(os.pathsep):
+            paths.extend(p for p in glob.glob(entry) if p.endswith('.jar'))
+    artifacts = {{str(pathlib.Path(p).resolve(strict=True)): hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths}}
+record = dict(tool={command!r}, target=str(target), sha256=hashlib.sha256(target.read_bytes()).hexdigest(), argv=sys.argv[1:], artifacts=artifacts)
+with open({str(bin_dir / 'executions.jsonl')!r}, 'a') as stream:
+    stream.write(json.dumps(record) + '\\n')
+os.execv(str(target), [str(target), *sys.argv[1:]])
+""")
+    wrapper.chmod(0o755)
+
+
+def publication_environment(bin_dir, repo):
+    """Keep selected documentation tools, not their entire ambient PATH."""
+    environment = dict(os.environ)
+    for command in ['python3', 'structurizr-cli', 'plantuml', 'java', 'dot']:
+        search = environment.get('PATH', os.defpath)
+        if command == 'java' and 'JAVA_HOME' in environment:
+            # An explicit pin is authoritative, including a broken pin.
+            search = str(pathlib.Path(environment['JAVA_HOME']) / 'bin')
+        executable = find_tool(command, search)
+        if not executable:
+            raise ValueError('missing publication prerequisite: ' + command)
+        traced_tool(bin_dir, command, executable)
+    environment['PATH'] = str(bin_dir) + os.pathsep + os.defpath
+    # PlantUML otherwise discovers Graphviz outside PATH on some platforms.
+    environment['GRAPHVIZ_DOT'] = str(bin_dir / 'dot')
+    if find_tool('ax', environment['PATH']) or os.path.lexists(repo / 'ax'):
+        raise ValueError('no-AX control is invalid: ax is present')
+    print('publication-no-ax-environment: ax=absent; java=' +
+          str(bin_dir / 'java'), flush=True)
+    return environment
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--group', choices=['all','source','model','fixture','obligations','publication'], default='all')
+    parser.add_argument('--group', choices=['all','source','model','fixture','obligations','publication','environment'], default='all')
     parser.add_argument('--dimension', choices=['entrypoint','carrier'], default='entrypoint')
     parser.add_argument('--report', type=pathlib.Path)
     args = parser.parse_args()
@@ -131,21 +202,20 @@ def main():
         print(f'baseline-public-validator: exit={baseline.returncode}',flush=True)
         if baseline.returncode or coverage_marker not in baseline.stdout:
             print(baseline.stdout,baseline.stderr);return 1
-        if args.group in {'all', 'publication'}:
+        if args.group in {'all', 'publication', 'environment'}:
             # A clean public fixture with no AX on PATH, still using the real
             # installed documentation tools and full public shell entrypoint.
             bin_dir = pathlib.Path(temp) / 'bin'
             bin_dir.mkdir()
-            for command in ['python3', 'structurizr-cli', 'plantuml']:
-                executable = shutil.which(command)
-                if not executable:
-                    print('missing publication prerequisite: '+command);return 1
-                (bin_dir / command).symlink_to(executable)
-            environment = dict(os.environ, PATH=str(bin_dir)+os.pathsep+os.defpath)
-            if shutil.which('ax', path=environment['PATH']) or (repo/'ax').exists():
-                print('no-AX control is invalid: ax is present');return 1
+            try:
+                environment = publication_environment(bin_dir, repo)
+            except (OSError, ValueError) as error:
+                print('publication environment error: ' + str(error), flush=True)
+                return 1
             result = subprocess.run(['./run_validation.sh'],cwd=repo,env=environment,text=True,capture_output=True)
             print(f'publication-no-ax-full-entrypoint: exit={result.returncode}',flush=True)
+            records = [json.loads(line) for line in (bin_dir / 'executions.jsonl').read_text().splitlines()]
+            print('publication-tool-executions: ' + json.dumps(records), flush=True)
             if result.returncode or coverage_marker not in result.stdout:
                 print(result.stdout,result.stderr);return 1
             # Syntax failure is an invalid plant, never a behavioral kill.

@@ -53,6 +53,70 @@ Every spec change must remain traceable:
 
 All changes require an independent reviewer acceptance before publication. The `to-review` board status means the author's work is handed off to review, not that it is accepted. See the task-board workflow and [SPEC.md §20.2](SPEC.md#202-publication-gate) items 8-10.
 
+## Local CI delivery policy
+
+Hosted automatic CI is disabled by user policy. `.github/workflows/validate.yml`
+retains the pinned installation inventory and public commands, with only a manual
+trigger; the hosted workflow is also disabled in repository settings. Local
+validation replaces hosted green checks. Do not wait for, relabel, or fabricate a
+hosted result.
+
+Run `./run_validation.sh`, `./scripts/test_expected_red.sh`, and the Java
+portability controls before delivery. The latter require real Java 11 and the workflow-pinned Temurin
+26.0.1 installations, a compatible Temurin 25.0.1 negative control, and the pinned documentation distribution/JAR:
+
+```bash
+python3 scripts/test_publication_environment.py --java11 /path/to/java11/home --pinned-java /path/to/temurin26.0.1/home --compatible-java /path/to/temurin25.0.1/home --structurizr /path/to/structurizr.sh --plantuml-jar /path/to/plantuml-1.2026.6.jar --mutants --report /tmp/publication-environment.json
+python3 scripts/test_svg_rendering.py --report /tmp/svg-rendering.json
+```
+
+The no-AX publication control preserves selected `python3`, `structurizr-cli`,
+`plantuml`, `java`, and `dot` executables in a restricted PATH. An explicit
+`JAVA_HOME` selects Java; an invalid pin fails instead of falling back. Without
+that pin, the caller's selected Java is retained. AX must be absent from the
+resulting executable search path and fixture root. Unreadable paths are errors,
+not evidence of absence. These controls establish repository publication
+portability, not AX runtime behavior or isolation from malicious tool binaries.
+`GRAPHVIZ_DOT` is bound to the isolated selected Graphviz executable. The control
+records each actual exec target and SHA256, invocation arguments, and Java JAR
+inputs. The publication invocation gate derives a complete inventory from
+`run_validation.sh` and its diagram sources. One evaluator requires each selected
+identity for each operation: contracts, Structurizr validate and export,
+C4/handwritten rendering, and every SVG comparison. The current source requires
+35 executable invocations and 110 supplied-classpath JAR identities; optional
+Graphviz probes have separate launch counters. A successful validate observation
+cannot satisfy export. Public receipts must agree with a separate trusted local
+launch ledger. Failed runs provide typed diagnostic evidence, never a successful
+publication census. Compatible Java substitution, omitted/forged receipts and
+documentation-tool substitutions must fail. Installed tools, controller and
+observer remain trusted; concurrent replacement, malicious binaries, loaded-class
+identity and native dependencies remain outside this finite guarantee.
+The public SVG comparator rejects malformed SVG and the pinned renderer's error
+artifacts even when its process exits zero and source/version metadata survives.
+This checks known renderer diagnostics and freshness, not visual correctness of
+every possible diagram. Use `--section controls` and `--section legacy-mutants --mutants` / `--section identity-mutants --mutants`
+for bounded environment runs; the default with `--mutants` runs both.
+
+The default expected-red suite and YAML local inventory run the invocation gate
+in both PATH and JAVA_HOME modes. Supply PUBLICATION_JAVA (or JAVA_HOME),
+PUBLICATION_STRUCTURIZR (the complete distribution launcher), and
+PUBLICATION_PLANTUML for local installations outside the YAML's `/opt` paths.
+PUBLICATION_DOT selects Graphviz, otherwise it is resolved from PATH. Real
+PUBLICATION_JAVA11 and PUBLICATION_JAVA25 installations are additionally needed
+for the regression controls. See [publication gate commands and bounds](scripts/publication_gate/README.md).
+`test_publication_identity.py --out /fresh/output --branch path` (then `home`)
+executes export-only Java25 and live comparator-receipt forgery, including their
+scope-specific narrowing witnesses. Replay suites explicitly reuse captured
+executions rather than claiming fresh publication for each omitted record.
+
+Keep the exact candidate tree, command lines, tool versions, real exits, negative
+and narrowing controls, and preservation evidence with the board outcome.
+After independent candidate review and creation of the author-signed delivery
+commit, rerun the local gates on that exact head, record its commit/tree and
+signature verification, and obtain exact-head review before PR delivery and
+plain fast-forward landing. A producer's uncommitted candidate evidence does not
+attest a future signed head. Preserve previous accepted results as history.
+
 ## Diagrams
 
 ### Sources

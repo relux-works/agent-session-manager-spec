@@ -46,7 +46,7 @@ PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
     "SPEC.md": "4315415822b0278d790868c767f92eb02ea93ffd8e96e1cc91719cd9dfc61100",
     "README.md": "f84da52ef39e69280e7ccee6156b36c51720b244d10349019783602c95407bbf",
-    "CONTRIBUTING.md": "4ebd45cc10df38a82fcbc5d3a626bcf55b9b68e23a906303afaede3f0e21f173",
+    "CONTRIBUTING.md": "6e15028248b1d85a470beea4ca626f4769bdbab009580ad85612b140a350f833",
     "CHANGELOG.md": "9f61e0eee5ec56a1f601d8cb74b73c2a006c404c90d78a7617b650d6e7f906fd",
     "RELEASE_NOTES.md": "bd62f047f8abd69da5d244cb3eb799104706b3a67a1c4dd5e2b5631a43c499e9",
 }
@@ -701,6 +701,14 @@ def check_ci_workflow(errors: list[str]) -> None:
     if not workflow.exists():
         return
     text = workflow.read_text(encoding="utf-8")
+    # This inventory deliberately supports one manual trigger only. Inspect the
+    # whole stanza, so a retained workflow_dispatch token cannot hide a push.
+    trigger_blocks = re.findall(r'^on:[^\n]*(?:\n(?:[ \t]+[^\n]*|))*(?=\n\S|\Z)', text, re.MULTILINE)
+    top_level_keys = [line.split(':', 1)[0] for line in text.splitlines()
+                      if line and not line[0].isspace() and not line.startswith('#')]
+    if (top_level_keys != ['name', 'on', 'jobs'] or
+            len(trigger_blocks) != 1 or trigger_blocks[0].strip() != 'on: workflow_dispatch'):
+        errors.append('validate.yml: local-only CI requires only on: workflow_dispatch')
     required = {
         "Ubuntu runner": "runs-on: ubuntu-22.04",
         "Python runtime": 'python-version: "3.11"',
@@ -2119,6 +2127,19 @@ def compare_svg_source_metadata(committed_name: str, generated_name: str) -> int
     else:
         committed_text = committed.read_text(encoding="utf-8")
         generated_text = generated.read_text(encoding="utf-8")
+        # A real pinned PlantUML crash can exit zero and preserve source/version
+        # metadata. Inspect rendered text, excluding embedded source comments.
+        import xml.etree.ElementTree as ET
+        for label, svg_text in [('committed', committed_text), ('generated', generated_text)]:
+            try:
+                svg = ET.fromstring(svg_text)
+                rendered_text = ' '.join(svg.itertext())
+                if (svg.get('data-diagram-type') == 'ERROR' or
+                        re.search(r'PlantUML \(.*?\) has crashed\.', rendered_text) or
+                        'An error has occurred!' in rendered_text):
+                    errors.append(f"{label} SVG contains a PlantUML render failure")
+            except ET.ParseError as error:
+                errors.append(f"{label} SVG is malformed: {error}")
         source_pattern = re.compile(r"<\?plantuml-src ([^?]+)\?>")
         version_pattern = re.compile(r"<\?plantuml ([^?]+)\?>")
         committed_source = source_pattern.search(committed_text)
