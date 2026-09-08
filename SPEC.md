@@ -1,9 +1,9 @@
-# Agent Session Manager (<code>ax</code>) v0.5.0 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.6.0 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.5.0</code> |
-| Document status | Release candidate and implementation contract |
+| Specification release | <code>v0.6.0</code> (prepared, unpublished) |
+| Document status | Prepared specification revision; no product implementation assurance |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
 | Default branch | <code>main</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.5.0. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.6.0. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -56,7 +56,7 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
     AX ownership, workspace, transfer, materialization, cloning, and terminal
     authority.
 
-The specified v0.5.0 product is a Go CLI, optional per-user background service, provider
+The specified v0.6.0 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -68,9 +68,9 @@ replication engine. It is not:
 - a guarantee that every provider supports every operation; or
 - an encrypted-at-rest snapshot product.
 
-There MUST be no permanent public TCP listener. The remote server entry point is
-<code>ax rpc serve --stdio</code>, normally started by Tailscale SSH or ordinary
-OpenSSH.
+There MUST be no permanent public TCP listener. The mutually authenticated remote entry point is
+<code>ax rpc serve --stdio --host-channel 1.0.0</code>, started through SSH
+without a PTY (Section 11.10). The unflagged invocation remains legacy only.
 
 ### 1.3 Conformance targets
 
@@ -113,13 +113,13 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following registry is the active v0.5.0 registry. Historical
+The following registry is the prepared v0.6.0 registry. Historical
 objects, including every v0.4.3 object and fixture, remain readable and
 immutable; a version shown here never widens an earlier version in place.
 
 | Contract | Schema identifier | Version |
 | --- | --- | --- |
-| Configuration | <code>urn:ax:schema:config</code> | <code>1.0.0</code>, <code>2.0.0</code> for directory-capable installations, <code>3.0.0</code> for TerminalBackend selection and policy |
+| Configuration | <code>urn:ax:schema:config</code> | <code>1.0.0</code>, <code>2.0.0</code> for directory-capable installations, <code>3.0.0</code> for TerminalBackend selection and policy, <code>4.0.0</code> for mutual host authentication |
 | Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor |
 | Provider manifest | <code>urn:ax:schema:provider-manifest</code> | <code>1.0.0</code> |
 | Provider probe | <code>urn:ax:schema:provider-probe</code> | <code>1.0.0</code> |
@@ -135,7 +135,9 @@ immutable; a version shown here never widens an earlier version in place.
 | Directory Node manifest | <code>urn:ax:schema:session-directory-node-manifest</code> | <code>1.0.0</code> |
 | Directory Node request | <code>urn:ax:schema:session-directory-node-request</code> | <code>1.0.0</code>, <code>2.0.0</code> for the AX platform vocabulary |
 | Directory Node response | <code>urn:ax:schema:session-directory-node-response</code> | <code>1.0.0</code> |
-| Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code>, <code>3.0.0</code> for directory replication, <code>4.0.0</code> for sanitized TerminalBackend evidence replication |
+| Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code>, <code>3.0.0</code> for directory replication, <code>4.0.0</code> for sanitized TerminalBackend evidence replication, <code>5.0.0</code> for authenticated host dispatch |
+| Host Channel | <code>urn:ax:transport:host-channel</code> | <code>1.0.0</code> |
+| Host Trust Store | <code>urn:ax:schema:host-trust-store</code> | <code>1.0.0</code> |
 | Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone targets, <code>3.0.0</code> for unified creation provenance |
 | Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone lifecycle, <code>3.0.0</code> for adoption and move lifecycle, <code>4.0.0</code> for Terminal Instance bindings |
 | Lease record | <code>urn:ax:schema:lease</code> | <code>1.0.0</code> |
@@ -180,7 +182,8 @@ immutable; a version shown here never widens an earlier version in place.
 | Session Directory Operation Receipt | <code>urn:ax:schema:session-directory-operation-receipt</code> | <code>1.0.0</code> |
 | Session Directory Query | <code>urn:ax:schema:session-directory-query</code> | <code>1.0.0</code> |
 
-The exact historical v0.4.3 registry is the table above with the five Terminal
+The exact historical v0.4.3 registry is the table above with Host Channel and
+Host Trust Store absent and with the five Terminal
 Backend contract rows absent and with exactly these six rows pinned to their
 then-active versions: Configuration <code>1.0.0,2.0.0</code>; Provider protocol
 <code>2.0.0</code>; Mesh RPC <code>2.0.0,3.0.0</code>; Session event
@@ -193,6 +196,12 @@ activates the five Terminal Backend contracts plus Configuration
 <code>3.0.0</code>, Provider Protocol <code>3.0.0</code>, Mesh RPC
 <code>4.0.0</code>, Session Event <code>4.0.0</code>, CLI Result
 <code>4.0.0</code>, and Structured Error <code>1.3.0</code>.
+
+The exact historical v0.5.0 registry is the table above with Host Channel and
+Host Trust Store absent, Configuration limited to 1.0.0/2.0.0/3.0.0 and Mesh
+RPC limited to 2.0.0/3.0.0/4.0.0. Every other row is unchanged. The prepared
+v0.6.0 authentication delta is exactly Configuration 4.0.0, Mesh RPC 5.0.0,
+Host Channel 1.0.0 and Host Trust Store 1.0.0. No published tag is changed.
 
 No contract version is implied by the <code>ax</code> executable version.
 Section 17 defines compatibility and migration. Independent versioning means
@@ -2616,6 +2625,56 @@ Configuration 1.0.0 and 2.0.0 retain their exact
 those two values as Section 4.E specifies, writes an owner-only backup and
 atomic replacement, and does not alter old bytes. A v1/v2 binary opening v3 is
 read-only diagnostic and MUST NOT discard tables or write a downgraded file.
+
+### 6.6 Configuration 4.0.0 host-channel migration
+
+Configuration 4.0.0 retains Configuration 3.0.0 except for the following exact
+changes. All other closed members, path precedence and five environment
+variables remain unchanged. No secret or TLS-verification override is added.
+
+| Key | Required value / constraint |
+| --- | --- |
+| <code>schema_version</code> | Exact <code>4.0.0</code> |
+| <code>mesh.transport</code> | Required, exact <code>ssh_tls13</code>; no default or alternative |
+| <code>mesh.host_channel</code> | Required, exact closed table below |
+
+The <code>mesh.host_channel</code> table contains exactly:
+
+| Key | Required value / constraint |
+| --- | --- |
+| <code>version</code> | Exact <code>1.0.0</code> |
+| <code>credential_id</code> | SHA-256 digest of the local leaf certificate DER |
+
+No per-peer override exists: every peer in a Config-4 mesh requires Host
+Channel 1 and RPC 5. The credential is loaded from the machine-local Section
+11.10.2 store; neither a certificate nor private-key bytes belong in TOML.
+The existing endpoint/SSH authentication and host-ID allowlist remain necessary
+but are insufficient without enrolled TLS identity. Unknown/missing/partial
+configuration, credential or trust state is a refusal, never legacy selection.
+
+Migration is an explicit local operator action, never first-connect behavior.
+First upgrade both binaries while keeping the old configuration bytes intact;
+create local credentials and exchange public enrollment material out of band;
+validate all intended peers' UUIDs and fingerprints; then preview a Config-4
+replacement with the retained Config-3 fields, selected credential and complete
+peer set. Apply only after explicit operator confirmation, an owner-only backup,
+and validation of that exact preview against the current configuration/trust
+generation. Older Config-1/2 inputs first use the existing explicit migrations.
+A missing peer enrollment blocks activation; an operator may explicitly remove
+a peer from the preview, but the implementation cannot silently drop it.
+
+Replacement is atomic and crash durable. On restart select only the last fully
+committed configuration plus valid local trust state; partial writes park with
+<code>invalid_config</code>. Config-4 readers MUST NOT rewrite historical files,
+and old readers MUST refuse Config-4 mutation. A Config-4 installation refuses
+the unflagged legacy server invocation before reading stdin. A Config-1/2/3
+installation refuses the flagged host-channel invocation. No byte sniffing,
+extension field, argv host UUID, environment value, or failed handshake can
+select a fallback. Legacy RPC 2/3/4 dual-stack obligations apply only to explicitly
+legacy installations; they never require a Config-4 endpoint to accept legacy.
+An operator rollback requires stopping every host channel, explicit replacement
+of configuration from the preserved backup, and acknowledgement that the legacy
+installation has no Host Channel assurance; it is not a connection retry.
 
 ## 7. Provider plugin protocol
 
@@ -7039,7 +7098,11 @@ value.
 
 ### 11.1 Transport and peer authentication
 
-The initiator runs the equivalent of:
+This subsection preserves the legacy RPC 2/3/4 transport. Its hello identity
+check is not cryptographic proof of an AX host UUID. Config-4/RPC-5 use Section
+11.10 instead and MUST NOT enter this legacy path.
+
+The legacy initiator runs the equivalent of:
 
 ~~~shell
 ssh -T HOST ax rpc serve --stdio
@@ -7933,6 +7996,832 @@ unknown binding. A v4/v2 negotiation performs core sync under v2 and reports
 both directory and TerminalBackend evidence unsupported. No peer coerces a
 namespace, event, or backend identity across majors, and unsupported activation
 never prevents safe browse/sync of contracts that were negotiated.
+
+### 11.10 Host Channel 1.0.0 and Mesh RPC 5.0.0
+
+This is the standard cross-platform strong-identity profile, independent of
+SSH implementation. It is a new explicit transport, not an extension to a
+legacy hello. Both endpoints MUST use a maintained TLS implementation; AX MUST
+NOT implement a custom challenge-signature or record-encryption protocol.
+
+#### 11.10.1 Launch, TLS and dispatch
+
+The Config-4 initiator starts exactly the equivalent of:
+
+~~~shell
+ssh -T HOST ax rpc serve --stdio --host-channel 1.0.0
+~~~
+
+SSH remains authenticated and server-verified. OpenSSH over a Tailscale network
+and native Tailscale SSH both carry the same ordered binary stdin/stdout stream;
+no PTY, shell banner on stdout, text conversion, alternate command, or shared
+TCP listener is permitted. Stderr is bounded sanitized diagnostics only.
+Native Tailscale SSH has its own authentication/server and policy; OpenSSH
+<code>authorized_keys</code>/forced-command behavior MUST NOT be assumed for it.
+Neither an SSH username, source address, tailnet node, launcher argument nor
+a hello value establishes AX host identity. Availability of a particular SSH
+server on a platform requires product testing; protocol parity is not a claim
+that native Tailscale SSH servers exist on every AX target.
+
+The initiator is TLS client and remote process TLS server. The first stdout/
+stdin bytes are TLS records, with no plaintext preface or version negotiation.
+Both sides require TLS 1.3 exclusively, ALPN exactly <code>ax-host/1</code>,
+full certificate authentication on every connection, and the Section 11.10.2
+certificate checks. Session tickets, PSKs, session resumption, 0-RTT, TLS 1.2,
+post-handshake client authentication, plaintext fallback and downgrade retries
+are forbidden. A missing ALPN or resumed connection is rejected. There is no
+RPC frame, error envelope, health read, version probe, or application dispatch
+before mutual authentication; failed TLS closes the SSH stream.
+
+In Go, configure <code>MinVersion=MaxVersion=tls.VersionTLS13</code>,
+<code>InsecureSkipVerify=false</code>,
+<code>ClientAuth=tls.RequireAndVerifyClientCert</code> on the server,
+<code>SessionTicketsDisabled=true</code>, a nil client session cache, and
+<code>NextProtos=["ax-host/1"]</code>. Use only the explicitly enrolled roots
+in <code>RootCAs</code>/<code>ClientCAs</code>, never the system pool. Exclude
+revoked/expired entries from these pools. The total encoded CA distinguished-
+name list MUST fit the TLS 65,535-byte CertificateRequest authority-list bound;
+refuse activation if it cannot, never truncate the trust set silently. The client
+sets <code>ServerName</code> to the expected UUID-derived DNS SAN below, not the
+SSH endpoint. Additional <code>VerifyConnection</code> checks MUST supplement
+successful standard chain/name/time/EKU verification, not replace or disable it.
+They check the exact enrolled leaf, root, key, UUID, role and current trust state.
+TLS exporters, key logs and secret traffic material MUST NOT be persisted.
+
+The TLS handshake has a fixed 10-second wall-clock deadline and at most 1 MiB
+of incoming handshake bytes per side, including certificate records, before
+completion; an adapter around SSH pipes MUST enforce cancellation and these
+limits even when a peer sends no bytes. The subsequent hello has a separate
+10-second deadline and the existing 8 MiB line / 5 MiB object limits; remaining
+requests use the configured RPC timeout. Limits count bytes, not characters.
+No application bytes may be interpreted as RPC until the TLS handshake returns
+success locally. TLS permits a client to finish its handshake before the server
+has accepted its final flight; consequently the client may send only encrypted
+hello at that point. The server MUST finish verifying the client's Certificate,
+CertificateVerify and Finished before parsing hello, and sends hello success
+only after current authorization and identity equality pass. The initiator
+MUST receive and validate that success before any other RPC operation.
+
+RPC 5 has the exact RPC-4 operations, envelope/body shapes, eight namespaces,
+limits and 25-key hello map from Section 11.9, with only the containing
+<code>protocol_version</code> and <code>contracts.rpc</code> changed to
+<code>5.0.0</code> and <code>["5.0.0"]</code>. No authentication, trust,
+configuration, error or transport key is added to hello. Structured Error
+remains statically bound to 1.3.0. Every received hello host ID MUST equal the
+uniquely verified enrolled host UUID; on the client that UUID MUST also equal
+the selected configured destination. Local outgoing hello MUST use the local
+credential's UUID equal to Config-4 host ID. Nonces retain their correlation
+semantics and are not identity proof. A TLS-authenticated peer is still refused
+when it is not allowlisted or its hello identity differs.
+
+After TLS, a valid RPC-5 non-hello request before hello success or an invalid
+RPC-5 hello receives at most one encrypted Error 1.3.0 failure and closes;
+identity refusal uses <code>host_identity_mismatch</code>, missing allowlist
+permission uses <code>peer_not_allowlisted</code> (both exit 7); a contract
+mismatch <code>incompatible_protocol</code>. Unframeable input and other RPC
+majors close without a frame. Before TLS completes, only a standard TLS alert
+may be sent, never JSON. The initiating CLI uses existing local <code>authentication_failed</code>
+(exit 7) for a known peer certificate/handshake authentication failure and
+<code>transport_failure</code> (exit 8) for transport I/O, timeout or unclassified
+EOF. Local config/credential-store loading failure is <code>invalid_config</code>
+(exit 3) before launch. Use <code>incompatible_protocol</code> (exit 6) only when
+incompatibility is actually known, not inferred from EOF. No new Error enum or
+exit code is introduced.
+
+#### 11.10.2 Certificate issuance and enrolled trust
+
+Host Credential Profile 1 is part of Host Channel 1, with no online CA service.
+For each credential generation the host generates two distinct CSPRNG ECDSA
+P-256 key pairs locally: a self-signed root CA and a leaf signed by that CA.
+Root and leaf use X.509 v3, ECDSA-with-SHA256 signatures and distinct positive
+random 128-bit serial numbers. The root is used only to sign this one leaf;
+its private key MUST be destroyed after successful issuance. Rotation generates
+both fresh keys and certificates. Reissuing a leaf under an enrolled CA does
+not enroll it. TLS sends only the leaf; the exact root is already local trust.
+
+| Certificate member | Root | Leaf |
+| --- | --- | --- |
+| Subject / issuer | CN <code>AX Host Root HOST_UUID</code>, self-issued | CN <code>AX Host HOST_UUID</code>, issuer equals root subject |
+| Basic Constraints (critical) | CA=true, pathLen=0 | CA=false, no pathLen |
+| Key Usage (critical) | keyCertSign only | digitalSignature only |
+| Extended Key Usage (noncritical) | Absent | Exactly clientAuth and serverAuth |
+| Subject Alternative Name (noncritical) | Absent | Exactly one DNS name <code>HOST_UUID.host.ax.invalid</code>; no other SAN type |
+| Validity | notBefore=issuance time minus 300s; notAfter=notBefore plus 366 days | Same notBefore; notAfter=notBefore plus 90 days |
+| Subject Key Identifier (noncritical) | SHA-1 of subjectPublicKey BIT STRING contents | Same construction for leaf key |
+| Authority Key Identifier (noncritical) | Root SKI | Root SKI |
+
+HOST_UUID is the configured lowercase canonical UUIDv7, without braces. No
+wildcard, CN-only name, alternative UUID, extra subject attribute, extension,
+intermediate, AIA fetch, CRL URL or OCSP dependency is allowed in this profile.
+The DNS SAN is a verification name, never a DNS lookup or network endpoint.
+Root self-signature, leaf signature, exact fields above, valid P-256 public
+points, root/leaf lifetime and current validity of both certificates MUST be
+checked at enrollment and handshake. Certificate validity uses the actual
+local UTC time inclusively within notBefore/notAfter; no extra acceptance skew
+or expiry grace is allowed. Unavailable/untrusted local time refuses admission;
+clock correction cannot extend a previously scheduled stream expiry. No FIPS
+certification or hardware non-exportability is claimed by choosing P-256.
+
+Host Trust Store 1.0.0 is owner-only JSON at
+<code>STATE_DIR/host-channel/trust.json</code>. It is machine-local authority,
+not an immutable mesh object, and has exactly these fields:
+
+| Field | Type / constraint |
+| --- | --- |
+| <code>schema</code> | Exact <code>urn:ax:schema:host-trust-store</code> |
+| <code>schema_version</code> | Exact <code>1.0.0</code> |
+| <code>generation</code> | uint53 greater than zero; increments by one per committed trust/config authorization change; exhaustion refuses mutation |
+| <code>entries</code> | CredentialEntry[0..4096], sorted by credential_id, no duplicates |
+
+Each CredentialEntry contains exactly <code>host_id:UUIDv7</code>,
+<code>credential_id:digest</code> (SHA-256 of leaf DER),
+<code>spki_id:digest</code> (SHA-256 of leaf SubjectPublicKeyInfo DER),
+<code>root_id:digest</code> (SHA-256 of root DER),
+<code>leaf_der:base64url</code>, <code>root_der:base64url</code> (each unpadded,
+canonical and decoding to 1..16384 bytes),
+<code>state:active|retiring|revoked</code>, <code>enrolled_at:timestamp</code>,
+and <code>retire_at:timestamp|null</code>. The last field is non-null exactly
+for retiring entries and later than enrolled_at. Revoked entries retain their
+public bytes permanently as reuse tombstones. An unreadable, malformed,
+partially read, duplicate-key, unknown-field or missing store is never an empty
+store. Initial creation of an empty generation-1 store is explicit local setup.
+
+Enrollment is local operator authorization of the tuple (host UUID, leaf DER
+fingerprint, SPKI fingerprint, root DER fingerprint), verified over an
+independent authenticated out-of-band channel. Imported public bytes MUST
+reproduce those fingerprints and the profile before the transaction commits.
+SSH discovery, a first hello, a remote claim, and a certificate being self-signed
+are not approval. Remote RPC cannot mutate the trust store. Both directions
+need enrollment; one side enrolling another does not imply reciprocity.
+
+Across all entries, including revoked ones, a leaf, leaf public key or root
+MUST NOT map to more than one host UUID. Multiple entries for the same leaf or
+SPKI are invalid, including attempted renewal with the same key. Duplicate
+root IDs are also invalid, even for the same UUID. At most two
+non-revoked credentials may belong to a host, solely during rotation. A root
+trusted for one host never grants its other issued certificates admission.
+After ordinary TLS verification, an exact leaf/root/SPKI match against one
+currently admitted entry yields the verified UUID. Zero or multiple matches
+refuse. SAN alone and CA membership alone are insufficient. Both EKUs are
+required by the profile; chain verification additionally validates serverAuth
+at the client and clientAuth at the server.
+
+Local leaf PEM and PKCS#8 private-key PEM are stored under
+<code>STATE_DIR/host-channel/credentials/HEX_CREDENTIAL_ID/</code> as
+<code>certificate.pem</code> and <code>private-key.pem</code>; HEX_CREDENTIAL_ID
+is the 64 lowercase hex characters after <code>sha256:</code>. The root public
+PEM is <code>root.pem</code>. No other file may select identity. Validate the
+private/public match, profile and configured host ID before use. Directories
+are 0700 and files 0600 on Unix; Windows requires equivalent owner-only ACLs.
+Reject symlinks/reparse escapes or group/world write access. Do not forward SSH
+agents or reuse SSH/provider keys. Credential/trust files, backups, private
+keys and authorization caches MUST NOT enter replication, snapshots, cloning,
+Session Directory, logs or exported diagnostic bundles. Operators exchange only
+explicitly selected public enrollment material outside replication.
+
+#### 11.10.3 Rotation, revocation and authorization generations
+
+Rotation keeps host UUID and creates a new credential. Explicitly enroll the
+new tuple on each participating peer before selecting it in Config-4. The
+local atomic trust transition admits the new entry as active and marks the old
+entry retiring with a fixed retire_at no more than 24 hours after that
+transition and no later than old leaf expiry. There is no overlap extension;
+no second rotation starts until the retiring entry is revoked. Failed or
+incomplete enrollment leaves the new route unavailable, never auto-trusted.
+At retire_at old admission ends and old streams close even if the new route
+is unavailable. A peer offline during rotation must explicitly catch up; no
+mesh-wide atomic enrollment or central CA availability is assumed.
+
+Trust changes and Config-4 peer/credential changes share a machine-local
+cross-process authorization lock and crash-durable generation transaction.
+Readers MUST obtain one coherent committed snapshot (config plus trust), never
+mix an old allowlist with new credentials. Every opened stream binds the local
+credential ID, verified remote credential ID/UUID and snapshot generation.
+A trust/config commit invalidates all streams of the prior generation; every
+process, including daemonless RPC children, MUST close them within one second
+of the commit using cancellation plus a bounded watchdog, even when idle.
+Missing/failed generation reads close the stream. Filesystem notifications
+alone are insufficient. At certificate expiry or retire_at the same rule
+applies, with no new dispatch at or after the deadline. Process crashes close
+the underlying stream; a dead process is not an authorization subscriber.
+
+Every application dispatch checks current generation, credential validity,
+allowlist membership and authenticated hello. Its check and dispatch admission
+MUST hold the same authorization lock, so revocation cannot commit between them.
+A read admitted before revocation may be interrupted by stream cancellation;
+no new read is admitted afterward from the stale generation. Each mutation, including resumed
+transfer, retry, queued work and recovery, additionally rechecks these facts
+under the authorization lock immediately before each externally visible
+side-effect boundary. The generation check and that boundary serialize with
+revocation/config commit. Work prepared under an old generation cannot gain
+new authority by refreshing a cached number: discard its authorization and
+replan/revalidate through a fresh mutually authenticated connection. Existing
+lease, operation and idempotency checks still apply. An effect already committed
+before revocation is not undone; pending work must stop at the next boundary
+and use the existing recovery journal. Long provider calls must not hold the
+authorization lock across unbounded work; revocation cannot report success
+while an effect boundary still holds prior authorization.
+
+Revocation is an explicit local atomic transition to revoked, increments the
+generation, forbids all future admissions of that key and closes old streams.
+Removing an allowlisted host also increments generation and invalidates streams.
+Success means the durable decision committed; the documented one-second close
+bound does not permit any later dispatch or mutation from the stale generation.
+A crash after commit but before acknowledgements cannot restore authority.
+Failed commits report failure; they cannot be reported as absence or success.
+Revocation is local: the operator must distribute it explicitly to every peer;
+a disconnected peer with stale trust cannot be claimed globally revoked.
+Loss/copy/compromise of a key requires revocation and new out-of-band enrollment,
+not same-key recovery. Host UUID reuse after total trust-state loss requires
+operator reconciliation of every peer, never automatic enrollment.
+
+#### 11.10.4 Assurance and executable fixture bounds
+
+TLS proves possession of an enrolled private key and protects records. It does
+not prove unique physical hardware, current ownership of a Session, or an
+uncompromised operator/account. A copied key authenticates until each verifier
+revokes it. An attacker able to read/replace local AX state, credentials or
+binaries is outside this assurance. Arbitrary shell access to that account
+cannot be made safe by a wrapper. A restricted server-enforced SSH account is
+an alternative deployment hardening measure, not equivalent host evidence and
+not a substitute for this profile. Remote attach/log CLI paths remain their
+existing SSH contracts; they do not acquire RPC-5 host-channel assurance.
+
+The following closed gate registry defines source-level fixture families.
+Each family MUST have positive and negative vectors. These are contract model
+checks, not an executed TLS deployment, private-key custody proof or product
+conformance result. Real certificate-chain, handshake, race/timeout and platform
+acceptance remains required by <code>AC-HOST-001</code>.
+
+| Gate | Predicate required for admission |
+| --- | --- |
+| HC-TLS | Both peers verify full TLS 1.3 and exact ALPN; no resumption or early data |
+| HC-CERT | Standard chain, profile, time and role verification succeed in both directions |
+| HC-MAP | Exact enrolled leaf/root/key maps uniquely to the configured UUID |
+| HC-HELLO | Both hello IDs equal verified UUIDs and nonce/contract/limit validation succeeds |
+| HC-DISPATCH | No application dispatch before mutual TLS and hello success |
+| HC-MIGRATE | Config 4 selects the explicit Host Channel 1 launch and RPC 5 only |
+| HC-LIFECYCLE | Explicit enrollment and bounded fresh-key rotation; revoked keys never reenter |
+| HC-GENERATION | Dispatch and every mutation boundary use the current committed authorization generation |
+| HC-EXCLUDE | Credential and trust material remains local, outside replication |
+| HC-PARITY | The same TLS requirements apply over OpenSSH and native Tailscale SSH |
+
+#### 11.10.5 Executable admission obligations
+
+The following closed JSON policy is normative source for the synthetic admission
+predicates. The public validator reads it from SPEC.md on every invocation;
+there is no independently hard-coded admission model. Every field is required,
+unknown fields refuse, and all field predicates must hold. Predicates apply to
+every invocation, including request, resume, retry, queue and recovery, on both
+SSH transports; client/server facts are separate required obligations. The entrypoint and
+carrier facts are synthetic execution context, not new RPC wire members. A
+conditional predicate cannot grant an exception to another obligation.
+
+Operators are closed: `eq` is type-exact JSON equality; `range` is an inclusive
+integer interval (booleans excluded); `in` is type-exact set membership;
+`equal_field` is type-exact equality with another present field; `singleton_field`
+is exactly a one-element array of that field; `uuid7` requires the canonical
+lowercase UUIDv7 grammar; `all` is conjunction. `when` has exactly `field`, `in`
+and `require`: it applies its predicate only when the named fact is in the given
+set. It exists to make scope changes executable and testable, not to authorize
+narrowing the universal obligations in this revision. Missing or mistyped
+operands, duplicate keys, unsupported operators and unreadable policy refuse.
+
+The table following the JSON is rendered from these predicates. The detailed
+Section 6.6 and 11.10.1–4 explanations are checked against the review-bound
+renderer templates in `scripts/host_channel_templates/`; they cannot be changed
+by refreshing the five-document prose digest. Templates are implementation
+inputs, not another normative specification. Changes to a predicate must pass
+independent vectors even when the table has been regenerated. Changes to the
+explanation require reviewing its renderer too. Projection agreement is an
+integrity check, **not** natural-language semantic proof.
+
+Coverage counts individually witnessed executable field obligations from this
+policy, separately from family coverage and explanation projection. A witness
+must show admission with the obligation satisfied and refusal caused by that
+obligation alone on a well-shaped vector. Missing-field controls prove the
+closed schema separately. Detailed DER parsing, issuance, filesystem custody,
+transaction crash durability and live TLS/SSH scheduling are not discharged by
+boolean facts; their behavioral coverage is unknown, as is semantic coverage of
+unstructured prose outside these projections. Product acceptance still requires
+AC-HOST-001. No coverage ratio here measures those runtime requirements.
+
+<!-- host-admission-policy -->
+~~~json
+{
+  "format": "ax-host-admission-1",
+  "gates": {
+    "HC-TLS": {
+      "client_version": {
+        "eq": "1.3"
+      },
+      "server_version": {
+        "eq": "1.3"
+      },
+      "client_alpn": {
+        "eq": "ax-host/1"
+      },
+      "server_alpn": {
+        "eq": "ax-host/1"
+      },
+      "resumed": {
+        "eq": false
+      },
+      "early_data": {
+        "eq": false
+      },
+      "incoming_handshake_bytes": {
+        "range": [
+          1,
+          1048576
+        ]
+      },
+      "handshake_ms": {
+        "range": [
+          1,
+          10000
+        ]
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-CERT": {
+      "client_chain": {
+        "eq": true
+      },
+      "server_chain": {
+        "eq": true
+      },
+      "client_profile": {
+        "eq": true
+      },
+      "server_profile": {
+        "eq": true
+      },
+      "client_time": {
+        "eq": true
+      },
+      "server_time": {
+        "eq": true
+      },
+      "client_role": {
+        "eq": true
+      },
+      "server_role": {
+        "eq": true
+      },
+      "insecure_skip_verify": {
+        "eq": false
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-MAP": {
+      "leaf_match": {
+        "eq": true
+      },
+      "root_match": {
+        "eq": true
+      },
+      "spki_match": {
+        "eq": true
+      },
+      "matches": {
+        "eq": 1
+      },
+      "mapping_hosts": {
+        "singleton_field": "verified_uuid"
+      },
+      "verified_uuid": {
+        "equal_field": "configured_uuid"
+      },
+      "configured_uuid": {
+        "uuid7": true
+      },
+      "allowlisted": {
+        "eq": true
+      },
+      "store_read": {
+        "eq": "valid"
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-HELLO": {
+      "client_verified": {
+        "uuid7": true
+      },
+      "server_verified": {
+        "uuid7": true
+      },
+      "client_hello": {
+        "equal_field": "client_verified"
+      },
+      "server_hello": {
+        "equal_field": "server_verified"
+      },
+      "nonce_echo": {
+        "eq": true
+      },
+      "exact_contracts": {
+        "eq": true
+      },
+      "valid_limits": {
+        "eq": true
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-DISPATCH": {
+      "client_tls": {
+        "eq": true
+      },
+      "server_tls": {
+        "eq": true
+      },
+      "server_verified_client_finished": {
+        "eq": true
+      },
+      "server_hello_accepted": {
+        "eq": true
+      },
+      "client_hello_success_received": {
+        "eq": true
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-MIGRATE": {
+      "config": {
+        "eq": "4.0.0"
+      },
+      "launch": {
+        "eq": "--host-channel 1.0.0"
+      },
+      "transport": {
+        "eq": "ssh_tls13"
+      },
+      "rpc": {
+        "eq": "5.0.0"
+      },
+      "explicit": {
+        "eq": true
+      },
+      "atomic": {
+        "eq": true
+      },
+      "all_peers_enrolled": {
+        "eq": true
+      },
+      "fallback": {
+        "eq": false
+      },
+      "config_read": {
+        "eq": "valid"
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-LIFECYCLE": {
+      "oob_verified": {
+        "eq": true
+      },
+      "fresh_key": {
+        "eq": true
+      },
+      "credential_state": {
+        "in": [
+          "active",
+          "retiring"
+        ]
+      },
+      "non_revoked_credentials": {
+        "range": [
+          1,
+          2
+        ]
+      },
+      "overlap_seconds": {
+        "range": [
+          0,
+          86400
+        ]
+      },
+      "retire_deadline_passed": {
+        "eq": false
+      },
+      "retired_key_reused": {
+        "eq": false
+      },
+      "overlap_extended": {
+        "eq": false
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-GENERATION": {
+      "stream_generation": {
+        "equal_field": "current_generation"
+      },
+      "current_generation": {
+        "range": [
+          1,
+          9007199254740991
+        ]
+      },
+      "read": {
+        "eq": "valid"
+      },
+      "dispatch_check": {
+        "eq": true
+      },
+      "mutation_check": {
+        "eq": true
+      },
+      "serialized_boundary": {
+        "eq": true
+      },
+      "local_credential_valid": {
+        "eq": true
+      },
+      "peer_credential_valid": {
+        "eq": true
+      },
+      "close_delay_ms": {
+        "range": [
+          0,
+          1000
+        ]
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-EXCLUDE": {
+      "replicated": {
+        "eq": []
+      },
+      "credential_storage": {
+        "eq": "machine_local"
+      },
+      "owner_only": {
+        "eq": true
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    },
+    "HC-PARITY": {
+      "transport": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      },
+      "tls_required": {
+        "eq": true
+      },
+      "identity_source": {
+        "eq": "enrolled_tls"
+      },
+      "assume_openssh_restrictions": {
+        "eq": false
+      },
+      "pty": {
+        "eq": false
+      },
+      "entrypoint": {
+        "in": [
+          "request",
+          "resume",
+          "retry",
+          "queue",
+          "recovery"
+        ]
+      },
+      "carrier": {
+        "in": [
+          "openssh",
+          "native_tailscale_ssh"
+        ]
+      }
+    }
+  }
+}
+~~~
+<!-- /host-admission-policy -->
+
+<!-- host-admission-table -->
+| Obligation | Required on every invocation |
+| --- | --- |
+| HC-TLS.client_version | equals "1.3" |
+| HC-TLS.server_version | equals "1.3" |
+| HC-TLS.client_alpn | equals "ax-host/1" |
+| HC-TLS.server_alpn | equals "ax-host/1" |
+| HC-TLS.resumed | equals false |
+| HC-TLS.early_data | equals false |
+| HC-TLS.incoming_handshake_bytes | is an integer in [1, 1048576] |
+| HC-TLS.handshake_ms | is an integer in [1, 10000] |
+| HC-TLS.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-TLS.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-CERT.client_chain | equals true |
+| HC-CERT.server_chain | equals true |
+| HC-CERT.client_profile | equals true |
+| HC-CERT.server_profile | equals true |
+| HC-CERT.client_time | equals true |
+| HC-CERT.server_time | equals true |
+| HC-CERT.client_role | equals true |
+| HC-CERT.server_role | equals true |
+| HC-CERT.insecure_skip_verify | equals false |
+| HC-CERT.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-CERT.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-MAP.leaf_match | equals true |
+| HC-MAP.root_match | equals true |
+| HC-MAP.spki_match | equals true |
+| HC-MAP.matches | equals 1 |
+| HC-MAP.mapping_hosts | is exactly [field verified_uuid] |
+| HC-MAP.verified_uuid | equals field configured_uuid |
+| HC-MAP.configured_uuid | is a canonical lowercase UUIDv7 |
+| HC-MAP.allowlisted | equals true |
+| HC-MAP.store_read | equals "valid" |
+| HC-MAP.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-MAP.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-HELLO.client_verified | is a canonical lowercase UUIDv7 |
+| HC-HELLO.server_verified | is a canonical lowercase UUIDv7 |
+| HC-HELLO.client_hello | equals field client_verified |
+| HC-HELLO.server_hello | equals field server_verified |
+| HC-HELLO.nonce_echo | equals true |
+| HC-HELLO.exact_contracts | equals true |
+| HC-HELLO.valid_limits | equals true |
+| HC-HELLO.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-HELLO.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-DISPATCH.client_tls | equals true |
+| HC-DISPATCH.server_tls | equals true |
+| HC-DISPATCH.server_verified_client_finished | equals true |
+| HC-DISPATCH.server_hello_accepted | equals true |
+| HC-DISPATCH.client_hello_success_received | equals true |
+| HC-DISPATCH.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-DISPATCH.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-MIGRATE.config | equals "4.0.0" |
+| HC-MIGRATE.launch | equals "--host-channel 1.0.0" |
+| HC-MIGRATE.transport | equals "ssh_tls13" |
+| HC-MIGRATE.rpc | equals "5.0.0" |
+| HC-MIGRATE.explicit | equals true |
+| HC-MIGRATE.atomic | equals true |
+| HC-MIGRATE.all_peers_enrolled | equals true |
+| HC-MIGRATE.fallback | equals false |
+| HC-MIGRATE.config_read | equals "valid" |
+| HC-MIGRATE.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-MIGRATE.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-LIFECYCLE.oob_verified | equals true |
+| HC-LIFECYCLE.fresh_key | equals true |
+| HC-LIFECYCLE.credential_state | is one of ["active","retiring"] |
+| HC-LIFECYCLE.non_revoked_credentials | is an integer in [1, 2] |
+| HC-LIFECYCLE.overlap_seconds | is an integer in [0, 86400] |
+| HC-LIFECYCLE.retire_deadline_passed | equals false |
+| HC-LIFECYCLE.retired_key_reused | equals false |
+| HC-LIFECYCLE.overlap_extended | equals false |
+| HC-LIFECYCLE.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-LIFECYCLE.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-GENERATION.stream_generation | equals field current_generation |
+| HC-GENERATION.current_generation | is an integer in [1, 9007199254740991] |
+| HC-GENERATION.read | equals "valid" |
+| HC-GENERATION.dispatch_check | equals true |
+| HC-GENERATION.mutation_check | equals true |
+| HC-GENERATION.serialized_boundary | equals true |
+| HC-GENERATION.local_credential_valid | equals true |
+| HC-GENERATION.peer_credential_valid | equals true |
+| HC-GENERATION.close_delay_ms | is an integer in [0, 1000] |
+| HC-GENERATION.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-GENERATION.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-EXCLUDE.replicated | equals [] |
+| HC-EXCLUDE.credential_storage | equals "machine_local" |
+| HC-EXCLUDE.owner_only | equals true |
+| HC-EXCLUDE.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-EXCLUDE.carrier | is one of ["openssh","native_tailscale_ssh"] |
+| HC-PARITY.transport | is one of ["openssh","native_tailscale_ssh"] |
+| HC-PARITY.tls_required | equals true |
+| HC-PARITY.identity_source | equals "enrolled_tls" |
+| HC-PARITY.assume_openssh_restrictions | equals false |
+| HC-PARITY.pty | equals false |
+| HC-PARITY.entrypoint | is one of ["request","resume","retry","queue","recovery"] |
+| HC-PARITY.carrier | is one of ["openssh","native_tailscale_ssh"] |
+<!-- /host-admission-table -->
 
 ## 12. Workspace replication
 
@@ -10258,6 +11147,16 @@ ax pane SESSION_ID
 ax rpc serve --stdio
 ~~~
 
+Prepared v0.6.0 additionally defines the internal invocation
+<code>ax rpc serve --stdio --host-channel 1.0.0</code>, exclusively with
+Configuration 4.0.0 (Sections 6.6 and 11.10). The flag is accepted only on
+<code>rpc serve --stdio</code>, exactly once with the literal value
+<code>1.0.0</code>; a missing value, duplicate flag, other value or use on another
+command is <code>invalid_arguments</code> (exit 2). The unflagged invocation
+retains its legacy meaning. Both invocations are streaming exceptions to CLI
+Result output: the new invocation emits only TLS records on stdout, including
+encrypted RPC-5 frames after authentication, never a plaintext CLI result.
+
 The v0.5.0 release adds exactly these TerminalBackend inspection commands:
 
 ~~~text
@@ -11229,12 +12128,18 @@ Machine-local credentials are a prerequisite at the destination. A successful
 snapshot transfer MUST NOT imply that provider or remote-board authentication
 will succeed.
 
+For Config-4/RPC-5, Sections 6.6 and 11.10 additionally require enrolled
+mutual TLS and define possession-of-key, revocation and account-compromise
+limits. Legacy hello equality alone MUST NOT be described as verified AX host
+identity. No transport profile grants authority to a discovered peer.
+
 ### 16.2 Mandatory exclusions
 
 No manifest or bundle generated by <code>ax</code> MAY intentionally include:
 
 | Class | Examples |
 | --- | --- |
+| AX host authentication | Host keys, credential/trust stores and backups, enrollment authority, TLS secrets and generation caches (Section 11.10) |
 | Provider credentials | API keys, OAuth tokens, <code>auth.json</code>, account cookies, subscription tokens |
 | SSH/private identity | SSH private keys, agent sockets, known-host mutation state |
 | Environment secrets | Secret environment values, dotenv secrets unless explicitly managed as project content outside <code>ax</code> |
@@ -11389,6 +12294,12 @@ prompts, credentials, terminal output, or raw environment values.
 ## 17. Compatibility and migration
 
 ### 17.1 Semantic-version rules
+
+Prepared specification v0.6.0 is a minor revision over immutable v0.5.0.
+Section 6.6 and Section 11.10 define the new containing contracts and explicit
+migration; every prior closed shape, fixture and release tag remains intact.
+RPC 5 binds Error 1.3.0 without adding an error or hello-map key. This prepared
+revision is not a statement that a v0.6.0 tag has been published.
 
 Each contract in Section 1.5 versions independently:
 
@@ -12007,6 +12918,7 @@ signed Environment Tuple under Section 13.14.5.
 | <code>AC-DIR-TERM-001</code> | Hostile ANSI/OSC/bidi/control/width strings render inertly, structured argv/cwd/environment launch admits no shell injection, and spawn alone never satisfies readiness. |
 | <code>AC-OBS-001</code> | Required events/metrics exist and a secret/transcript canary never appears in logs. |
 | <code>AC-DOC-001</code> | All internal section references, local links, JSON/TOML examples, tables, and traceability rows validate. |
+| <code>AC-HOST-001</code> | Drive the real Config-4 launch and RPC-5 dispatch on supported SSH/platform lanes: full mutual TLS, exact enrolled certificate/UUID/hello, no preauthentication effects, migration/downgrade refusals, fresh-key rotation, revocation of idle/live streams within one second, expiry and concurrent mutation-generation fencing. Exercise valid and invalid actual certificates, both role failures, stale/failed reads and recovery bypasses. Model fixtures alone never satisfy this product gate. |
 | <code>AC-REF-001</code> | A schema-aware reference walker resolves every normative simple/dotted field expression and enum token against the containing closed registry (including MaterializationCohort fields), rejects aliases absent from that schema, and separately validates every extension key against Section 1.6. |
 | <code>AC-DIAG-001</code> | Structurizr and all nine focused PlantUML sources render to fifteen committed SVGs; the fresh artifacts are visually inspected for clipping, width, contrast, readable labels, and arrow direction and match Sections 3–4, 10.8, 13, and 16.7. |
 
@@ -12041,10 +12953,18 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 
 ### 20.1 Repository and release
 
+For the prepared v0.6.0 revision, explicit user authorization permits signed
+branch/PR delivery after real review and green checks, superseding the legacy
+manual-command workflow for commits and pushes. The parent coordinates
+release publication only after all constituent Stories are accepted and landed.
+This preparation MUST NOT create a release tag or claim a published v0.6.0
+release. A later release requires its own accepted publication evidence.
+
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
-the default branch, and carry the MIT License. The current specification
-release is <code>v0.5.0</code>. Existing release tags are immutable history and
+the default branch, and carry the MIT License. The prepared revision is
+<code>v0.6.0</code>, not an already published release. Existing release tags are
+immutable history and
 MUST NOT be moved or rewritten. The v0.3.0 specification baseline remains the
 normative cloning authority whether consumed from its release package or the
 accepted baseline commit; this sentence does not claim that a particular tag
@@ -12060,10 +12980,12 @@ Ivan Oparin <oparin@me.com>
 No AI <code>Co-Authored-By</code> trailer or other AI attribution trailer MUST
 appear in any commit message, including the release commit. The release commit
 MUST contain only the human author above and MUST be SSH-signed with
-<code>~/.ssh/ivanopcode</code>. Automation MUST NOT stage, commit, tag, or push;
-automation MUST stop before any <code>git add</code>/<code>git commit</code>/
-<code>git tag</code>/<code>git push</code> operation and hand the exact reviewed
-commands to the user for explicit human execution. The model MAY be acknowledged
+<code>~/.ssh/ivanopcode</code>. Authorized repository delivery MUST use a signed
+feature branch, a real PR review record and green required checks on that exact
+head. Preserve the reviewed signed commits when landing; never replace them
+with unsigned objects or bypass branch protection. Publication of a release tag
+is a separate parent-owned action after all constituent work is accepted.
+The model MAY be acknowledged
 only in prose documentation outside commit metadata, clearly marked as
 non-commit attribution and only when explicitly requested; it MUST NOT appear as
 a commit co-author.
@@ -12071,7 +12993,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-specification release <code>v0.5.0</code>, not an <code>ax</code> executable
+prepared specification revision <code>v0.6.0</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -12083,35 +13005,31 @@ release. The publication task MUST:
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
 4. verify <code>VERSION</code>, current document metadata, changelog, release
-   notes, and the proposed tag all say <code>v0.5.0</code>, while every existing
+   notes, and the proposed tag all say <code>v0.6.0</code>, while every existing
    historical tag remains unchanged;
 5. run the semantic crash/restart gate and its focused expected-red mutations;
    validation MUST emit an actionable diagnostic when the three-outcome
    exclusivity/exhaustiveness rule, boundary registry, evidence requirements,
    duplicate-owner prohibition, or exact-native-identity prohibition is
    weakened or removed;
-6. prepare the exact signed-commit command with author
-   <code>Ivan Oparin &lt;oparin@me.com&gt;</code> and no AI trailer, and hand it
-   to the user for explicit review; automation MUST NOT stage or commit before
-   human approval;
-7. prepare the exact signed annotated <code>v0.5.0</code> tag command and hand it
-   to the user for explicit review; automation MUST NOT create the tag before
-   human approval;
-8. after the human creates the commit and tag, verify both signatures locally
-   with <code>git log --show-signature -1</code> and
-   <code>git tag --verify v0.5.0</code>;
-9. hand the exact <code>git push</code> commands for <code>main</code> and the
-   <code>v0.5.0</code> tag to the user; automation MUST NOT push before explicit
-   human approval and only after accepted validation/review;
+6. create only author-signed commits for reviewed scope, publish a feature
+   branch, and open or update its pull request under explicit delivery authority;
+7. inspect the complete remote diff and obtain the required real review and
+   checks for the exact signed head; an author comment review never impersonates
+   an independent approval required by branch protection;
+8. verify signatures locally and remote feature/PR head equality, then land the
+   accepted signed head without rewriting it and without forcing the default
+   branch; if main advances, repeat signed rebase, review and checks;
+9. keep release tags unchanged during preparation; the parent may publish a
+   signed annotated release only after all constituent Stories and publication
+   gates are accepted and landed under separate release authority;
 10. verify the public repository, default branch, license, commit signature, tag
    signature, and release URL; and
 11. attach publication evidence to the board.
 
-No automation MAY publish, stage, commit, tag, or push before validation
-acceptance and explicit human review of every stage/commit/tag/push command.
-Automation MUST stop before those operations and hand the exact reviewed
-commands to the user. SemVer applies to specification releases; independent
-schema/protocol versions remain as listed in Section 1.5.
+Specification preparation and repository delivery MUST NOT be reported as an
+already published release or product acceptance. SemVer applies to specification
+releases; independent schema/protocol versions remain as listed in Section 1.5.
 
 Publication acceptance case <code>SPEC-PUB-001</code> MUST run in a fixture
 checkout containing no <code>ax</code> executable and pass all specification
@@ -12127,6 +13045,22 @@ At least one focused expected-red mutation MUST remove or weaken a gate clause
 and MUST be rejected with a diagnostic that names the missing crash/restart
 requirement rather than only reporting a generic document digest mismatch.
 
+Publication acceptance case <code>SPEC-PUB-HOST-001</code> MUST run the public
+validator against the exact ten Section 11.10.4 gate families, executable
+Section 11.10.5 policy and <code>fixtures/host_channel_conformance.json</code>.
+It MUST report individually witnessed source-derived obligation coverage
+separately from the measured family coverage ratio and check registry, migration, certificate/trust profile,
+positive and negative contract vectors, legacy preservation and publication
+caveats. Focused narrowing mutants MUST fail with a named host-channel
+diagnostic through <code>scripts/validate_spec.py</code>, not solely a prose
+hash. Predicate-scope mutations with regenerated tables MUST change vector
+admission and be rejected for that decision, across request/resume/retry/queue/
+recovery and both carriers. Token-preserving explanation qualifiers MUST fail
+projection agreement independently of the prose digest. Projection checks are
+reported as integrity evidence, not semantic behavior. The full public
+<code>run_validation.sh</code> must invoke this gate. This source-only check
+does not execute <code>AC-HOST-001</code>.
+
 ## Appendix A. Normative traceability
 
 ### A.1 Settled-decision traceability
@@ -12137,6 +13071,7 @@ requirement rather than only reporting a generic document digest mismatch.
 | Terminal persistence | Sections 3.1–3.2, 4, 13.4–13.13, 19.2–19.4 |
 | Providers and native stores | Sections 7, 8, 13.1, 13.6–13.13, Appendix C |
 | Task-board integration | Sections 2.2, 9, 13.2, 13.6–13.13, 19.3–19.4 |
+| Mutual host authentication and credential lifecycle | Sections 1.5, 6.6, 11.10, 16, 17.1; AC-HOST-001 and SPEC-PUB-HOST-001 |
 | Mesh and replication | Sections 1.6, 3.2–3.3, 6, 10–12, 13.3, 13.13, 16, 19 |
 | Attach, takeover, failure, and fork | Sections 5.3–5.7, 13, 14, 15, 16.5, 19.4 |
 | Implementation stack and delivery | Sections 1.3–1.6, 3–7, 10–12, 17–20 |
@@ -12233,7 +13168,7 @@ not a prerequisite for that publication.
 | No duplicate owner or silent fresh native session | Section 13.13 rejects two live/authoritative owners, unfenced continuation presented as safe recovery, new-session launch, fresh native handles/manager references, blank relabeling, and realm substitution. |
 | Runtime conformance acceptance | Section 19.4 <code>AC-CRASH-001</code> executes every applicable boundary with exact classification and evidence. |
 | Specification publication acceptance and mutation gate | Section 20.2 <code>SPEC-PUB-CRASH-001</code> requires semantic validation plus an actionable focused expected-red mutation. |
-| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version from immutable history and introduce changed closed shapes only under independent versions; Section 20.1 identifies <code>v0.5.0</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
+| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version from immutable history and introduce changed closed shapes only under independent versions; Section 20.1 identifies prepared <code>v0.6.0</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
 
 ### A.9 Cross-environment cloning traceability
 
@@ -12374,6 +13309,18 @@ surface while the matrices retain the stricter tuple-specific gates:
    backend ID, compatibility, capability, ownership, transport, or conformance
    claim.
 
+Host-channel building blocks were checked 2026-09-08 against
+[TLS 1.3 (RFC 8446)](https://www.rfc-editor.org/rfc/rfc8446),
+[X.509 (RFC 5280)](https://www.rfc-editor.org/rfc/rfc5280),
+[Go TLS](https://pkg.go.dev/crypto/tls),
+[Go X.509](https://pkg.go.dev/crypto/x509),
+[OpenSSH server restrictions](https://man.openbsd.org/sshd.8), and
+[native Tailscale SSH](https://tailscale.com/docs/features/tailscale-ssh).
+The issuance, enrollment, pinning and generation policy is AX
+Section 11.10 design, not a claim that those sources implement AX. The
+[host-channel source report](.research/260908_host-channel-profile.md) records
+the design rationale and evidence limits.
+
 Local help probes are evidence only for the exact installed versions and macOS
 host. They do not establish another platform cell.
 
@@ -12413,6 +13360,7 @@ display-language label.
 
 | Section 1.5 contract | Positive fixture anchor | Additional required negative mutation |
 | --- | --- | --- |
+| Host Channel / Host Trust Store | Sections 6.6 and 11.10; host_channel_conformance.json | Missing/forged credential, wrong role/UUID/hello, duplicate mapping, stale generation, idle revocation, rollback, legacy fallback, replicated keys; cover all ten gate families and Section 11.10.5 field obligations with token-preserving scope changes and regenerated-table behavior tests |
 | Configuration | Sections 6.2, 6.4, and 6.5 TOML plus Section 3.2 path registry | Add root <code>unknown_root</code>; add secret value or raw backend command/environment; set unsafe SSH host-key bypass; exercise all flags/environment values plus empty and unknown <code>AX_*</code> cases; reject Config-2 directory bounds, Config-3 duplicate/unknown/backend-policy/trust violations, restore fallback, silent major rewrite, or downgrade mutation |
 | Provider protocol | Section 7.2 envelopes, every Section 7.5 row, and Section 7.A v3 descriptor | Mismatch request ID; success with both body/error; operation/body tag mismatch; stale/mismatched Terminal Instance binding; v2 projection of a non-built-in ID; compatible/major/invalid-first-output Error binding fixtures |
 | Provider manifest | Section 7.3 with all fifteen operations | Remove <code>capture</code> or one transaction operation; duplicate provider ID discovery remains fatal |

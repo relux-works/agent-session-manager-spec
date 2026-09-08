@@ -1,18 +1,18 @@
-# Agent Session Manager (`ax`) v0.5.0 — Specification Repository
+# Agent Session Manager (`ax`) v0.6.0 — Specification Repository
 
 | Field | Value |
 | --- | --- |
 | Public command | `ax` |
-| Specification release | `v0.5.0` |
+| Prepared specification revision | `v0.6.0` — unpublished |
 | Repository | `relux-works/agent-session-manager-spec` |
 | Default branch | `main` |
 | License | MIT |
 | Normative contract | [`SPEC.md`](SPEC.md) |
 | Status | Specification only — no `ax` product binary in this repository |
 
-> This repository publishes the normative, implementation-ready contract for Agent Session Manager v0.5.0. It specifies behavior; it does not implement `ax`. Publishing the specification does not claim that any future product acceptance matrix has passed. See [SPEC.md §1](SPEC.md#1-conformance-language-and-scope), [§19](SPEC.md#19-ax-implementation-conformance-and-product-release), and [§20](SPEC.md#20-specification-publication-and-governance).
+> This repository prepares the normative contract for Agent Session Manager v0.6.0; no v0.6.0 release tag is published by this work. It specifies behavior; it does not implement `ax`. Publishing the specification does not claim that any future product acceptance matrix has passed. See [SPEC.md §1](SPEC.md#1-conformance-language-and-scope), [§19](SPEC.md#19-ax-implementation-conformance-and-product-release), and [§20](SPEC.md#20-specification-publication-and-governance).
 
-> **Current baseline:** v0.5.0 adds the independently versioned TerminalBackend
+> **Retained baseline:** v0.5.0 adds the independently versioned TerminalBackend
 > contract family over immutable v0.4.3 history. AX retains all session and
 > ownership authority; tmux remains the mandatory Unix target; Superlogical is
 > future-only and unavailable. Existing release tags are not moved.
@@ -46,7 +46,29 @@ The operator can:
 
 `ax` is a Go CLI, optional per-user background service, provider plugin host, terminal supervisor, SSH RPC client/server, and Go-native replication engine. It is not a cloud service, public relay, multi-tenant scheduler, replacement for a provider native store or for task-board/`tb-sessiond`, general-purpose backup, secrets manager, source-control system, distributed shell that auto-authorizes discovered machines, guarantee that every provider supports every operation, or encrypted-at-rest snapshot product. See [SPEC.md §1.2](SPEC.md#12-product-boundary) and [§16](SPEC.md#16-security-and-threat-boundary).
 
-There is no permanent public TCP listener. The remote entry point is `ax rpc serve --stdio`, normally started by Tailscale SSH or ordinary OpenSSH. See [SPEC.md §1.2](SPEC.md#12-product-boundary) and [§11.1](SPEC.md#111-transport-and-peer-authentication).
+There is no permanent public TCP listener. The Config-4 remote entry point is `ax rpc serve --stdio --host-channel 1.0.0`, started over verified SSH with no PTY. The unflagged command remains legacy-only. See [SPEC.md §1.2](SPEC.md#12-product-boundary) and [§11.1](SPEC.md#111-transport-and-peer-authentication).
+
+## Mutually authenticated host channel
+
+Prepared v0.6.0 adds Config `4.0.0`, Mesh RPC `5.0.0`, Host Channel `1.0.0`
+and Host Trust Store `1.0.0`. TLS 1.3 mutual authentication runs over the SSH
+byte stream; the verified enrolled certificate maps to one host UUID and each
+hello must match it before application dispatch. Enrollment is explicit and
+out of band. Keys stay local; rotation uses fresh keys and at most 24 hours of
+overlap; revocation fences mutations and closes stale streams within one second.
+
+Migration is explicit and atomic. No legacy retry, plaintext fallback,
+resumption or 0-RTT is allowed. Published Config 1/2/3 and RPC 2/3/4 shapes remain
+unchanged. The same host checks apply to OpenSSH and native Tailscale SSH,
+without assuming they share account or forced-command enforcement. This proves
+possession of an enrolled key, not physical-machine uniqueness or safety after
+local-account compromise. SSH attach/log commands retain their existing scope.
+See [SPEC §6.6](SPEC.md#66-configuration-400-host-channel-migration) and
+[§11.10](SPEC.md#1110-host-channel-100-and-mesh-rpc-500).
+
+The new fixtures check specification consistency and synthetic contract
+vectors. They do not run an AX TLS implementation. Real handshake, certificate,
+revocation-race and platform evidence belongs to `AC-HOST-001`.
 
 ## TerminalBackend modularity boundary
 
@@ -151,7 +173,7 @@ projections only; it never changes ownership or launches a runtime.
 
 ## Installation and status caveat
 
-This is a **specification-only** repository at `v0.5.0`. There is no `ax` binary or TerminalBackend implementation to install, no provider runtime requirement to validate or publish the spec, no stable public TerminalBackend SDK, and no Section 19 product-conformance result implied by publication. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20.2](SPEC.md#202-publication-gate).
+This is a **specification-only** repository preparing `v0.6.0`. There is no `ax` binary or TerminalBackend implementation to install, no provider runtime requirement to validate or publish the spec, no stable public TerminalBackend SDK, and no Section 19 product-conformance result implied by publication. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20.2](SPEC.md#202-publication-gate).
 
 To work with the spec:
 
@@ -382,7 +404,7 @@ Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-c
 
 ```
 .
-├── SPEC.md                          # normative v0.5.0 contract (only normative source)
+├── SPEC.md                          # normative v0.6.0 contract (only normative source)
 ├── README.md                        # this file — operator summary with links to SPEC
 ├── CONTRIBUTING.md                  # contributor workflow (traceability, diagrams, versioning, signing)
 ├── STANDALONE_TO_AX_TRACEABILITY.md # non-normative standalone migration index
@@ -455,7 +477,7 @@ Provider binaries are not required to validate or publish this specification. Pr
 
 The validator compares LF-normalized SHA-256 digests for the five reviewed public claim documents (`SPEC.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and `RELEASE_NOTES.md`). This is a bounded content-integrity control, not general natural-language theorem proving. A specification revision must intentionally update the digest map in `scripts/validate_spec.py` after reviewing the changed prose and mutation coverage. The semantic gate validates the Section 13.13 recovery outcomes, Section 13.14 cloning contracts, Directory conformance, the eight historical v0.4.3 roadmap/terminal-realm safety classes, and the independently versioned TerminalBackend fixture. Focused expected-red mutations must fail with actionable diagnostics.
 
-The `v0.5.0` publication gate freezes the reviewed public claim documents, validates the retained crash/restart and cloning semantics, Directory and historical v0.4.3 roadmap/terminal-realm conformance, and the TerminalBackend contract, then runs focused expected-red mutations with actionable diagnostics. Every command below must exit `0`; a nonzero result is a gate failure, never publication evidence. This does not relax [SPEC.md §20.2](SPEC.md#202-publication-gate).
+The prepared `v0.6.0` publication gate freezes the candidate public claim documents, validates the retained crash/restart and cloning semantics, Directory and historical v0.4.3 roadmap/terminal-realm conformance, and the TerminalBackend contract, then runs focused expected-red mutations with actionable diagnostics. Every command below must exit `0`; a nonzero result is a gate failure, never publication evidence. This does not relax [SPEC.md §20.2](SPEC.md#202-publication-gate).
 
 ### Exact validation commands
 
@@ -504,7 +526,7 @@ Sources live in `diagrams/c4/*.dsl` (Structurizr) and `diagrams/plantuml/*.puml`
 
 ## License and release target
 
-The repository is intended for public release under the **MIT License**, default branch `main`. The initial specification release was `v0.1.0`; the current specification release is `v0.5.0`. Existing release tags remain immutable; the accepted v0.3 baseline remains cloning authority without asserting that a particular historical tag exists. The signing and authorship metadata — author `Ivan Oparin <oparin@me.com>`, SSH key `~/.ssh/ivanopcode`, SSH-signed commit and annotated tag with local signature verification, no AI `Co-Authored-By` trailer, and an explicit human approval gate before stage/commit/tag/push — are normative in [SPEC.md §20](SPEC.md#20-specification-publication-and-governance) and summarized in [CONTRIBUTING.md](CONTRIBUTING.md#signing-release-and-attribution).
+The repository is intended for public release under the **MIT License**, default branch `main`. The initial specification release was `v0.1.0`; the retained published baseline is `v0.5.0` and the prepared, unpublished revision is `v0.6.0`. Existing release tags remain immutable; the accepted v0.3 baseline remains cloning authority without asserting that a particular historical tag exists. The signing and authorship metadata — author `Ivan Oparin <oparin@me.com>`, SSH key `~/.ssh/ivanopcode`, SSH-signed commit and annotated tag with local signature verification, no AI `Co-Authored-By` trailer, and explicitly authorized signed branch/PR delivery with separate parent-owned release publication — are normative in [SPEC.md §20](SPEC.md#20-specification-publication-and-governance) and summarized in [CONTRIBUTING.md](CONTRIBUTING.md#signing-release-and-attribution).
 
 ## Contract map
 
@@ -527,3 +549,12 @@ Major implementation boundaries (see [SPEC.md](SPEC.md) for the normative defini
 - one allowlisted SSH remote-log path whose result always identifies the emitting host and is never rewritten as Mesh RPC output.
 
 Appendix A of [SPEC.md](SPEC.md#appendix-a-normative-traceability) maps these to the settled decisions, acceptance criteria, and reviewer findings. Appendix D defines the exhaustive contract, tagged-union, cross-contract, and static-reference fixture catalog.
+
+Host-channel validation tools (repository-only):
+
+- `python3 scripts/test_host_channel.py` drives the public validator in isolated
+  copies with host-channel narrowing mutants; temporary evidence goes below
+  `.temp/host-channel-tests/`. It reports real process exits and named failures.
+- `scripts/validate_host_channel.py` is imported by `scripts/validate_spec.py`;
+  its fixtures are `fixtures/host_channel_conformance.json`. Source-family and
+  synthetic-vector coverage is distinct from product TLS/runtime coverage.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for AX v0.5.0.
+"""Public, repository-only validation for AX v0.6.0.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
 and adds publication/metadata, recovery, cloning, Directory, historical v0.4.3
@@ -18,12 +18,13 @@ import sys
 import tomllib
 from collections.abc import Iterator
 
+from validate_host_channel import validate as validate_host_channel
 from validate_directory import validate as validate_directory
 from validate_terminal_backend import validate as validate_terminal_backend
 from validate_v043 import validate as validate_v043
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CURRENT_RELEASE = "0.5.0"
+CURRENT_RELEASE = "0.6.0"
 SPEC = ROOT / "SPEC.md"
 README = ROOT / "README.md"
 CONTRIBUTING = ROOT / "CONTRIBUTING.md"
@@ -37,16 +38,17 @@ DIRECTORY_FIXTURE = ROOT / "fixtures" / "session_directory_conformance.json"
 V043_FIXTURE = ROOT / "fixtures" / "v0_4_3_roadmap_terminal_realm.json"
 TERMINAL_BACKEND_FIXTURE = ROOT / "fixtures" / "terminal_backend_conformance.json"
 PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
-# Frozen reviewed publication prose. Hashes use UTF-8 text with all line endings
+# Prepared candidate publication prose, subject to exact-head review. Hashes
+# use UTF-8 text with all line endings
 # normalized to LF, so the same checkout validates on Unix and Windows. A
 # specification revision must deliberately replace this bounded map after its
 # semantic checks and expected-red suite have been reviewed.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "562546d240f0fa3e71b47e6359a002f9892c0efd97e19eb55917527552ac484a",
-    "README.md": "da7ac589d05ae41a93d2b1d94a2d4a2a008304f51e0c63d9e8fab55c71e21c99",
-    "CONTRIBUTING.md": "6346872b89c114988e93c2ab4fd85f16045c09e4d87f6d534453d102f945c2ce",
-    "CHANGELOG.md": "b7243c372fd6e7e1ffdcf536fedd03318b50971230611a43ddfa92f80621c081",
-    "RELEASE_NOTES.md": "e544932452ea45222132e5743596bd55afefc7ed9b394da9489d1159b328bff9",
+    "SPEC.md": "4315415822b0278d790868c767f92eb02ea93ffd8e96e1cc91719cd9dfc61100",
+    "README.md": "f84da52ef39e69280e7ccee6156b36c51720b244d10349019783602c95407bbf",
+    "CONTRIBUTING.md": "4ebd45cc10df38a82fcbc5d3a626bcf55b9b68e23a906303afaede3f0e21f173",
+    "CHANGELOG.md": "9f61e0eee5ec56a1f601d8cb74b73c2a006c404c90d78a7617b650d6e7f906fd",
+    "RELEASE_NOTES.md": "bd62f047f8abd69da5d244cb3eb799104706b3a67a1c4dd5e2b5631a43c499e9",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -2235,6 +2237,10 @@ def main() -> int:
     passed += terminal_backend_ledger["terminal_backend_gate_classes"] - terminal_backend_ledger["terminal_backend_failed_groups"]
     ledger.update(terminal_backend_ledger)
 
+    host_errors, host_ledger = validate_host_channel(ROOT, text)
+    errors.extend(host_errors)
+    ledger.update(host_ledger)
+
     local_link_count = 0
     for doc in [SPEC, README, CONTRIBUTING, DIAGRAMS_README]:
         if not doc.exists():
@@ -2267,6 +2273,10 @@ def main() -> int:
     print(f"  Directory ledger: gate_classes={ledger.get('directory_gate_classes',0)}, contracts={ledger.get('directory_contracts',0)}, fixture_families={ledger.get('directory_fixture_families',0)}, expected_red_minimum={ledger.get('directory_expected_red_minimum',0)}")
     print(f"  v0.4.3 ledger: gate_classes={ledger.get('v043_gate_classes',0)}, positive_cases={ledger.get('v043_positive_cases',0)}, negative_cases={ledger.get('v043_negative_cases',0)}")
     print(f"  TerminalBackend ledger: gate_classes={ledger.get('terminal_backend_gate_classes',0)}, positive_cases={ledger.get('terminal_backend_positive_cases',0)}, expected_red_minimum={ledger.get('terminal_backend_expected_red_minimum',0)}")
+    print(f"  Host Channel contextual obligations: {ledger.get('host_contexts_witnessed',0)}/{ledger.get('host_contexts',0)} isolated context witnesses")
+    print(f"  Host Channel closed facts: {ledger.get('host_closed_contexts_witnessed',0)}/{ledger.get('host_closed_contexts',0)} isolated unknown-field context witnesses")
+    print(f"  Host Channel executable obligations: {ledger.get('host_obligations_witnessed',0)}/{ledger.get('host_obligations',0)} isolated negative witnesses; unstructured prose/runtime semantic coverage unknown")
+    print(f"  Host Channel source families: {ledger.get('host_channel_covered',0)}/{ledger.get('host_channel_families',0)}, synthetic vectors={ledger.get('host_channel_vectors',0)}; runtime/TLS acceptance not executed")
     print("  Registry evidence: parsed provider, bridge, RPC-body, CLI-body, SessionState, Git-payload, cloning contract/adapter/CLI/event/error, and standalone traceability registries; no aggregate parity count is claimed")
     return 0
 

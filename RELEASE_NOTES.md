@@ -1,4 +1,23 @@
-# Agent Session Manager (`ax`) Specification v0.5.0
+# Agent Session Manager (`ax`) Specification v0.6.0 — prepared, unpublished
+
+This prepared minor revision adds the standard mutually authenticated host
+channel over SSH, exact public credential enrollment and UUID binding,
+credential rotation/revocation, and explicit configuration/launch migration.
+Config 4.0.0 and RPC 5.0.0 select Host Channel 1.0.0 with Host Trust Store 1.0.0.
+Historical contracts and release tags stay immutable. There is no resumption,
+0-RTT, plaintext fallback, silent downgrade or inferred trust from SSH identity.
+
+These are specification artifacts only: this repository has no `ax` product
+binary and no executed TLS deployment or platform conformance result. Synthetic
+fixtures and source mutations validate the contract package, not key custody or
+live revocation. The parent coordinates publication after all constituent
+Stories pass review and land. This work does not create a v0.6.0 release tag.
+
+The profile authenticates enrolled-key possession. Copied keys and compromised
+local accounts are outside physical-host assurance; revocation must reach each
+peer explicitly. See SPEC Sections 6.6, 11.10, 16 and 20.
+
+## Retained v0.5.0 release notes
 
 This minor specification release adds the first-class TerminalBackend contract
 family over immutable `v0.4.3` history. It is a specification-only release:

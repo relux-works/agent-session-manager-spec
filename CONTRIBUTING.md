@@ -1,13 +1,18 @@
 # Contributing to the Agent Session Manager specification
 
-This guide is for contributors editing the `v0.5.0` specification in `relux-works/agent-session-manager-spec` (public, MIT, default branch `main`). It summarizes and links to the normative rules in [SPEC.md](SPEC.md) — it does not create a second contract. When this guide and [SPEC.md](SPEC.md) disagree, [SPEC.md](SPEC.md) wins.
+This guide is for contributors editing the `v0.6.0` specification in `relux-works/agent-session-manager-spec` (public, MIT, default branch `main`). It summarizes and links to the normative rules in [SPEC.md](SPEC.md) — it does not create a second contract. When this guide and [SPEC.md](SPEC.md) disagree, [SPEC.md](SPEC.md) wins.
+
+Prepared v0.6.0 does not authorize a release tag. Explicit user authorization
+permits signed branch/PR delivery after review and green checks, superseding
+the historical manual commit/push workflow. The coordinating parent
+owns release publication after every constituent Story is accepted and landed.
 
 ## Scope and publication target
 
-The repository is **specification only** in `v0.5.0`. It does not contain an `ax` product binary or TerminalBackend implementation, does not publish a stable TerminalBackend SDK, and does not claim that any future product acceptance matrix has passed. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20](SPEC.md#20-specification-publication-and-governance).
+The repository is **specification only** in `v0.6.0`. It does not contain an `ax` product binary or TerminalBackend implementation, does not publish a stable TerminalBackend SDK, and does not claim that any future product acceptance matrix has passed. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20](SPEC.md#20-specification-publication-and-governance).
 
-The first specification release was `v0.1.0`; the current release is
-`v0.5.0`. Current release metadata and the proposed tag must say `v0.5.0`
+The first specification release was `v0.1.0`; the prepared, unpublished revision is
+`v0.6.0`. Current release metadata and the proposed tag must say `v0.6.0`
 consistently without moving or rewriting any existing release tag — see
 [Signing, release, and attribution](#signing-release-and-attribution).
 
@@ -16,7 +21,7 @@ consistently without moving or rewriting any existing release tag — see
 ### 1 — Before editing
 
 - Read the settled product and architecture decisions (attached to `TASK-260819-1h306n` and summarized in [SPEC.md §1.4](SPEC.md#14-source-authority-and-evidence) and [Appendix A.1](SPEC.md#a1-settled-decision-traceability)). Preserve those decisions unless a contradiction makes implementation impossible; record any necessary refinement explicitly.
-- Read the accepted Muse and Antigravity evidence report at [`.research/260819_muse-antigravity-native-store-contracts.md`](.research/260819_muse-antigravity-native-store-contracts.md). Its retained unknowns must remain `unknown` or `unsupported` in `v0.5.0`.
+- Read the accepted Muse and Antigravity evidence report at [`.research/260819_muse-antigravity-native-store-contracts.md`](.research/260819_muse-antigravity-native-store-contracts.md). Its retained unknowns must remain `unknown` or `unsupported` in `v0.6.0`.
 - Check [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates) — the only intentionally unsettled facts. Do not invent parity for a gated cell.
 
 ### 2 — Making changes
@@ -97,9 +102,9 @@ The exact flags are `validate -w`, `export -w ... -format plantuml -output`, and
 
 ### What the publication validator does and does not do
 
-For `v0.5.0` publication, the accepted validation entry point must check spec structure, contract fixtures, links, JCS identity and numeric-boundary vectors, schema/path common types, Directory Node and TerminalBackend bindings, diagram presence, publication metadata, and the frozen `v0.5.0` content baseline for the five public claim documents. The baseline uses SHA-256 over UTF-8 text with line endings normalized to LF, making the check stable across supported checkout platforms. It is a bounded release-integrity control, not general natural-language theorem proving. The semantic validator must check the retained Section 13.13 recovery gate, Section 13.14 cloning closure, Directory conformance, the eight historical v0.4.3 roadmap/terminal-realm safety classes, and the independently versioned TerminalBackend gate. Focused expected-red mutations must produce actionable diagnostics. For a future specification revision, update the digest map in `scripts/validate_spec.py` only after the changed prose and expected-red coverage have been reviewed. The validator **must not** require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) product-conformance result. Any validator that tries to execute product acceptance cases fails publication case `SPEC-PUB-001`. See [SPEC.md §20.2](SPEC.md#202-publication-gate).
+For `v0.6.0` publication, the accepted validation entry point must check spec structure, contract fixtures, links, JCS identity and numeric-boundary vectors, schema/path common types, Directory Node and TerminalBackend bindings, diagram presence, publication metadata, and the frozen `v0.6.0` content baseline for the five public claim documents. The baseline uses SHA-256 over UTF-8 text with line endings normalized to LF, making the check stable across supported checkout platforms. It is a bounded release-integrity control, not general natural-language theorem proving. The semantic validator must check the retained Section 13.13 recovery gate, Section 13.14 cloning closure, Directory conformance, the eight historical v0.4.3 roadmap/terminal-realm safety classes, and the independently versioned TerminalBackend gate. Focused expected-red mutations must produce actionable diagnostics. For a future specification revision, update the digest map in `scripts/validate_spec.py` only after the changed prose and expected-red coverage have been reviewed. The validator **must not** require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) product-conformance result. Any validator that tries to execute product acceptance cases fails publication case `SPEC-PUB-001`. See [SPEC.md §20.2](SPEC.md#202-publication-gate).
 
-The repository scripts identify and freeze the reviewed `v0.5.0` baseline, check TerminalBackend, Directory, cloning, retained crash/restart, and historical roadmap/terminal-realm semantics, run focused mutations, and validate diagram freshness. Every command below must exit `0`; a nonzero result is a gate failure, never an expected success or publication evidence.
+The repository scripts identify and freeze the reviewed `v0.6.0` baseline, check TerminalBackend, Directory, cloning, retained crash/restart, and historical roadmap/terminal-realm semantics, run focused mutations, and validate diagram freshness. Every command below must exit `0`; a nonzero result is a gate failure, never an expected success or publication evidence.
 
 ### Exact commands
 
@@ -143,7 +148,7 @@ Observed after `TASK-260819-37heok` rework:
 | `structurizr-cli version` | `structurizr-cli 2025.11.09`, `structurizr-java 5.0.2` |
 | `plantuml -version` | `PlantUML 1.2026.6 / 6287b33` |
 
-Provider binaries are not required. Keep link, command, metadata, and terminology consistent with [SPEC.md](SPEC.md) — especially `v0.5.0` naming, repository `relux-works/agent-session-manager-spec`, default branch `main`, and capability values `available`/`conditional`/`unsupported`/`unknown`.
+Provider binaries are not required. Keep link, command, metadata, and terminology consistent with [SPEC.md](SPEC.md) — especially `v0.6.0` naming, repository `relux-works/agent-session-manager-spec`, default branch `main`, and capability values `available`/`conditional`/`unsupported`/`unknown`.
 
 ## Compatibility and versioning
 
@@ -169,27 +174,28 @@ The full gate is normative in [SPEC.md §20.2](SPEC.md#202-publication-gate). In
 1. Verify a clean checkout contains `SPEC.md`, `README.md`, `CONTRIBUTING.md`, diagram sources and rendered SVGs, `VERSION`, `CHANGELOG`, release notes, and `LICENSE` (MIT).
 2. Run the accepted validation entry point as a standalone process and retain its real exit code.
 3. Explicitly verify that the validator does not require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) result.
-4. Verify `VERSION`, current document metadata, changelog, release notes, and the proposed tag all say `v0.5.0`; verify every existing release tag is unchanged.
+4. Verify `VERSION`, current document metadata, changelog and release notes identify prepared `v0.6.0`; verify every existing release tag is unchanged. There is no preparation tag.
 5. Run the semantic crash/restart gate and focused expected-red mutations; weakening the three outcomes, boundary registry, evidence, owner uniqueness, or native-identity preservation must produce an actionable diagnostic.
-6. Prepare the exact signed-commit command with author `Ivan Oparin <oparin@me.com>` and no AI trailer; hand it to the user for explicit review. Automation MUST NOT stage or commit before human approval.
-7. Prepare the exact signed annotated `v0.5.0` tag command; hand it to the user for explicit review. Automation MUST NOT create the tag before human approval.
-8. After the human creates the commit and tag, verify both signatures locally.
-9. Hand the exact `git push` commands for `main` and the `v0.5.0` tag to the user; automation MUST NOT push before explicit human approval and only after accepted validation/review.
-10. Verify the public repository, default branch, license, commit signature, tag signature, and release URL.
+6. Create signed commits for the reviewed scope and publish a feature branch/PR under explicit delivery authorization.
+7. Obtain a real review verdict and required green checks on the exact signed head; never impersonate independent approval or bypass protection.
+8. Verify signatures and PR/remote head equality, then land accepted signed commits without rewriting them or forcing main. If main advances, repeat signed rebase, review and checks.
+9. Keep release tags unchanged during preparation; the parent owns later release publication after all constituent Stories and gates are accepted and landed.
+10. For signed PR delivery verify the public repository, default branch, license, commit signature and exact PR/remote head. The parent verifies the tag signature and release URL only during the later authorized release publication.
 11. Attach publication evidence to the board.
 
-No automation may publish, stage, commit, tag, or push before validation acceptance and explicit human review of every stage/commit/tag/push command. Automation MUST stop before those operations and hand the exact reviewed commands to the user. See [§20.2](SPEC.md#202-publication-gate), `SPEC-PUB-001`, and `SPEC-PUB-CRASH-001`.
+Explicit delivery authorization permits automation to stage the reviewed scope, create signed commits, and push a feature branch/PR after validation. Required independent review and checks must accept the exact signed head before landing; advancing main requires a signed rebase and fresh review/checks. Preparation MUST NOT create a release tag. The parent owns separate release publication only after all constituent Stories and publication gates are accepted and landed. See [§20.2](SPEC.md#202-publication-gate), `SPEC-PUB-001`, and `SPEC-PUB-CRASH-001`.
 
 ### Signing
 
 - **Author**: `Ivan Oparin <oparin@me.com>` — this is the commit author for the release commit. No AI `Co-Authored-By` trailer is included.
-- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Both the release commit and the annotated tag `v0.5.0` must be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
-- **Human commit gate**: Automation MUST NOT stage, commit, tag, or push. It MUST stop before those operations and hand the exact `git commit`, `git tag`, and `git push` commands to the user for explicit human execution.
-- Verify locally after the human signs:
+- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Delivery commits must be signed with this key. If the parent later publishes an annotated release tag `v0.6.0`, that tag must also be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
+- **Delivery authority**: explicit user authorization permits signed branch/PR delivery after review and checks. Release tags are separate parent-owned publication; preparation creates no tag.
+- Verify committed signatures locally; verify a release tag only when the parent has actually published one:
 
 ```shell
 git log --show-signature -1
-git tag --verify v0.5.0
+# Parent only, after actual release publication (not preparation):
+git tag --verify v0.6.0
 ```
 
 ### AI attribution policy
@@ -231,4 +237,13 @@ Do not add a second normative spec file. Do not commit provider credentials, SSH
 - [ ] Diagram sources re-rendered, SVGs committed, and visual inspection done.
 - [ ] `./run_validation.sh` exits `0` as a standalone process.
 - [ ] `task-board validate` exits `0`.
-- [ ] Commit carries correct author `Ivan Oparin <oparin@me.com>`, is SSH-signed with `~/.ssh/ivanopcode`, contains no AI `Co-Authored-By` trailer, and was created only after explicit human review of the handed commands.
+- [ ] Commit carries correct author `Ivan Oparin <oparin@me.com>`, is SSH-signed with `~/.ssh/ivanopcode`, contains no AI `Co-Authored-By` trailer, and was created under explicit signed-delivery authorization after validation. Required review and checks accept the exact signed head before landing; no release tag is created during preparation.
+
+For host-channel edits run `python3 scripts/test_host_channel.py` in addition to
+the public validation and retained expected-red suite. Fixtures are synthetic
+contract evidence; real TLS and platform acceptance remains `AC-HOST-001`.
+
+Host admission predicates are read from SPEC.md §11.10.5. Its rendered table
+and the operational explanation templates must agree; refreshing the document
+digest cannot waive these checks. The ledger separately reports individually
+witnessed field obligations, family coverage and runtime/prose blind spots.

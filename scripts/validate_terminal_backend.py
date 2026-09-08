@@ -96,9 +96,9 @@ UUID7_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[
 NORMATIVE_SECTIONS = {
     "TerminalBackend 1.0.0": ("### 4.A TerminalBackend authority and terminology", "### 4.1 Terminal backend interface", "c8d7af4b4176d39ccced2814c3d6db4f175b79d92ef0e7b45fdeea367fa8cdad"),
     "Session Event 4.0.0": ("#### Session Event 4.0.0 Terminal Instance events", "### 5.3 Lease Record and ownership", "2d2214542078ff9e48c2347186638f6f1833a67389c360dde73d49319f09910e"),
-    "Configuration 3.0.0": ("### 6.5 Configuration 3.0.0 TerminalBackend extension", "## 7.", "dff8850845bc45aa7545800b4d07e43e622387b142e6fb5984ae4a79fbedf199"),
+    "Configuration 3.0.0": ("### 6.5 Configuration 3.0.0 TerminalBackend extension", "### 6.6 Configuration 4.0.0 host-channel migration", "dff8850845bc45aa7545800b4d07e43e622387b142e6fb5984ae4a79fbedf199"),
     "Provider Protocol 3.0.0": ("### 7.A Provider Protocol 3.0.0 Terminal Instance binding", "### 7.8 Companion Session Adapter protocol", "f869ddaf9cc67d69b9561a3cfac3903320447b4c4fd71fe951346bd24f196108"),
-    "Mesh RPC 4.0.0": ("### 11.9 Mesh RPC 4.0.0 TerminalBackend evidence replication", "## 12.", "d1d12504f6350a7c89b983cb6759f35328f1c6694b7af77620ff0b9e7cc37ba6"),
+    "Mesh RPC 4.0.0": ("### 11.9 Mesh RPC 4.0.0 TerminalBackend evidence replication", "### 11.10 Host Channel 1.0.0 and Mesh RPC 5.0.0", "d1d12504f6350a7c89b983cb6759f35328f1c6694b7af77620ff0b9e7cc37ba6"),
     "CLI Result 4.0.0": ("### 14.6 CLI Result 4.0.0 TerminalBackend surfaces", "## 15.", "9809e30fc2b78b61dd5ca8c17042394da44e3decb0a58fb1b028386ea9669299"),
     "Structured Error 1.3.0": ("#### Structured Error 1.3.0 TerminalBackend codes", "## 16. Security and threat boundary", "9f3705da80de7cf566523e0cb9369fe5eb4c0f5669d16cb8c7bec02d88b25b84"),
 }

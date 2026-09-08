@@ -5,6 +5,25 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.0] - Unreleased
+
+### Added
+
+- Prepared mutual TLS 1.3 over SSH with dedicated enrolled host credentials,
+  exact certificate/UUID/hello binding, and no preauthentication dispatch.
+- Added Config 4.0.0, Mesh RPC 5.0.0, Host Channel 1.0.0 and Host Trust Store
+  1.0.0, with explicit atomic migration, fresh-key rotation and revocation.
+- Added source-only positive/negative host-channel vectors and narrowing
+  mutations. No AX runtime, deployment assurance or release tag is produced.
+
+### Compatibility
+
+- Retained published v0.5.0 and earlier contracts, fixtures and tag objects.
+  Legacy raw stdio cannot silently acquire TLS or serve as downgrade fallback.
+- Key possession is the assurance boundary; copied keys and compromised local
+  accounts are not physical-host uniqueness. No global revocation is inferred
+  from a local trust change.
+
 ## [v0.5.0] - 2026-08-29
 
 ### Added
