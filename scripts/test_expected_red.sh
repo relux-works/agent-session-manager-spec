@@ -31,6 +31,12 @@ trap 'rm -rf "$TEMP_ROOT"' EXIT
 PASS=0
 FAIL=0
 TOTAL=0
+SKIPPED=0
+# Optional bounded local execution; CI default still exercises every mutation.
+RED_START=${EXPECTED_RED_START:-1}
+RED_END=${EXPECTED_RED_END:-2147483647}
+[[ "$RED_START" =~ ^[0-9]+$ && "$RED_END" =~ ^[0-9]+$ ]] || exit 2
+
 
 expect_fail() {
   local label="$1"
@@ -38,7 +44,8 @@ expect_fail() {
   local fixture_dir="${3:-.}"
   local cmd="${4:-./scripts/validate_spec.py}"
   TOTAL=$((TOTAL+1))
-  if [ "$TOTAL" -lt "$FIRST" ] || [ "$TOTAL" -gt "$LAST" ]; then
+  if [ "$TOTAL" -lt "$FIRST" ] || [ "$TOTAL" -gt "$LAST" ] || (( TOTAL < RED_START || TOTAL > RED_END )); then
+    SKIPPED=$((SKIPPED+1))
     return 0
   fi
   echo "  [$TOTAL] $label"
@@ -2839,12 +2846,12 @@ expect_fail "modified actual historical Configuration definition" "historical de
 
 echo ""
 echo "=========================================="
-echo "Results: $PASS passed, $FAIL failed out of $TOTAL mutations"
+echo "Results: $PASS passed, $FAIL failed, $SKIPPED skipped of $TOTAL registered mutations"
 if [ "$RANGED" -eq 1 ] && { [ "$LAST" -gt "$TOTAL" ] || [ "$((PASS+FAIL))" -ne "$((LAST-FIRST+1))" ]; }; then
   echo "Requested range was not fully exercised: $FIRST:$LAST"
   exit 1
 fi
-if [ $FAIL -ne 0 ]; then
+if [ $FAIL -ne 0 ] || [ $PASS -eq 0 ]; then
   echo "Expected-red suite FAILED"
   exit 1
 fi

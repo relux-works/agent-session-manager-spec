@@ -17,6 +17,14 @@
 > ownership authority; tmux remains the mandatory Unix target; Superlogical is
 > future-only and unavailable. Existing release tags are not moved.
 
+> **Prepared v0.6.0 deltas:** source-qualified selectors with durable `id:`
+> selection, execution revalidation and authoritative summary refusals
+> ([SPEC §14.7](SPEC.md#147-session-selector-100-and-cli-result-500)), plus the
+> mutually authenticated host channel over SSH ([SPEC §6.6](SPEC.md#66-configuration-400-host-channel-migration)
+> and [§11.10](SPEC.md#1110-host-channel-100-and-mesh-rpc-500)). Bare selection
+> and closed historical contracts are preserved. No release tag or AX product
+> implementation is created by this source revision.
+
 ## Read first
 
 - [SPEC.md](SPEC.md) is the only normative source. Its uppercase `MUST`/`SHOULD`/`MAY` requirements control implementations. This README summarizes and links to it — it does not create a second contract.
@@ -86,7 +94,7 @@ changes ownership. Every backend ultimately runs exactly
 an AX-owned private runtime directory, dedicated `tmux -S` server, no ambient
 server reuse, and functional macOS Aqua/provider-auth evidence. `ax.conpty`
 remains the native-Windows built-in without a tmux-equivalent durability claim.
-Superlogical is unavailable, non-normative, and future-only: v0.5.0 reserves no
+Superlogical is unavailable, non-normative, and future-only: v0.6.0 reserves no
 Superlogical ID and claims no API, SDK, support, compatibility, or conformance.
 
 These are specification targets, not implementation-availability claims. This
@@ -112,7 +120,7 @@ Support is not inferred from a provider name, a successful probe, or self-minted
 
 ## Session Directory and continuation boundary
 
-The Session Directory namespace retained in v0.5.0 is `ax sessions`, with the closed leaves `list`, `inspect`, `lineage`, `scan`, `enrich`, `jobs`, `plan`, `continue`, `operation`, `attach`, and `doctor`. Agents use the same typed engine through `ax sessions q`, `ax sessions grep`, and `ax sessions m`; they must not scrape TUI text. Existing `ax list`, `ax status`, and `ax session clone` retain their v0.3 meanings. See [SPEC.md §14.5](SPEC.md#145-session-directory-cli-result-3-query-and-tui).
+The Session Directory namespace retained in v0.6.0 is `ax sessions`, with the closed leaves `list`, `inspect`, `lineage`, `scan`, `enrich`, `jobs`, `plan`, `continue`, `operation`, `attach`, and `doctor`. Agents use the same typed engine through `ax sessions q`, `ax sessions grep`, and `ax sessions m`; they must not scrape TUI text. Existing `ax list`, `ax status`, and `ax session clone` retain their v0.3 meanings. See [SPEC.md §14.5](SPEC.md#145-session-directory-cli-result-3-query-and-tui).
 
 ```shell
 ax sessions list
@@ -354,7 +362,7 @@ Change the profile with `ax session set-profile NAME standard|yolo`, which requi
 
 Peers are explicitly allowlisted in `~/.config/ax/config.toml` (or the platform-equivalent directory — see [SPEC.md §3.2](SPEC.md#32-platform-paths) and [§6](SPEC.md#6-configuration-contract)) with stable host ID, Tailscale/OpenSSH endpoint, platform, and workspace-root mappings. Tailscale discovery may suggest hosts but may not auto-authorize them. Transport is Tailscale SSH or ordinary OpenSSH; the remote side is `ax rpc serve --stdio`; no permanent public TCP listener is required. See [SPEC.md §11.1](SPEC.md#111-transport-and-peer-authentication).
 
-The project owner does not require payload encryption at rest. The spec must not claim default snapshot encryption — and this README does not. SSH protects transport. The security boundary remains a trusted project mesh. `mesh.payload_encryption` must be `none` in `v0.5.0`; any other value fails as unsupported. See [SPEC.md §6.3](SPEC.md#63-field-constraints) and [§16.1](SPEC.md#161-trusted-mesh-model).
+The project owner does not require payload encryption at rest. The spec must not claim default snapshot encryption — and this README does not. SSH protects transport. The security boundary remains a trusted project mesh. `mesh.payload_encryption` must be `none` in `v0.6.0`; any other value fails as unsupported. See [SPEC.md §6.3](SPEC.md#63-field-constraints) and [§16.1](SPEC.md#161-trusted-mesh-model).
 
 Never replicated: credentials/tokens, SSH private keys, environment secrets, live PIDs, sockets, tmux server sockets, transient locks, machine-local authentication state, or the live SQLite database file (rebuildable derived index). Opaque durable history may contain historical path/PID facts as inert bytes required for native resume, but they are not current authority. See [SPEC.md §2.2](SPEC.md#22-global-invariants), [§10-§11](SPEC.md#10-immutable-records-blobs-manifests-and-tombstones), and [§16.2](SPEC.md#162-mandatory-exclusions).
 
@@ -395,7 +403,7 @@ Capabilities are `native_resume`, `portable_store`, `managed_pty`, `appserver`, 
 Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-contracts) and [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates)):
 
 - **Pi 0.73.1** has no YOLO flag; both `ax` profiles map to `default_unrestricted_tool_set` but remain distinct `ax` authority — see [§2.4](SPEC.md#24-execution-profiles).
-- **Qwen** has no direct `ax-provider-qwen` claim in `v0.5.0`; task-board prompt-mode bundles only — see [§8.2](SPEC.md#82-native-store-contract-matrix).
+- **Qwen** has no direct `ax-provider-qwen` claim in `v0.6.0`; task-board prompt-mode bundles only — see [§8.2](SPEC.md#82-native-store-contract-matrix).
 - **Muse** and **Antigravity** unknowns in [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates) (store, cron, resume, import, quiesce, backend realm, checkpoint, Windows behavior) remain gated and disabled.
 - **WSL2 and native Windows are never collapsed** into one row — an adapter accepted in WSL2 does not establish native Windows support. See [§8.4](SPEC.md#84-providerplatform-matrix).
 - Known resume surfaces: Codex `codex resume UUID`; Pi `--session <path|id>` / `--continue` / `--resume` / `--session-dir`; Gemini UUID/session import; Muse `muse resume UUID`; Antigravity `agy --conversation <id>` / continue. See settled decisions § Providers and native stores and [SPEC.md §7](SPEC.md#7-provider-plugin-protocol).

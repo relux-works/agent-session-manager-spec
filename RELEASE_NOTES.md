@@ -1,21 +1,38 @@
 # Agent Session Manager (`ax`) Specification v0.6.0 — prepared, unpublished
 
-This prepared minor revision adds the standard mutually authenticated host
-channel over SSH, exact public credential enrollment and UUID binding,
-credential rotation/revocation, and explicit configuration/launch migration.
-Config 4.0.0 and RPC 5.0.0 select Host Channel 1.0.0 with Host Trust Store 1.0.0.
-Historical contracts and release tags stay immutable. There is no resumption,
-0-RTT, plaintext fallback, silent downgrade or inferred trust from SSH identity.
+This prepared minor revision combines two approved source deltas with no
+release tag. The selector delta adds Session selector 1.0.0, CLI Result 5.0.0
+and Structured Error 1.4.0. Literal first-at qualification accepts exact
+configured aliases; explicit id:UUID bypasses name precedence. Plans bind
+source, record, configuration and lease facts and revalidate before effects.
+Public summaries require real initial leases and observations; record-only
+bootstrap returns a typed refusal and recovers only from original durable
+bootstrap inputs. No invented owner or lease is produced. The authentication
+delta adds the standard mutually authenticated host channel over SSH, exact
+public credential enrollment and UUID binding, credential rotation/revocation,
+and explicit configuration/launch migration. Config 4.0.0 and RPC 5.0.0 select
+Host Channel 1.0.0 with Host Trust Store 1.0.0. Historical contracts and
+release tags stay immutable. There is no resumption, 0-RTT, plaintext fallback,
+silent downgrade or inferred trust from SSH identity.
 
 These are specification artifacts only: this repository has no `ax` product
-binary and no executed TLS deployment or platform conformance result. Synthetic
-fixtures and source mutations validate the contract package, not key custody or
-live revocation. The parent coordinates publication after all constituent
-Stories pass review and land. This work does not create a v0.6.0 release tag.
+binary, no executed TLS deployment or platform conformance result, and no AX
+implementation, platform acceptance, or release tag. Synthetic fixtures and
+source mutations validate the contract package, not key custody, live
+revocation, or product runtime behavior. The parent coordinates publication
+after all constituent Stories pass review and land. This work does not create
+a v0.6.0 release tag.
 
-The profile authenticates enrolled-key possession. Copied keys and compromised
-local accounts are outside physical-host assurance; revocation must reach each
-peer explicitly. See SPEC Sections 6.6, 11.10, 16 and 20.
+The host profile authenticates enrolled-key possession. Copied keys and
+compromised local accounts are outside physical-host assurance; revocation must
+reach each peer explicitly. See SPEC Sections 6.6, 11.10, 16 and 20. See SPEC
+Section 14.7 for the selector contract and Sections 6.6/11.10 for the host
+channel contract.
+
+Publication evidence: `./run_validation.sh`, `./scripts/test_expected_red.sh`,
+`python3 scripts/test_selector_publication.py`, and the host-channel
+publication gate; measured source-only coverage and mutation bounds are
+reported by those commands. SPEC remains authoritative.
 
 ## Retained v0.5.0 release notes
 
@@ -139,3 +156,8 @@ versioned contracts and negative mutations. `STANDALONE_TO_AX_TRACEABILITY.md`
 retains the historical cloning/Directory mappings and adds a non-normative
 v0.5.0 TerminalBackend release-delta index. `SPEC.md` remains the only normative
 source.
+
+Selector review refinements freeze the CLI5 remote attach expectation operand,
+real action/boundary revalidation matrix, and concrete BootstrapIntent/Lease1
+conformance. Historical CLI1–4 routes remain version-bound. Prepared v0.6.0 is
+source publication only; no product implementation or release tag is asserted.

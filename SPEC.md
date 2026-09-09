@@ -113,7 +113,7 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following registry is the prepared v0.6.0 registry. Historical
+The following registry is the prepared v0.6.0 registry; no release tag is created. Historical
 objects, including every v0.4.3 object and fixture, remain readable and
 immutable; a version shown here never widens an earlier version in place.
 
@@ -154,9 +154,9 @@ immutable; a version shown here never widens an earlier version in place.
 | Clone materialization recovery state (journal variant) | <code>urn:ax:schema:materialization-journal</code> | <code>3.0.0</code> |
 | Task-board bridge | <code>urn:ax:protocol:task-board-bridge</code> | <code>1.0.0</code> |
 | Task-board bundle | <code>urn:ax:schema:task-board-bundle</code> | <code>1.0.0</code> |
-| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for cloning, <code>1.2.0</code> for directory surfaces, <code>1.3.0</code> for TerminalBackend surfaces |
+| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for cloning, <code>1.2.0</code> for directory surfaces, <code>1.3.0</code> for TerminalBackend surfaces, <code>1.4.0</code> for selector-capable CLI failures |
 | Observation event | <code>urn:ax:schema:observation</code> | <code>1.0.0</code> |
-| CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code>, <code>2.0.0</code> for <code>session.clone.*</code>, <code>3.0.0</code> for <code>sessions.*</code> commands, <code>4.0.0</code> for TerminalBackend commands and generalized start/resume results |
+| CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code>, <code>2.0.0</code> for <code>session.clone.*</code>, <code>3.0.0</code> for <code>sessions.*</code> commands, <code>4.0.0</code> for TerminalBackend commands and generalized start/resume results, <code>5.0.0</code> for source-qualified selection and authoritative summaries |
 | Clone Raw Object Manifest | <code>urn:ax:schema:clone-raw-object-manifest</code> | <code>1.0.0</code> |
 | Clone Capture Manifest | <code>urn:ax:schema:clone-capture-manifest</code> | <code>1.0.0</code> |
 | Clone Bundle Manifest | <code>urn:ax:schema:session-clone-bundle</code> | <code>1.0.0</code> |
@@ -181,8 +181,9 @@ immutable; a version shown here never widens an earlier version in place.
 | Session Continuation Plan | <code>urn:ax:schema:session-continuation-plan</code> | <code>1.0.0</code> |
 | Session Directory Operation Receipt | <code>urn:ax:schema:session-directory-operation-receipt</code> | <code>1.0.0</code> |
 | Session Directory Query | <code>urn:ax:schema:session-directory-query</code> | <code>1.0.0</code> |
+| Session selector | <code>urn:ax:contract:session-selector</code> | <code>1.0.0</code>; CLI grammar and machine-local execution-plan contract (Section 14.7) |
 
-The exact historical v0.4.3 registry is the table above with Host Channel and
+The exact historical v0.4.3 registry is the table above with the Session selector row absent, with Host Channel and
 Host Trust Store absent and with the five Terminal
 Backend contract rows absent and with exactly these six rows pinned to their
 then-active versions: Configuration <code>1.0.0,2.0.0</code>; Provider protocol
@@ -197,11 +198,17 @@ activates the five Terminal Backend contracts plus Configuration
 <code>4.0.0</code>, Session Event <code>4.0.0</code>, CLI Result
 <code>4.0.0</code>, and Structured Error <code>1.3.0</code>.
 
-The exact historical v0.5.0 registry is the table above with Host Channel and
+The exact historical v0.5.0 registry is the table above with the Session selector row absent, with Host Channel and
 Host Trust Store absent, Configuration limited to 1.0.0/2.0.0/3.0.0 and Mesh
 RPC limited to 2.0.0/3.0.0/4.0.0. Every other row is unchanged. The prepared
-v0.6.0 authentication delta is exactly Configuration 4.0.0, Mesh RPC 5.0.0,
-Host Channel 1.0.0 and Host Trust Store 1.0.0. No published tag is changed.
+v0.6.0 selector delta is Session selector 1.0.0, CLI Result 5.0.0 and
+Structured Error 1.4.0; the prepared v0.6.0 authentication delta is
+Configuration 4.0.0, Mesh RPC 5.0.0, Host Channel 1.0.0 and Host Trust Store
+1.0.0. Configuration 3 and RPC 4 are already occupied; the selector delta
+allocates neither Configuration 4 nor RPC 5. Session Record, Event, Lease and
+Directory Query/Plan versions do not change for selection. New selector plans
+are local, never RPC hello keys, replicated records, or Directory Continuation
+Plan extensions. No published tag is changed.
 
 No contract version is implied by the <code>ax</code> executable version.
 Section 17 defines compatibility and migration. Independent versioning means
@@ -11857,6 +11864,2839 @@ missing native projection data, or an unrepresentable state return
 <code>incompatible_schema</code>. Projection never rewrites a v4 result or
 invents capabilities, and lower-version clients remain read-only for an
 unrepresentable backend.
+
+### 14.7 Session selector 1.0.0 and CLI Result 5.0.0
+
+This section is the v0.6.0 selector contract. It applies to the umbrella
+<code>ax SELECTOR</code> and every existing managed-session NAME operand in
+Section 14, including status, attach, takeover, fork, stop, resume, sync,
+diff, materialize, logs --session and session set-profile. Creation NAME, destination HOST,
+provider-native identifiers, Directory instance IDs/query expressions, and the
+internal <code>ax pane SESSION_ID</code> are not selector operands. No new
+product operation or ownership authority is introduced.
+
+#### 14.7.1 Literal grammar and source-index resolution
+
+A selector is one CLI argument. Ordinary shell quoting handles spaces; the CLI
+MUST NOT join multiple arguments, expand aliases as shell text, decode percent
+escapes, normalize Unicode, trim, or case-fold configured host aliases. Split
+at the FIRST literal <code>@</code> only. The key is either a Section 2 session
+NAME or <code>id:SESSION_UUID</code>, with a canonical lowercase UUIDv7; neither
+key form contains <code>@</code>. A bare UUID retains Section 2.3 name-first
+precedence. <code>id:</code> explicitly bypasses names and never denotes a
+provider-native ID, directory instance ID, lease ID, or UUID prefix.
+
+| Form | Meaning |
+| --- | --- |
+| <code>NAME</code> / bare UUID | Exact Section 2.3 local-name, peer-name, UUID, not-found precedence; collision refusal unchanged |
+| <code>id:SESSION_UUID</code> | Durable AX session UUID in the local and allowed-peer union, independent of names |
+| <code>KEY@local</code> | Only the local derived source index |
+| <code>KEY@peer:ALIAS</code> | Only the configured peer source whose entire remaining suffix is the literal alias |
+| <code>KEY@id:HOST_UUID</code> | Only the source whose canonical host UUID is given; local UUID selects local; otherwise exactly one allowlisted configured peer |
+
+Examples: <code>ax status build@local</code>,
+<code>ax status build@peer:workstation</code>,
+<code>ax status "build@peer:Work Laptop"</code>,
+<code>ax status "build@peer:Ops@east:თბილისი"</code>, and
+<code>ax status id:0198f4c8-3e70-7a11-8a2b-1234567890ab</code>.
+A percent sign in an alias is literal. <code>peer:</code> with an empty alias,
+unknown source prefixes, malformed durable IDs, and an empty key are invalid
+arguments. The alias obeys the existing configured name bound, 1–64 characters;
+this grammar adds no alias encoding, normalization, or registration path.
+
+Resolution first validates configuration, including uniqueness of exact alias
+and host-ID mappings. Duplicate source mappings are invalid_config, never
+first-match selection. An explicit unknown alias/host is selector_source_not_found;
+a known but disallowed peer is peer_not_allowlisted. A failed, partial, malformed,
+or inaccessible config read is invalid_config. A remote source transport/I/O read failure is selector_source_read_failed
+(exit 8); a local source/store I/O failure is the existing
+local_precondition_failed (exit 3). A partial or malformed index/authority
+response is integrity_failure (exit 9), not absence. A complete valid empty index
+or a complete index without the selected live key returns not_found. A malformed
+record or digest failure is integrity_failure. These outcomes MUST remain distinct.
+An explicit source MUST NOT fall back to the local index, another peer, a cached
+index from another source, or a union search, even when the same name/UUID exists
+there. A peer source requires a complete read of that peer's advertised index
+under the selected transport, with verified configured host identity; a local
+cached observation does not prove that read succeeded.
+
+For a qualified NAME, select in that source only: exact live name first, then
+exact UUID if the NAME is UUID-shaped. Deduplicate multiple copies of the same
+session UUID only when their immutable record digest agrees. Distinct live
+UUIDs with the same name or ASCII-fold-colliding names return name_ambiguous.
+For bare input retain exactly Section 2.3 tiers: a local exact match wins over a
+peer exact match; a peer exact match wins over UUID interpretation. Collision
+checks apply within the reached tier. Unread lower tiers need not be consulted
+after a unique higher-tier match. A tier that must be read but cannot be read
+is a read failure, not permission to proceed to a lower tier. Tombstoned entries
+are excluded only with authoritative tombstone evidence, not a failed record read.
+
+#### 14.7.2 Resolve once, bind facts, revalidate execution
+
+Resolve the key to a session UUID once per invocation/confirmed plan. Build a
+machine-local immutable SelectionPlan under selector contract 1.0.0 with exactly
+the required members in this table. No plan hash, name, source, or display field
+is a capability. A persisted plan has a locally verified canonical digest over
+all members; caller-supplied digest equality alone is not evidence of authority.
+
+| Member | Type and binding |
+| --- | --- |
+| <code>selector_version</code> | Exact 1.0.0 |
+| <code>selector</code> | Original single argument, at most 134 characters (64-character NAME + @ + peer: + 64-character alias) |
+| <code>session_id</code> | Selected UUIDv7, never resolved again by name |
+| <code>session_record_id</code> | Validated immutable Session Record digest for that UUID |
+| <code>source_host_id</code> | UUIDv7 of the selected source; for a bare union match, provenance host of the selected entry, deterministic bytewise host-ID tie break for identical copies |
+| <code>source_alias</code> | Exact configured alias or null for local; a diagnostic label, never identity |
+| <code>source_index_digest</code> | Digest of the complete validated index read used for selection |
+| <code>configuration_digest</code> | Digest of effective validated configuration, including peer mapping, allowlist and selected transport |
+| <code>lease_record_id</code> | Validated winning Lease Record digest |
+| <code>lease_epoch</code>, <code>lease_id</code>, <code>owner_host_id</code> | Positive uint53, UUIDv4, UUIDv7, all from that same winning lease |
+| <code>authority_heads</code> | Sorted unique digest array of the validated lease/event/tombstone heads used for the decision |
+| <code>action</code> | Explicit existing command/action tag selected under Sections 2.3 and 14 |
+| <code>destination_host_id</code> | Explicit destination UUIDv7 or null when action has no destination; independently validated |
+| <code>expectation_digest</code> | Digest binding the action's existing checkpoint/workspace/cohort/provider/terminal/confirmation expectations; does not replace those contracts |
+
+A source is an index location, never destination or proof of current ownership.
+A local source can describe a remote owner; a peer source can describe a local
+owner. Summary owner/role and execution routing MUST use the validated winning
+lease and local-host comparison, never the source host or Session Record creator.
+
+Immediately before any effect, and again at every existing fencing/commit/retry
+boundary, reread current configuration and required source data, validate the
+same immutable Session Record, current tombstones and complete authority union,
+winning lease and action prerequisites. Compare every bound plan fact. A changed
+mapping, alias, allowlist, transport, source index, record, authority head, lease,
+action, destination or expectation invalidates the plan. Return
+selector_plan_stale before effects; explicit authorization revocation returns
+peer_not_allowlisted; failed reads retain their read-failure classification.
+Do not re-resolve by name, substitute a same-named session, silently replan,
+transfer a lease, or reuse confirmation for new facts. An unrelated index change
+may conservatively require a fresh plan. Reads revalidate before projecting output;
+mutations retain existing serialized fencing/effect boundaries so a successful
+precheck cannot authorize an effect after authority changes. If an earlier phase
+already committed, use that operation's existing status/recovery contract with
+its original IDs; a stale selection is not rollback or a new-operation retry.
+
+##### Selector execution boundaries
+
+The following action/boundary matrix is normative. Umbrella choices use their
+selected action, never an umbrella bypass. `logs` applies when --session is
+present; `cancel` only projects a choice. A boundary is reached only when the
+existing operation reaches that phase; these rows do not introduce new effects.
+`projection` precedes output, `pre-effect` precedes the first effect, `fencing`
+covers every Section 5.3 fencing check, `commit` precedes durable publication,
+`retry` and `recovery` precede continuation using original operation IDs.
+`remote-dispatch` precedes sending attach expectations, `remote-admission`
+precedes owner input, and `transport-resume` covers reconnect or sleep/transport
+interruption under Section 5.3. None may skip checks because a previous phase
+succeeded. Post-commit recovery checks current authority without demanding that
+an operation's own authorized committed transitions equal its pre-commit plan:
+reconcile those transitions through the original operation's status/receipts,
+then build and validate its continuation expectations before any further effect.
+Unexpected transitions refuse; they never authorize a new operation.
+
+| Selector action | Required boundary classes |
+| --- | --- |
+| status | projection, retry |
+| attach | pre-effect, fencing, retry, remote-dispatch, remote-admission, transport-resume |
+| takeover | pre-effect, fencing, commit, retry, recovery, transport-resume |
+| fork | pre-effect, fencing, commit, retry, recovery, transport-resume |
+| stop | pre-effect, fencing, commit, retry, recovery, transport-resume |
+| resume | pre-effect, fencing, commit, retry, recovery, transport-resume |
+| sync | pre-effect, fencing, commit, retry, recovery, transport-resume |
+| diff | projection, retry |
+| materialize | pre-effect, fencing, commit, retry, recovery |
+| session.set-profile | pre-effect, fencing, commit, retry, recovery |
+| logs | projection, retry, remote-dispatch, remote-admission, transport-resume |
+| cancel | projection |
+
+##### CLI 5 remote attach route
+
+For CLI Result 5 only, this paragraph supersedes the NAME forwarding and
+re-resolution in Sections 13.4–13.5. The initiating host revalidates its complete
+SelectionPlan at remote-dispatch, then invokes the argv-equivalent of:
+
+~~~shell
+ssh -t HOST ax attach id:SESSION_UUID --local --result-version 5.0.0 --expect-selection EXPECTATIONS_JSON
+~~~
+
+HOST is the verified configured endpoint for the plan's winning owner, never
+the source. EXPECTATIONS_JSON is one canonically encoded JSON argument with
+exactly the members/types in the following table. Transport invocation MUST
+preserve argument boundaries with platform-appropriate shell quoting; no alias,
+name or JSON value may become executable shell text. No application input is
+forwarded until remote-admission succeeds. The selected configured transport
+and its authentication/host-verification requirements remain mandatory; this
+route does not weaken any stronger host-channel requirement or introduce an
+RPC method. If that transport cannot carry the owner CLI attach stream with
+its required authentication, refuse capability_unavailable before dispatch;
+never downgrade to another transport. The receiver must support exact CLI 5;
+an unsupported version refuses incompatible_schema, never retries legacy NAME
+or bare UUID. CLI 1–4 retain the historical route and closed bytes.
+
+| Attach expectation | Type |
+| --- | --- |
+| selector_version | Exact 1.0.0 |
+| session_id | UUIDv7 |
+| session_record_id | digest |
+| lease_record_id | digest |
+| lease_epoch | Positive uint53 |
+| lease_id | UUIDv4 |
+| owner_host_id | UUIDv7 |
+| authority_heads | digest array |
+| expectation_digest | digest |
+
+These are expected values, not caller authentication or a capability. The
+receiver validates them against its independently read exact session, winning
+lease, complete authority and attach prerequisites; it uses a local plan with
+its own source/configuration facts. The initiator's configuration digest or
+source alias is never substituted for the receiver's local configuration.
+Unknown/missing/extra expectation members or a non-id operand with this flag
+are invalid_arguments; well-formed changed expectations are selector_plan_stale.
+The flag is valid only for attach --local with CLI 5. A receiver that is not the
+expected owner refuses selector_plan_stale rather than redirecting or taking
+over. Both ends revalidate their own plans at their applicable boundaries.
+Each end's plan action MUST equal attach and its destination MUST be null:
+attach --local takes no destination argument, so a status plan, a plan for
+another destination, or two agreeing copies of a wrong plan never authorize
+attach input, even when that plan equals current. Two agreeing plan copies
+prove nothing about the actual invocation.
+The initiator plan MUST retain the literal single-argument selector and the
+alias derived from the actually selected source (null for local): another
+spelling that resolves to the same session UUID, or two agreeing copies of a
+wrong selector/alias, never authorizes attach input. Receiver selector, alias
+and source facts stay endpoint-local and are never cross-compared.
+Receiver retry and transport-resume repeat exact-identity authority validation;
+they never call NAME resolution. Receiver-local revocation/read/integrity
+failures retain Section 14.7.1 classes and CLI 5/Error 1.4 binding. Caller
+expectations cannot authorize input after revocation or a winning lease change.
+
+##### CLI 5 remote log filtering
+
+For CLI Result 5, the Section 14.1 remote logs NAME example and Result-1
+validation are superseded by the following argv-equivalent. Resolve --session
+once at the initiator and revalidate its plan before remote-dispatch. The
+initiator refuses selector_plan_stale unless its plan session_id,
+session_record_id and source_host_id equal the resolved selection;
+plan/current agreement alone never proves selection binding:
+
+~~~shell
+ssh HOST ax logs --session id:SESSION_UUID --limit N --json --result-version 5.0.0
+~~~
+
+HOST is the explicit --peer log emitter, which may differ from both selection
+source and winning owner. The receiver interprets id:SESSION_UUID as an exact
+session-ID log filter, never a display name. It revalidates its local read plan
+before projecting records; no ownership is granted and no record is created.
+The initiating side validates exactly CLI Result 5 and the original command,
+selected session filter, emitting_host_id and every returned event's host_id.
+Session-scoped results contain only events for that exact session UUID. The
+same Section 14.1 error classes, argument serialization, local-only remote
+invocation and no-fan-out rules apply. Unsupported CLI5 refuses
+incompatible_schema without retrying NAME, bare UUID or a lower result version.
+A continuation cursor remains opaque to the initiator and is passed unchanged
+to the same explicit --peer with --result-version 5.0.0. Its original durable
+session filter is retained by the emitter; resume never re-resolves a name.
+A cursor/emitter mismatch is invalid_arguments; forged emitter/event identity
+is host_identity_mismatch/integrity_failure as in Section 14.1. Original plan
+expectations must be revalidated at retry/transport-resume/projection boundaries.
+Each end's plan action MUST equal logs. Each end's plan destination MUST equal
+the actual explicit --peer host independently: the initiator's destination never
+authorizes projection from another peer, and the receiver's destination is
+checked against the same actual peer, never against the initiator's plan value.
+A plan for another destination, or two ends agreeing on a wrong destination,
+refuses selector_plan_stale. The initiator plan MUST retain the literal
+--session selector and the alias derived from the actually selected source
+(null for local) at every scope and boundary; another spelling resolving to
+the same session, or two agreeing copies of a wrong selector/alias, refuses.
+Source and configuration facts stay endpoint-local
+and are never cross-compared. These bindings hold for initial and
+cursor-continuation scopes and at every retry/resume boundary.
+Historical CLI1–4 behavior stays closed and does not receive selector syntax.
+
+##### Composed invocation-to-plan binding
+
+
+The composed routes bind every independent invocation/selection fact to each
+endpoint plan exactly once per the following member disposition and relation.
+Plan/current agreement
+alone authorizes nothing: each divergence witness below keeps plan and current
+in agreement while disagreeing with the actual invocation, and every witness
+refuses selector_plan_stale. Cross-endpoint plan equality is never evidence;
+trusted_local_plan marks a locally verified plan but never substitutes for
+invocation binding. Receiver-local source and configuration facts keep the
+meanings from the attach and logs paragraphs and are never cross-compared.
+
+Member disposition (all 16 SelectionPlan members; every member has exactly one
+row; a new member without a row, or a new composed revalidation call site
+without applicable rows, fails the publication gate closed rather than falling
+into a default relation):
+
+| Plan member | Disposition | Independent fact and transformation, or endpoint-local evidence |
+| --- | --- | --- |
+| selector_version | endpoint-local observation | Constant 1.0.0; plan equals current via revalidate; no argv fact beyond version admission |
+| selector | independent invocation fact (initiator only) | Initiator plan.selector equals the literal selection.selector single argument, even when another spelling resolves to the same UUID; receiver selector stays endpoint-local |
+| session_id | independent invocation fact | Initiator plan.session_id equals resolved selection session_id; logs receiver plan.session_id equals the same resolved session_id; attach receiver session binds via expected lease admission plus revalidate, never via initiator equality; attach initiator session/record are jointly verified with owner exact-ID admission (a session-only divergence also changes the admitted record), logs isolates each clause |
+| session_record_id | independent invocation fact | Same endpoints as session_id, against resolved session_record_id digest; same joint owner-admission note for attach, isolated caller narrowing on logs |
+| source_host_id | independent invocation fact (initiator only) | Initiator plan.source_host_id equals resolved source_host_id; receiver source stays endpoint-local (valid distinct-source positives keep differing hosts) |
+| source_alias | independent invocation fact (initiator only) | Initiator plan.source_alias equals the alias of the actually selected source (null for local); diagnostic label, never identity; receiver alias stays endpoint-local |
+| source_index_digest | endpoint-local observation | Digest of the validated index read; no independent synthetic recomputation; plan equals current via revalidate; per-row changed/missing vectors |
+| configuration_digest | endpoint-local observation | Digest of effective configuration; same evidence as source_index_digest |
+| lease_record_id | endpoint-local observation | Winning lease digest; plan equals current via revalidate plus receiver expected admission; per-row vectors |
+| lease_epoch | endpoint-local observation | Same evidence as lease_record_id |
+| lease_id | endpoint-local observation | Same evidence as lease_record_id |
+| owner_host_id | endpoint-local observation | Same evidence as lease_record_id; HOST derives from winning owner, never source |
+| authority_heads | endpoint-local observation | Same evidence as lease_record_id |
+| action | independent invocation fact (per endpoint) | Each end plan.action equals its actual route (attach/logs); both-ends-agreeing vectors prove cross-equality never counts |
+| destination_host_id | independent invocation fact (per endpoint) | Attach: each end null (no destination argument); logs: each end equals the actual explicit --peer host per-endpoint; both-agreeing vectors prove cross-equality never counts |
+| expectation_digest | endpoint-local observation | Digest binding action expectations; plan equals current via revalidate; per-row vectors |
+
+Synthetic digests are never independently recomputed to manufacture authority:
+endpoint-local digest/lease/authority/expectation facts are validated by
+plan/current equality (revalidate) at every applicable boundary plus receiver
+expected admission, with per-row changed/missing witnesses. Temporal execution
+(that a retry/resume actually re-ran) is a runtime prerequisite outside this
+source evaluator. The denominator is closed at 159 divergence witnesses derived
+directly from the 26-row composed context inventory joined with the member
+disposition above: every applicable independent fact at every source-derived
+composed route/endpoint/boundary/scope context, per endpoint, plus
+both-ends-agreeing vectors for action/destination at every such context (and
+initiator selection agreement vectors where both ends wrong still refuse via
+the initiator check). Pre-effect, fencing and projection boundaries carry their
+own invocation-binding witnesses with the context boundary set to pre-effect,
+fencing or projection; plan/current revalidation alone cannot substitute for
+this binding because two agreeing copies of a wrong plan never prove the actual
+invocation. Invocation binding is checked unconditionally at every applicable
+dispatch, admission, pre-effect, fencing, projection, retry and resume point,
+so single-context narrowing at any one point is detected while all other points
+still check.
+
+| Composed route | Plan side | Scope | Invocation fact | Plan field | Required relation | Divergence witness |
+| --- | --- | --- | --- | --- | --- | --- |
+| attach | initiator | initial | route attach | action | equals attach | <code>SEL-CASE-remote-initiator-action-mismatch</code> |
+| attach | initiator | initial | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-initiator-destination-mismatch</code> |
+| attach | initiator | initial | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-remote-initiator-selector-mismatch</code> |
+| attach | initiator | initial | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-remote-initiator-alias-mismatch</code> |
+| attach | initiator | initial | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-remote-initiator-session-mismatch</code> |
+| attach | initiator | initial | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-remote-initiator-record-mismatch</code> |
+| attach | initiator | initial | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-remote-initiator-source-mismatch</code> |
+| attach | initiator | initial-retry | route attach | action | equals attach | <code>SEL-CASE-remote-retry-initiator-action-mismatch</code> |
+| attach | initiator | initial-retry | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-retry-initiator-destination-mismatch</code> |
+| attach | initiator | initial-retry | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-remote-retry-initiator-selector-mismatch</code> |
+| attach | initiator | initial-retry | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-remote-retry-initiator-alias-mismatch</code> |
+| attach | initiator | initial-retry | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-remote-retry-initiator-session-mismatch</code> |
+| attach | initiator | initial-retry | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-remote-retry-initiator-record-mismatch</code> |
+| attach | initiator | initial-retry | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-remote-retry-initiator-source-mismatch</code> |
+| attach | initiator | initial-resume | route attach | action | equals attach | <code>SEL-CASE-remote-resume-initiator-action-mismatch</code> |
+| attach | initiator | initial-resume | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-resume-initiator-destination-mismatch</code> |
+| attach | initiator | initial-resume | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-remote-resume-initiator-selector-mismatch</code> |
+| attach | initiator | initial-resume | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-remote-resume-initiator-alias-mismatch</code> |
+| attach | initiator | initial-resume | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-remote-resume-initiator-session-mismatch</code> |
+| attach | initiator | initial-resume | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-remote-resume-initiator-record-mismatch</code> |
+| attach | initiator | initial-resume | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-remote-resume-initiator-source-mismatch</code> |
+| attach | receiver | initial | route attach | action | equals attach | <code>SEL-CASE-remote-receiver-action-mismatch</code> |
+| attach | receiver | initial | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-receiver-destination-mismatch</code> |
+| attach | receiver | initial-retry | route attach | action | equals attach | <code>SEL-CASE-remote-retry-receiver-action-mismatch</code> |
+| attach | receiver | initial-retry | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-retry-receiver-destination-mismatch</code> |
+| attach | receiver | initial-resume | route attach | action | equals attach | <code>SEL-CASE-remote-resume-receiver-action-mismatch</code> |
+| attach | receiver | initial-resume | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-resume-receiver-destination-mismatch</code> |
+| attach | both | initial | route attach | action | both equal attach | <code>SEL-CASE-remote-both-action-mismatch</code> |
+| attach | both | initial | no destination argument | destination_host_id | both null | <code>SEL-CASE-remote-both-destination-mismatch</code> |
+| attach | both | initial-retry | route attach | action | both equal attach | <code>SEL-CASE-remote-retry-both-action-mismatch</code> |
+| attach | both | initial-retry | no destination argument | destination_host_id | both null | <code>SEL-CASE-remote-retry-both-destination-mismatch</code> |
+| attach | both | initial-resume | route attach | action | both equal attach | <code>SEL-CASE-remote-resume-both-action-mismatch</code> |
+| attach | both | initial-resume | no destination argument | destination_host_id | both null | <code>SEL-CASE-remote-resume-both-destination-mismatch</code> |
+| logs | initiator | initial | route logs | action | equals logs | <code>SEL-CASE-logs-initiator-action-mismatch</code> |
+| logs | initiator | initial | explicit --peer host | destination_host_id | equals peer_host | <code>SEL-CASE-logs-initiator-destination-mismatch</code> |
+| logs | initiator | initial | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-logs-initiator-selector-mismatch</code> |
+| logs | initiator | initial | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-logs-initiator-alias-mismatch</code> |
+| logs | initiator | initial | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-initiator-session-mismatch</code> |
+| logs | initiator | initial | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-initiator-record-mismatch</code> |
+| logs | initiator | initial | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-logs-initiator-source-mismatch</code> |
+| logs | initiator | cursor | route logs with cursor | action | equals logs | <code>SEL-CASE-logs-cursor-initiator-action-mismatch</code> |
+| logs | initiator | cursor | explicit --peer host with cursor | destination_host_id | equals peer_host | <code>SEL-CASE-logs-cursor-initiator-destination-mismatch</code> |
+| logs | initiator | cursor | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-logs-cursor-initiator-selector-mismatch</code> |
+| logs | initiator | cursor | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-logs-cursor-initiator-alias-mismatch</code> |
+| logs | initiator | cursor | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-cursor-initiator-session-mismatch</code> |
+| logs | initiator | cursor | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-cursor-initiator-record-mismatch</code> |
+| logs | initiator | cursor | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-logs-cursor-initiator-source-mismatch</code> |
+| logs | initiator | initial-retry | route logs | action | equals logs | <code>SEL-CASE-logs-retry-initiator-action-mismatch</code> |
+| logs | initiator | initial-retry | explicit --peer host | destination_host_id | equals peer_host | <code>SEL-CASE-logs-retry-initiator-destination-mismatch</code> |
+| logs | initiator | initial-retry | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-logs-retry-initiator-selector-mismatch</code> |
+| logs | initiator | initial-retry | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-logs-retry-initiator-alias-mismatch</code> |
+| logs | initiator | initial-retry | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-retry-initiator-session-mismatch</code> |
+| logs | initiator | initial-retry | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-retry-initiator-record-mismatch</code> |
+| logs | initiator | initial-retry | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-logs-retry-initiator-source-mismatch</code> |
+| logs | initiator | cursor-retry | route logs with cursor | action | equals logs | <code>SEL-CASE-logs-cursor-retry-initiator-action-mismatch</code> |
+| logs | initiator | cursor-retry | explicit --peer host with cursor | destination_host_id | equals peer_host | <code>SEL-CASE-logs-cursor-retry-initiator-destination-mismatch</code> |
+| logs | initiator | cursor-retry | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-logs-cursor-retry-initiator-selector-mismatch</code> |
+| logs | initiator | cursor-retry | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-logs-cursor-retry-initiator-alias-mismatch</code> |
+| logs | initiator | cursor-retry | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-cursor-retry-initiator-session-mismatch</code> |
+| logs | initiator | cursor-retry | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-cursor-retry-initiator-record-mismatch</code> |
+| logs | initiator | cursor-retry | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-logs-cursor-retry-initiator-source-mismatch</code> |
+| logs | initiator | initial-resume | route logs | action | equals logs | <code>SEL-CASE-logs-resume-initiator-action-mismatch</code> |
+| logs | initiator | initial-resume | explicit --peer host | destination_host_id | equals peer_host | <code>SEL-CASE-logs-resume-initiator-destination-mismatch</code> |
+| logs | initiator | initial-resume | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-logs-resume-initiator-selector-mismatch</code> |
+| logs | initiator | initial-resume | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-logs-resume-initiator-alias-mismatch</code> |
+| logs | initiator | initial-resume | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-resume-initiator-session-mismatch</code> |
+| logs | initiator | initial-resume | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-resume-initiator-record-mismatch</code> |
+| logs | initiator | initial-resume | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-logs-resume-initiator-source-mismatch</code> |
+| logs | initiator | cursor-resume | route logs with cursor | action | equals logs | <code>SEL-CASE-logs-cursor-resume-initiator-action-mismatch</code> |
+| logs | initiator | cursor-resume | explicit --peer host with cursor | destination_host_id | equals peer_host | <code>SEL-CASE-logs-cursor-resume-initiator-destination-mismatch</code> |
+| logs | initiator | cursor-resume | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-logs-cursor-resume-initiator-selector-mismatch</code> |
+| logs | initiator | cursor-resume | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-logs-cursor-resume-initiator-alias-mismatch</code> |
+| logs | initiator | cursor-resume | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-cursor-resume-initiator-session-mismatch</code> |
+| logs | initiator | cursor-resume | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-cursor-resume-initiator-record-mismatch</code> |
+| logs | initiator | cursor-resume | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-logs-cursor-resume-initiator-source-mismatch</code> |
+| logs | receiver | initial | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-receiver-session-mismatch</code> |
+| logs | receiver | initial | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-receiver-record-mismatch</code> |
+| logs | receiver | initial | route logs | action | equals logs | <code>SEL-CASE-logs-receiver-action-mismatch</code> |
+| logs | receiver | initial | explicit --peer host | destination_host_id | equals peer_host per-endpoint | <code>SEL-CASE-logs-receiver-destination-mismatch</code> |
+| logs | receiver | cursor | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-cursor-receiver-session-mismatch</code> |
+| logs | receiver | cursor | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-cursor-receiver-record-mismatch</code> |
+| logs | receiver | cursor | route logs with cursor | action | equals logs | <code>SEL-CASE-logs-cursor-receiver-action-mismatch</code> |
+| logs | receiver | cursor | explicit --peer host with cursor | destination_host_id | equals peer_host per-endpoint | <code>SEL-CASE-logs-cursor-receiver-destination-mismatch</code> |
+| logs | receiver | initial-retry | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-retry-receiver-session-mismatch</code> |
+| logs | receiver | initial-retry | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-retry-receiver-record-mismatch</code> |
+| logs | receiver | initial-retry | route logs | action | equals logs | <code>SEL-CASE-logs-retry-receiver-action-mismatch</code> |
+| logs | receiver | initial-retry | explicit --peer host | destination_host_id | equals peer_host per-endpoint | <code>SEL-CASE-logs-retry-receiver-destination-mismatch</code> |
+| logs | receiver | cursor-retry | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-cursor-retry-receiver-session-mismatch</code> |
+| logs | receiver | cursor-retry | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-cursor-retry-receiver-record-mismatch</code> |
+| logs | receiver | cursor-retry | route logs with cursor | action | equals logs | <code>SEL-CASE-logs-cursor-retry-receiver-action-mismatch</code> |
+| logs | receiver | cursor-retry | explicit --peer host with cursor | destination_host_id | equals peer_host per-endpoint | <code>SEL-CASE-logs-cursor-retry-receiver-destination-mismatch</code> |
+| logs | receiver | initial-resume | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-resume-receiver-session-mismatch</code> |
+| logs | receiver | initial-resume | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-resume-receiver-record-mismatch</code> |
+| logs | receiver | initial-resume | route logs | action | equals logs | <code>SEL-CASE-logs-resume-receiver-action-mismatch</code> |
+| logs | receiver | initial-resume | explicit --peer host | destination_host_id | equals peer_host per-endpoint | <code>SEL-CASE-logs-resume-receiver-destination-mismatch</code> |
+| logs | receiver | cursor-resume | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-cursor-resume-receiver-session-mismatch</code> |
+| logs | receiver | cursor-resume | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-cursor-resume-receiver-record-mismatch</code> |
+| logs | receiver | cursor-resume | route logs with cursor | action | equals logs | <code>SEL-CASE-logs-cursor-resume-receiver-action-mismatch</code> |
+| logs | receiver | cursor-resume | explicit --peer host with cursor | destination_host_id | equals peer_host per-endpoint | <code>SEL-CASE-logs-cursor-resume-receiver-destination-mismatch</code> |
+| logs | both | initial | route logs | action | both equal logs | <code>SEL-CASE-logs-both-action-mismatch</code> |
+| logs | both | initial | explicit --peer host | destination_host_id | both equal peer_host | <code>SEL-CASE-logs-both-destination-mismatch</code> |
+| logs | both | cursor | route logs with cursor | action | both equal logs | <code>SEL-CASE-logs-cursor-both-action-mismatch</code> |
+| logs | both | cursor | explicit --peer host with cursor | destination_host_id | both equal peer_host | <code>SEL-CASE-logs-cursor-both-destination-mismatch</code> |
+| logs | both | initial-retry | route logs | action | both equal logs | <code>SEL-CASE-logs-retry-both-action-mismatch</code> |
+| logs | both | initial-retry | explicit --peer host | destination_host_id | both equal peer_host | <code>SEL-CASE-logs-retry-both-destination-mismatch</code> |
+| logs | both | cursor-retry | route logs with cursor | action | both equal logs | <code>SEL-CASE-logs-cursor-retry-both-action-mismatch</code> |
+| logs | both | cursor-retry | explicit --peer host with cursor | destination_host_id | both equal peer_host | <code>SEL-CASE-logs-cursor-retry-both-destination-mismatch</code> |
+| logs | both | initial-resume | route logs | action | both equal logs | <code>SEL-CASE-logs-resume-both-action-mismatch</code> |
+| logs | both | initial-resume | explicit --peer host | destination_host_id | both equal peer_host | <code>SEL-CASE-logs-resume-both-destination-mismatch</code> |
+| logs | both | cursor-resume | route logs with cursor | action | both equal logs | <code>SEL-CASE-logs-cursor-resume-both-action-mismatch</code> |
+| logs | both | cursor-resume | explicit --peer host with cursor | destination_host_id | both equal peer_host | <code>SEL-CASE-logs-cursor-resume-both-destination-mismatch</code> |
+| attach | initiator | initial-pre-effect | route attach | action | equals attach | <code>SEL-CASE-remote-pre-effect-initiator-action-mismatch</code> |
+| attach | initiator | initial-pre-effect | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-pre-effect-initiator-destination-mismatch</code> |
+| attach | initiator | initial-pre-effect | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-remote-pre-effect-initiator-selector-mismatch</code> |
+| attach | initiator | initial-pre-effect | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-remote-pre-effect-initiator-alias-mismatch</code> |
+| attach | initiator | initial-pre-effect | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-remote-pre-effect-initiator-session-mismatch</code> |
+| attach | initiator | initial-pre-effect | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-remote-pre-effect-initiator-record-mismatch</code> |
+| attach | initiator | initial-pre-effect | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-remote-pre-effect-initiator-source-mismatch</code> |
+| attach | initiator | initial-fencing | route attach | action | equals attach | <code>SEL-CASE-remote-fencing-initiator-action-mismatch</code> |
+| attach | initiator | initial-fencing | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-fencing-initiator-destination-mismatch</code> |
+| attach | initiator | initial-fencing | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-remote-fencing-initiator-selector-mismatch</code> |
+| attach | initiator | initial-fencing | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-remote-fencing-initiator-alias-mismatch</code> |
+| attach | initiator | initial-fencing | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-remote-fencing-initiator-session-mismatch</code> |
+| attach | initiator | initial-fencing | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-remote-fencing-initiator-record-mismatch</code> |
+| attach | initiator | initial-fencing | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-remote-fencing-initiator-source-mismatch</code> |
+| attach | receiver | initial-pre-effect | route attach | action | equals attach | <code>SEL-CASE-remote-pre-effect-receiver-action-mismatch</code> |
+| attach | receiver | initial-pre-effect | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-pre-effect-receiver-destination-mismatch</code> |
+| attach | receiver | initial-fencing | route attach | action | equals attach | <code>SEL-CASE-remote-fencing-receiver-action-mismatch</code> |
+| attach | receiver | initial-fencing | no destination argument | destination_host_id | is null | <code>SEL-CASE-remote-fencing-receiver-destination-mismatch</code> |
+| attach | both | initial-pre-effect | route attach | action | both equal attach | <code>SEL-CASE-remote-pre-effect-both-action-mismatch</code> |
+| attach | both | initial-pre-effect | no destination argument | destination_host_id | both null | <code>SEL-CASE-remote-pre-effect-both-destination-mismatch</code> |
+| attach | both | initial-fencing | route attach | action | both equal attach | <code>SEL-CASE-remote-fencing-both-action-mismatch</code> |
+| attach | both | initial-fencing | no destination argument | destination_host_id | both null | <code>SEL-CASE-remote-fencing-both-destination-mismatch</code> |
+| logs | initiator | initial-projection | route logs | action | equals logs | <code>SEL-CASE-logs-projection-initiator-action-mismatch</code> |
+| logs | initiator | initial-projection | explicit --peer host | destination_host_id | equals peer_host | <code>SEL-CASE-logs-projection-initiator-destination-mismatch</code> |
+| logs | initiator | initial-projection | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-logs-projection-initiator-selector-mismatch</code> |
+| logs | initiator | initial-projection | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-logs-projection-initiator-alias-mismatch</code> |
+| logs | initiator | initial-projection | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-projection-initiator-session-mismatch</code> |
+| logs | initiator | initial-projection | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-projection-initiator-record-mismatch</code> |
+| logs | initiator | initial-projection | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-logs-projection-initiator-source-mismatch</code> |
+| logs | initiator | cursor-projection | route logs with cursor | action | equals logs | <code>SEL-CASE-logs-cursor-projection-initiator-action-mismatch</code> |
+| logs | initiator | cursor-projection | explicit --peer host with cursor | destination_host_id | equals peer_host | <code>SEL-CASE-logs-cursor-projection-initiator-destination-mismatch</code> |
+| logs | initiator | cursor-projection | literal invocation selector | selector | equals selection.selector | <code>SEL-CASE-logs-cursor-projection-initiator-selector-mismatch</code> |
+| logs | initiator | cursor-projection | alias of selected source | source_alias | equals selected source alias (null for local) | <code>SEL-CASE-logs-cursor-projection-initiator-alias-mismatch</code> |
+| logs | initiator | cursor-projection | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-cursor-projection-initiator-session-mismatch</code> |
+| logs | initiator | cursor-projection | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-cursor-projection-initiator-record-mismatch</code> |
+| logs | initiator | cursor-projection | resolved source host | source_host_id | equals resolved source_host_id | <code>SEL-CASE-logs-cursor-projection-initiator-source-mismatch</code> |
+| logs | receiver | initial-projection | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-projection-receiver-session-mismatch</code> |
+| logs | receiver | initial-projection | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-projection-receiver-record-mismatch</code> |
+| logs | receiver | initial-projection | route logs | action | equals logs | <code>SEL-CASE-logs-projection-receiver-action-mismatch</code> |
+| logs | receiver | initial-projection | explicit --peer host | destination_host_id | equals peer_host per-endpoint | <code>SEL-CASE-logs-projection-receiver-destination-mismatch</code> |
+| logs | receiver | cursor-projection | resolved session UUID | session_id | equals resolved session_id | <code>SEL-CASE-logs-cursor-projection-receiver-session-mismatch</code> |
+| logs | receiver | cursor-projection | resolved record digest | session_record_id | equals resolved session_record_id | <code>SEL-CASE-logs-cursor-projection-receiver-record-mismatch</code> |
+| logs | receiver | cursor-projection | route logs with cursor | action | equals logs | <code>SEL-CASE-logs-cursor-projection-receiver-action-mismatch</code> |
+| logs | receiver | cursor-projection | explicit --peer host with cursor | destination_host_id | equals peer_host per-endpoint | <code>SEL-CASE-logs-cursor-projection-receiver-destination-mismatch</code> |
+| logs | both | initial-projection | route logs | action | both equal logs | <code>SEL-CASE-logs-projection-both-action-mismatch</code> |
+| logs | both | initial-projection | explicit --peer host | destination_host_id | both equal peer_host | <code>SEL-CASE-logs-projection-both-destination-mismatch</code> |
+| logs | both | cursor-projection | route logs with cursor | action | both equal logs | <code>SEL-CASE-logs-cursor-projection-both-action-mismatch</code> |
+| logs | both | cursor-projection | explicit --peer host with cursor | destination_host_id | both equal peer_host | <code>SEL-CASE-logs-cursor-projection-both-destination-mismatch</code> |
+
+Other managed-session remote action routes use Section 11's existing typed
+session_id and LeaseExpectation/transaction IDs; they MUST carry the selected
+UUID and existing expected authority, never convert either into a CLI NAME.
+Their closed RPC envelopes and bound error versions are unchanged. Selector
+failures are emitted locally as CLI5/Error1.4, not inserted into an older RPC.
+
+#### 14.7.3 Authoritative summaries and closed failure binding
+
+Selector-capable CLI defaults to CLI Result 5.0.0 and Structured Error 1.4.0.
+Explicit <code>--result-version VERSION</code> selects a supported exact CLI
+Result version before parsing command operands; unsupported versions fail locally
+with incompatible_schema. Version 5 retains the exact v4 success envelope,
+command/body registry and SessionSummary shape. It changes selector admission and
+requires authoritative projection below. A canceled chooser emits the selected
+record's existing NAME in the unchanged cancel body, not the qualified argument.
+There is no successful public incomplete-session variant and no nullable owner,
+lease epoch zero, synthetic lease ID, or added SessionState.
+
+Every SessionSummary owner_host_id, lease_epoch and lease_id comes from the
+validated winning Lease Record, including the initial epoch-1 create lease.
+owner_host_name comes from validated host metadata for that holder; missing host
+metadata is a refusal, never the source alias. local_role compares that holder
+with the local host UUID. Before the first checkpoint, both newest-checkpoint
+members are null; creating is valid only with an authoritative initial lease
+and the existing eligible-bootstrap facts. A Session Record alone proves
+identity/provenance, not creation of an owner or a creating lifecycle. Liveness
+and capabilities require the existing observation/evidence contracts; source
+reachability, a cached row or an absent observation cannot mint process_present,
+readiness, capability, or current ownership. An unknown required observation is
+selector_observation_unavailable. Read-only inspection never creates a lease.
+
+A complete read proving a record without any valid lease returns
+selector_bootstrap_incomplete; a failed read follows the local/remote read classification above,
+and corrupt/inconsistent authority returns integrity_failure/lease_conflict as
+applicable. List refuses the whole success document if an encountered record
+cannot be represented truthfully; it MUST NOT silently omit that record, invent
+summary fields, or use partial/unreachable_peer_ids to conceal a record-only
+bootstrap. Existing legitimate peer-partial list semantics otherwise remain.
+
+Structured Error 1.4.0 keeps the exact 1.3 top-level shape and all earlier
+code-to-exit mappings and adds exactly:
+
+| Exit | Code | Required meaning |
+| ---: | --- | --- |
+| 4 | <code>selector_source_not_found</code> | Complete valid config has no requested source |
+| 8 | <code>selector_source_read_failed</code> | Remote source transport/I/O read failed; no fallback; local I/O uses local_precondition_failed and partial/malformed evidence uses integrity_failure |
+| 12 | <code>selector_bootstrap_incomplete</code> | Complete authority read proves record-only creation; inspect/recover original bootstrap |
+| 3 | <code>selector_observation_unavailable</code> | Required summary observation or host metadata cannot be established |
+| 16 | <code>selector_plan_stale</code> | Bound selection facts changed; fresh plan/confirmation required |
+
+These five errors have retryable=false; known session/operation IDs are included.
+Redacted details may explain phase/source without secrets or inventing facts.
+Only CLI Result 5 binds Error 1.4; selector errors MUST NOT be emitted inside
+legacy RPC/Provider/Directory envelopes. CLI Result 1/2/3/4 retain exact historical
+syntax, body and Error 1.0/1.1/1.2/1.3 bindings respectively. An explicitly selected
+legacy result version refuses id:/qualified selector syntax with its bound
+invalid_arguments, never silently treats it as a name. Unrepresentable summaries
+on legacy surfaces refuse with that surface's existing local_precondition_failed
+(exit 3); incompatible_schema covers unsupported representation versions.
+No lower-version successful projection may fabricate missing authority. Record,
+lease, event and error objects already published are never rewritten/re-digested.
+
+#### 14.7.4 Interrupted record-only creation
+
+The crash gap inside Section 13.1 step 2 (Session Record durable, initial Lease
+Record not yet durable) is recovery work, before creating. Recovery runs only on
+the original creating host under a serialized machine-local BootstrapIntent
+and its original operation IDs. Selector contract 1.0.0 defines this closed
+local representation: selector_version (exact 1.0.0), session_record_id (digest),
+workspace_group_record_id (digest), creating_host_id (UUIDv7),
+bootstrap_operation_id (UUIDv7), first_checkpoint_operation_id (UUIDv7), and
+initial_lease (the complete allocated Lease Record 1.0.0 described by the
+closed bootstrap representation table below).
+New creation MUST atomically persist and fsync this intent and its parent
+directory before publishing the Session Record. Retain it through durable
+session.created publication and reconcile against immutable authority on retry.
+It is never replicated, never a lease grant, and never accepted from caller
+bytes as recovery authority. Its encoding is canonical JSON under selector
+contract 1.0.0, not an extension of a historical journal. Legacy record-only
+creation without this original intent remains refused; no migration invents it. It requires a complete valid authority read proving no lease,
+no terminal/provider effect and no conflicting creation; an unavailable read
+cannot establish any of those absences. It reuses the already allocated/persisted
+initial lease and operation IDs, validates the Session Record/Workspace Group,
+and durably publishes the initial epoch-1 create lease and session.created in the
+original order before any terminal/provider action. The same intent ordering
+applies to task-board creation in Section 13.2 step 1. If the original durable
+bootstrap inputs are missing, ambiguous or inconsistent, remain refused with
+selector_bootstrap_incomplete for manual diagnosis; do not allocate replacement
+IDs, infer the creator is owner, recover from another peer, or launch a second
+process. When the lease already exists, reconcile it and the original intent;
+never issue a second initial lease. A lease/event read failure is not the
+record-only case. Normal Section 13.1 bootstrap retry begins only after these
+facts are established. No new recovery command, replicated journal schema, or
+cross-host create authority is introduced.
+
+The exact BootstrapIntent members are the seven members above, all required;
+unknown members are refused. Its embedded Lease Record retains every required
+Section 5.3 member, including nullable members, canonical self digest,
+UUIDv4 fencing token, timestamp and reverse-DNS extensions. The following
+initial-lease values and cross-record bindings are normative, and are consumed
+by the publication evaluator in addition to structural validation:
+
+| Bootstrap constraint | Required value |
+| --- | --- |
+| epoch | 1 |
+| reason | create |
+| predecessor_lease_id | null |
+| checkpoint_id | null |
+| schema | urn:ax:schema:lease |
+| schema_version | 1.0.0 |
+
+Intent session_record_id and workspace_group_record_id must equal the canonical
+record digests of the supplied Session/Workspace Group. Session subject_id equals
+session_id; Workspace Group subject_id equals workspace_group_id; the Session's
+workspace_group_id equals that group's ID and its launch cwd names a member.
+Lease session_id and subject_id equal the Session ID. Intent creating_host_id,
+Session created_by_host_id, lease holder_host_id, issued_by_host_id and
+created_by_host_id equal the original creating host and the recovering local
+host. An existing reused Workspace Group need not have the same creator.
+Both operation IDs are distinct UUIDv7 and equal the IDs in the original durable
+creation inputs; initial_lease is byte-identical after canonicalization to the
+originally allocated lease. Recovery compares the whole original intent, not
+just its digest, against trusted machine-local original inputs. Rehashed caller
+records, fresh operation IDs or a fresh valid lease cannot replace them.
+Absent or malformed original intent, invalid embedded lease, or inconsistent
+bindings refuse selector_bootstrap_incomplete before publication. A failed read
+of those inputs retains its read-failure class, not absence. Existing-lease
+reconciliation first validates the same intent and must not republish a lease.
+The original-input provenance, serialization, effect absence and complete
+observation checks remain runtime prerequisites; concrete synthetic record
+validation does not prove those runtime facts.
+
+#### 14.7.5 Publication conformance and assurance bounds
+
+The following closed machine-readable policy is normative for the selector
+reference evaluator in the publication gate. The policy is the executable normative admission/refusal representation for
+the eight listed source-conformance families. The guard expression grammar is
+closed: get reads a required context field; eq/ne compare JSON values; gt
+compares counts; all/any combine booleans. Guard lists evaluate in order and
+refuse with the first matching error. Missing fields, unknown operators/stages,
+or malformed policy are publication failures. Prose explains these predicates
+and additionally specifies runtime authority/durability obligations outside the
+source evaluator. Prose and policy must agree; neither
+synthetic vectors nor source fingerprints prove a running AX implementation.
+The fixture families below are the independently enumerated publication scope.
+
+| ID | Publication obligation |
+| --- | --- |
+| SEL-GRAMMAR | First-at grammar, exact aliases, explicit durable UUIDs and input bounds |
+| SEL-PRECEDENCE | Bare tier order, collisions and tombstones |
+| SEL-SOURCE | Missing/read-failed/empty source and no explicit-source fallback |
+| SEL-PLAN | Resolve once and all bound facts revalidated before effects |
+| SEL-AUTHORITY | Source is neither owner nor destination |
+| SEL-SUMMARY | Initial lease/observation projection and truthful refusal |
+| SEL-BOOTSTRAP | Interrupted record-only recovery with original durable inputs |
+| SEL-VERSION | Exact versions and closed historical behavior |
+
+
+The exact source-only case inventory is closed; dropping a case is a publication
+failure, not a reduction of the denominator.
+
+Publication composition derives its action/boundary and SelectionPlan member
+inventory from Section 14.7.2, including both CLI5 remote routes. Each endpoint
+inherits the action boundaries except the opposite transport endpoint:
+remote-admission belongs to the receiver, remote-dispatch to the initiator.
+Session-filtered logs require separate initial and cursor-continuation witnesses.
+Every resulting row requires an unchanged positive, revoked and forged-plan
+negatives, failed/partial/malformed reads in each local/remote domain, and one
+changed and one missing current-fact witness for every bound SelectionPlan member.
+The opposite endpoint remains valid. These synthetic vectors must execute the
+composed publication evaluator, not only generic revalidation. Caller and generic
+checks must independently resist scope narrowing. Recovery is measured for the
+actions that declare it; attach/log recovery is not invented. Composed
+invocation binding adds the 111 plan/current-agree divergence witnesses from
+the Section 14.7.2 relation (per-endpoint actions, peer/null destinations,
+resolved session/record/source, literal selector and derived source alias;
+initial, cursor, retry and transport-resume scopes; single-endpoint and
+both-ends-agreeing vectors), with caller, generic and phase-specific narrowing
+mutants executed through both public entries.
+Exact fixture coverage does not attest runtime provenance or temporal boundary
+execution.
+
+| Case | Family |
+| --- | --- |
+| <code>SEL-CASE-name</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-durable</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-qualified</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-alias-at</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-alias-space</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-alias-percent</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-host-id</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-max-name</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-max-alias</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-empty</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-empty-key</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-empty-alias</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-bad-source</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-id-v4</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-id-upper</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-id-prefix</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-id-native</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-long-name</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-long-alias</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-extra-argument</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-local-first</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-peer-name</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-uuid-name-first</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-durable-bypass</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-case-collision</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-tombstone-excluded</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-local-does-not-read-peer</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-required-tier-read</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-deduplicate-copies</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-same-id-digest-conflict</code> | SEL-PRECEDENCE |
+| <code>SEL-CASE-literal-source</code> | SEL-SOURCE |
+| <code>SEL-CASE-missing-peer</code> | SEL-SOURCE |
+| <code>SEL-CASE-case-alias</code> | SEL-SOURCE |
+| <code>SEL-CASE-no-normalize</code> | SEL-SOURCE |
+| <code>SEL-CASE-source-local</code> | SEL-SOURCE |
+| <code>SEL-CASE-source-id-0198f4c8-7d40-7e55-8e6f-1234567890ab</code> | SEL-SOURCE |
+| <code>SEL-CASE-source-id-0198f4c8-7d40-7e55-8e6f-1234567890ac</code> | SEL-SOURCE |
+| <code>SEL-CASE-source-failed</code> | SEL-SOURCE |
+| <code>SEL-CASE-config-failed</code> | SEL-SOURCE |
+| <code>SEL-CASE-source-partial</code> | SEL-SOURCE |
+| <code>SEL-CASE-config-partial</code> | SEL-SOURCE |
+| <code>SEL-CASE-source-malformed</code> | SEL-SOURCE |
+| <code>SEL-CASE-config-malformed</code> | SEL-SOURCE |
+| <code>SEL-CASE-source-inaccessible</code> | SEL-SOURCE |
+| <code>SEL-CASE-config-inaccessible</code> | SEL-SOURCE |
+| <code>SEL-CASE-empty-no-fallback</code> | SEL-SOURCE |
+| <code>SEL-CASE-missing-key-no-fallback</code> | SEL-SOURCE |
+| <code>SEL-CASE-revoked-source</code> | SEL-SOURCE |
+| <code>SEL-CASE-duplicate-source</code> | SEL-SOURCE |
+| <code>SEL-CASE-invalid-record</code> | SEL-SOURCE |
+| <code>SEL-CASE-stable-plan</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-forged-plan</code> | SEL-PLAN |
+| <code>SEL-CASE-plan-read-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-plan-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-initial-lease</code> | SEL-SUMMARY |
+| <code>SEL-CASE-local-source-remote-owner</code> | SEL-AUTHORITY |
+| <code>SEL-CASE-peer-source-local-owner</code> | SEL-AUTHORITY |
+| <code>SEL-CASE-record-only</code> | SEL-SUMMARY |
+| <code>SEL-CASE-summary-read-failed</code> | SEL-SUMMARY |
+| <code>SEL-CASE-unknown-observation</code> | SEL-SUMMARY |
+| <code>SEL-CASE-unknown-owner-name</code> | SEL-SUMMARY |
+| <code>SEL-CASE-corrupt-summary</code> | SEL-SUMMARY |
+| <code>SEL-CASE-failed-is-not-absent</code> | SEL-SUMMARY |
+| <code>SEL-CASE-list-no-omission</code> | SEL-SUMMARY |
+| <code>SEL-CASE-bootstrap-original</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-bootstrap-no-original_host</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-bootstrap-no-serialized</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-bootstrap-no-no_effects</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-bootstrap-no-no_conflict</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-bootstrap-no-record_valid</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-bootstrap-no-original_inputs</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-bootstrap-read-failed</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-bootstrap-existing-lease</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-version-1.0.0-bare</code> | SEL-VERSION |
+| <code>SEL-CASE-version-1.0.0-id</code> | SEL-VERSION |
+| <code>SEL-CASE-version-1.0.0-qualified</code> | SEL-VERSION |
+| <code>SEL-CASE-version-1.0.0-record-only</code> | SEL-VERSION |
+| <code>SEL-CASE-version-2.0.0-bare</code> | SEL-VERSION |
+| <code>SEL-CASE-version-2.0.0-id</code> | SEL-VERSION |
+| <code>SEL-CASE-version-2.0.0-qualified</code> | SEL-VERSION |
+| <code>SEL-CASE-version-2.0.0-record-only</code> | SEL-VERSION |
+| <code>SEL-CASE-version-3.0.0-bare</code> | SEL-VERSION |
+| <code>SEL-CASE-version-3.0.0-id</code> | SEL-VERSION |
+| <code>SEL-CASE-version-3.0.0-qualified</code> | SEL-VERSION |
+| <code>SEL-CASE-version-3.0.0-record-only</code> | SEL-VERSION |
+| <code>SEL-CASE-version-4.0.0-bare</code> | SEL-VERSION |
+| <code>SEL-CASE-version-4.0.0-id</code> | SEL-VERSION |
+| <code>SEL-CASE-version-4.0.0-qualified</code> | SEL-VERSION |
+| <code>SEL-CASE-version-4.0.0-record-only</code> | SEL-VERSION |
+| <code>SEL-CASE-version-5.0.0-bare</code> | SEL-VERSION |
+| <code>SEL-CASE-version-5.0.0-id</code> | SEL-VERSION |
+| <code>SEL-CASE-version-5.0.0-qualified</code> | SEL-VERSION |
+| <code>SEL-CASE-version-5.0.0-record-only</code> | SEL-VERSION |
+| <code>SEL-CASE-unsupported-version</code> | SEL-VERSION |
+| <code>SEL-CASE-percent-literal-resolution</code> | SEL-SOURCE |
+| <code>SEL-CASE-duplicate-alias-distinct-host</code> | SEL-SOURCE |
+| <code>SEL-CASE-duplicate-host-distinct-alias</code> | SEL-SOURCE |
+| <code>SEL-CASE-max-qualified-name</code> | SEL-GRAMMAR |
+| <code>SEL-CASE-local-source-failed</code> | SEL-SOURCE |
+| <code>SEL-CASE-local-source-partial</code> | SEL-SOURCE |
+| <code>SEL-CASE-local-source-malformed</code> | SEL-SOURCE |
+| <code>SEL-CASE-boundary-status-projection-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-projection-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-projection-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-projection-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-projection-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-status-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-pre-effect-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-pre-effect-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-pre-effect-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-pre-effect-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-pre-effect-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-fencing-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-fencing-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-fencing-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-fencing-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-fencing-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-dispatch-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-dispatch-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-dispatch-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-dispatch-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-dispatch-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-admission-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-admission-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-admission-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-admission-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-remote-admission-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-transport-resume-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-transport-resume-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-transport-resume-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-transport-resume-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-attach-transport-resume-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-pre-effect-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-pre-effect-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-pre-effect-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-pre-effect-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-pre-effect-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-fencing-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-fencing-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-fencing-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-fencing-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-fencing-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-commit-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-commit-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-commit-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-commit-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-commit-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-recovery-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-recovery-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-recovery-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-recovery-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-recovery-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-transport-resume-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-transport-resume-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-transport-resume-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-transport-resume-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-takeover-transport-resume-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-pre-effect-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-pre-effect-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-pre-effect-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-pre-effect-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-pre-effect-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-fencing-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-fencing-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-fencing-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-fencing-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-fencing-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-commit-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-commit-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-commit-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-commit-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-commit-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-recovery-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-recovery-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-recovery-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-recovery-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-recovery-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-transport-resume-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-transport-resume-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-transport-resume-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-transport-resume-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-fork-transport-resume-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-pre-effect-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-pre-effect-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-pre-effect-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-pre-effect-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-pre-effect-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-fencing-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-fencing-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-fencing-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-fencing-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-fencing-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-commit-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-commit-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-commit-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-commit-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-commit-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-recovery-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-recovery-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-recovery-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-recovery-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-recovery-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-transport-resume-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-transport-resume-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-transport-resume-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-transport-resume-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-stop-transport-resume-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-pre-effect-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-pre-effect-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-pre-effect-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-pre-effect-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-pre-effect-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-fencing-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-fencing-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-fencing-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-fencing-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-fencing-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-commit-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-commit-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-commit-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-commit-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-commit-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-recovery-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-recovery-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-recovery-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-recovery-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-recovery-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-transport-resume-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-transport-resume-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-transport-resume-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-transport-resume-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-resume-transport-resume-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-pre-effect-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-pre-effect-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-pre-effect-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-pre-effect-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-pre-effect-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-fencing-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-fencing-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-fencing-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-fencing-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-fencing-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-commit-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-commit-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-commit-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-commit-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-commit-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-recovery-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-recovery-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-recovery-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-recovery-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-recovery-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-transport-resume-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-transport-resume-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-transport-resume-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-transport-resume-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-sync-transport-resume-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-projection-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-projection-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-projection-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-projection-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-projection-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-diff-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-pre-effect-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-pre-effect-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-pre-effect-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-pre-effect-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-pre-effect-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-fencing-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-fencing-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-fencing-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-fencing-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-fencing-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-commit-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-commit-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-commit-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-commit-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-commit-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-recovery-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-recovery-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-recovery-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-recovery-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-materialize-recovery-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-pre-effect-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-pre-effect-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-pre-effect-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-pre-effect-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-pre-effect-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-fencing-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-fencing-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-fencing-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-fencing-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-fencing-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-commit-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-commit-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-commit-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-commit-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-commit-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-recovery-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-recovery-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-recovery-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-recovery-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-session.set-profile-recovery-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-projection-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-projection-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-projection-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-projection-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-projection-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-retry-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-retry-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-retry-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-retry-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-retry-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-cancel-projection-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-cancel-projection-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-cancel-projection-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-cancel-projection-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-cancel-projection-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-intent-absent</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-original-absent</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-missing-selector_version</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-missing-session_record_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-missing-workspace_group_record_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-missing-creating_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-missing-bootstrap_operation_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-missing-first_checkpoint_operation_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-missing-initial_lease</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-extra</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-version</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-schema</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-schema_version</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-record_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-subject_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-session_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-lease_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-epoch</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-holder_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-predecessor_lease_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-reason</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-checkpoint_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-issued_by_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-created_by_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-created_at</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-missing-extensions</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-extra</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-epoch</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-reason</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-predecessor_lease_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-checkpoint_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-schema</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-schema_version</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-lease_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-created_at</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-extensions</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-epoch-bool</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-lease-record_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-lease-subject_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-lease-session_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-lease-holder_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-lease-issued_by_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-lease-created_by_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-changed-session_record_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-changed-workspace_group_record_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-changed-creating_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-changed-bootstrap_operation_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-changed-first_checkpoint_operation_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-same-operation</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-new-lease</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-wrong-local-host</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-session-subject_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-session-workspace_group_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-session-created_by_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-binding-workspace-subject_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-cwd</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-rehashed-new-lease</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-remote-durable-collision</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.pre-effect.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.fencing.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.retry.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.remote-dispatch.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.initiator.transport-resume.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.pre-effect.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.fencing.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.retry.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.remote-admission.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-attach.receiver.transport-resume.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.projection.cursor-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.retry.cursor-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.remote-dispatch.cursor-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.initiator.transport-resume.cursor-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-failed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-failed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-partial-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-partial-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-malformed-local</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-malformed-remote</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-selector</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-source_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-source_alias</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-source_index_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-configuration_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-action</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-destination_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_attach-source-missing</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_attach-source-empty</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_attach-source-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_attach-source-partial</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_attach-source-malformed</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_logs-source-missing</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_logs-source-empty</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_logs-source-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_logs-source-partial</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-remote_logs-source-malformed</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.initial-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-cursor-host</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.projection.cursor-cursor-session</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.initial-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-cursor-host</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.retry.cursor-cursor-session</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.initial-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-cursor-host</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.remote-admission.cursor-cursor-session</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.initial-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-cursor-host</code> | SEL-PLAN |
+| <code>SEL-CASE-GATE-logs.receiver.transport-resume.cursor-cursor-session</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-receiver-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-receiver-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-receiver-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-receiver-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-unsupported</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-wrong-owner</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-bare-uuid</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-name</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-wrong-id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-selector_version</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-session_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-session_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-lease_record_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-lease_epoch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-lease_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-owner_host_id</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-authority_heads</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-missing-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-changed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-malformed-expectation_digest</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-extra-expectation</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-tombstoned</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-invalid</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-intent-invalid-creating_host_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-invalid-bootstrap_operation_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-intent-invalid-first_checkpoint_operation_id</code> | SEL-BOOTSTRAP |
+| <code>SEL-CASE-boundary-logs-remote-dispatch-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-dispatch-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-dispatch-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-dispatch-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-dispatch-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-admission-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-admission-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-admission-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-admission-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-remote-admission-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-transport-resume-stable</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-transport-resume-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-transport-resume-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-transport-resume-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-boundary-logs-transport-resume-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-durable-collision</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-wrong-emitter</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-forged-event</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-legacy</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-host</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-session</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-selection-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-selection-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-selection-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-selection-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-receiver-stale</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-receiver-revoked</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-receiver-failed</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-receiver-forged</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-receiver-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-receiver-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-receiver-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-resume-receiver-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-receiver-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-retry-receiver-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-receiver-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-receiver-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-receiver-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-resume-receiver-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-receiver-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-retry-receiver-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-resume-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-retry-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-pre-effect-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-remote-fencing-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-initiator-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-initiator-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-initiator-selector-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-initiator-alias-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-initiator-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-initiator-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-initiator-source-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-receiver-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-receiver-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-receiver-session-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-receiver-record-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-receiver-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-receiver-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-projection-both-destination-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-both-action-mismatch</code> | SEL-PLAN |
+| <code>SEL-CASE-logs-cursor-projection-both-destination-mismatch</code> | SEL-PLAN |
+
+
+| <code>SEL-CASE-logs-receiver-wrong-session</code> | SEL-PLAN |
+
+~~~selector-policy
+{
+  "version": "1.0.0",
+  "split": "first",
+  "name_pattern": "[A-Za-z0-9][A-Za-z0-9._-]{0,63}",
+  "alias_max": 64,
+  "bare_order": [
+    "local_name",
+    "peer_name",
+    "uuid"
+  ],
+  "explicit_fallback": false,
+  "source_is_owner": false,
+  "summary_requires_lease": true,
+  "plan_fields": [
+    "selector_version",
+    "selector",
+    "session_id",
+    "session_record_id",
+    "source_host_id",
+    "source_alias",
+    "source_index_digest",
+    "configuration_digest",
+    "lease_record_id",
+    "lease_epoch",
+    "lease_id",
+    "owner_host_id",
+    "authority_heads",
+    "action",
+    "destination_host_id",
+    "expectation_digest"
+  ],
+  "cli_result": "5.0.0",
+  "error": "1.4.0",
+  "guards": {
+    "config": [
+      {
+        "when": {
+          "ne": [
+            {
+              "get": "config_read"
+            },
+            "valid"
+          ]
+        },
+        "error": "invalid_config"
+      }
+    ],
+    "mapping": [
+      {
+        "when": {
+          "ne": [
+            {
+              "get": "aliases_count"
+            },
+            {
+              "get": "unique_aliases"
+            }
+          ]
+        },
+        "error": "invalid_config"
+      },
+      {
+        "when": {
+          "ne": [
+            {
+              "get": "hosts_count"
+            },
+            {
+              "get": "unique_hosts"
+            }
+          ]
+        },
+        "error": "invalid_config"
+      }
+    ],
+    "source": [
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "matches"
+            },
+            0
+          ]
+        },
+        "error": "selector_source_not_found"
+      }
+    ],
+    "allowlist": [
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "allowed"
+            },
+            false
+          ]
+        },
+        "error": "peer_not_allowlisted"
+      }
+    ],
+    "read": [
+      {
+        "when": {
+          "any": [
+            {
+              "eq": [
+                {
+                  "get": "read"
+                },
+                "partial"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "get": "read"
+                },
+                "malformed"
+              ]
+            }
+          ]
+        },
+        "error": "integrity_failure"
+      },
+      {
+        "when": {
+          "all": [
+            {
+              "ne": [
+                {
+                  "get": "read"
+                },
+                "valid"
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "get": "read_domain"
+                },
+                "local"
+              ]
+            }
+          ]
+        },
+        "error": "local_precondition_failed"
+      },
+      {
+        "when": {
+          "ne": [
+            {
+              "get": "read"
+            },
+            "valid"
+          ]
+        },
+        "error": "selector_source_read_failed"
+      }
+    ],
+    "record": [
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "valid"
+            },
+            false
+          ]
+        },
+        "error": "integrity_failure"
+      }
+    ],
+    "collision": [
+      {
+        "when": {
+          "gt": [
+            {
+              "get": "identities"
+            },
+            1
+          ]
+        },
+        "error": "name_ambiguous"
+      },
+      {
+        "when": {
+          "gt": [
+            {
+              "get": "digests"
+            },
+            1
+          ]
+        },
+        "error": "integrity_failure"
+      }
+    ],
+    "plan": [
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "trusted_local_plan"
+            },
+            false
+          ]
+        },
+        "error": "selector_plan_stale"
+      }
+    ],
+    "plan_fact": [
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "present"
+            },
+            false
+          ]
+        },
+        "error": "selector_plan_stale"
+      },
+      {
+        "when": {
+          "ne": [
+            {
+              "get": "expected"
+            },
+            {
+              "get": "current"
+            }
+          ]
+        },
+        "error": "selector_plan_stale"
+      }
+    ],
+    "summary_lease": [
+      {
+        "when": {
+          "all": [
+            {
+              "get": "required"
+            },
+            {
+              "eq": [
+                {
+                  "get": "lease"
+                },
+                null
+              ]
+            }
+          ]
+        },
+        "error": "selector_bootstrap_incomplete"
+      }
+    ],
+    "summary_observation": [
+      {
+        "when": {
+          "any": [
+            {
+              "eq": [
+                {
+                  "get": "observation_known"
+                },
+                false
+              ]
+            },
+            {
+              "eq": [
+                {
+                  "get": "host_metadata_known"
+                },
+                false
+              ]
+            }
+          ]
+        },
+        "error": "selector_observation_unavailable"
+      }
+    ],
+    "bootstrap": [
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "original_host"
+            },
+            false
+          ]
+        },
+        "error": "selector_bootstrap_incomplete"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "serialized"
+            },
+            false
+          ]
+        },
+        "error": "selector_bootstrap_incomplete"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "no_effects"
+            },
+            false
+          ]
+        },
+        "error": "selector_bootstrap_incomplete"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "no_conflict"
+            },
+            false
+          ]
+        },
+        "error": "selector_bootstrap_incomplete"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "record_valid"
+            },
+            false
+          ]
+        },
+        "error": "selector_bootstrap_incomplete"
+      },
+      {
+        "when": {
+          "eq": [
+            {
+              "get": "original_inputs"
+            },
+            false
+          ]
+        },
+        "error": "selector_bootstrap_incomplete"
+      }
+    ]
+  },
+  "error_exits": {
+    "invalid_arguments": 2,
+    "invalid_config": 3,
+    "local_precondition_failed": 3,
+    "name_ambiguous": 4,
+    "not_found": 4,
+    "incompatible_schema": 6,
+    "peer_not_allowlisted": 7,
+    "integrity_failure": 9,
+    "selector_source_not_found": 4,
+    "selector_source_read_failed": 8,
+    "selector_bootstrap_incomplete": 12,
+    "selector_observation_unavailable": 3,
+    "selector_plan_stale": 16,
+    "host_identity_mismatch": 7
+  }
+}
+~~~
+
+<code>scripts/validate_spec.py</code> invokes the selector conformance evaluator;
+<code>run_validation.sh</code> is the full publication entrypoint. Committed
+positive and negative vectors exercise every listed family. Mutation tests drive
+both public entrypoints in isolated copies, including narrowed refusal gates,
+source-policy changes preserving key tokens, missing fixtures and disconnected
+validation. They report named failing tests and measured family/case/mutant
+ratios. Fingerprints bind reviewed prose bytes only, not semantic completeness.
+Real AX selector, filesystem crash durability, race serialization, transport
+identity, process observation and provider/platform behavior remain unimplemented
+and unverified; Section 19 product acceptance is required before product claims.
 
 ## 15. Errors and exit semantics
 

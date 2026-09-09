@@ -82,6 +82,13 @@ jobs:
       - name: Run expected-red mutation suite
         run: ./scripts/test_expected_red.sh
 
+      - name: Run selector publication mutation suite
+        run: python3 scripts/test_selector_publication.py
+      - name: Attack selector composed boundaries and evidence
+        run: |
+          python3 scripts/test_selector_composition.py
+          python3 scripts/test_selector_composition.py --controls --full
+
       - name: Verify complete no-AX publication tool identities (local inventory)
         run: |
           python3 -B scripts/publication_gate/drive.py --source . --out "$RUNNER_TEMP/publication-identity-path" --branch path --pinned-java "$JAVA_HOME" --structurizr /opt/structurizr-cli-2025.11.09/structurizr.sh --plantuml-jar /opt/plantuml-1.2026.6.jar

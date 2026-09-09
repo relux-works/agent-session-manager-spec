@@ -277,3 +277,72 @@ directory rules live in [§7.9](SPEC.md#79-companion-directory-node-protocol),
 [§11.8](SPEC.md#118-mesh-rpc-300-directory-replication),
 [§13.15](SPEC.md#1315-directory-continuation-planning-and-execution),
 [§14.5](SPEC.md#145-session-directory-cli-result-3-query-and-tui), and Appendix D.
+
+## Prepared v0.6.0 selector source delta
+
+| Approved requirement | Normative source | Publication family | Runtime evidence |
+| --- | --- | --- | --- |
+| Literal first-at / exact aliases / durable ID | SPEC 14.7.1 | SEL-GRAMMAR | Unimplemented |
+| Preserved bare NAME/UUID precedence | SPEC 2.3 and 14.7.1 | SEL-PRECEDENCE | Unimplemented |
+| Explicit source read outcomes / no fallback | SPEC 14.7.1 | SEL-SOURCE | Unimplemented |
+| Resolve once / every fact revalidated | SPEC 14.7.2 | SEL-PLAN | Unimplemented |
+| Source is not ownership or destination | SPEC 14.7.2 | SEL-AUTHORITY | Unimplemented |
+| Initial lease and observation-backed summaries | SPEC 14.7.3 | SEL-SUMMARY | Unimplemented |
+| Interrupted record-only creation / original intent | SPEC 14.7.4 | SEL-BOOTSTRAP | Unimplemented |
+| Closed legacy contracts / CLI5 Error1.4 | SPEC 1.5 and 14.7.3 | SEL-VERSION | Unimplemented |
+
+The public validator calls `validate_selector.validate` and evaluates the exact
+SPEC case inventory against committed synthetic vectors. Its 8/8 families
+are source conformance, with 0/8 AX runtime families implemented here. Prose
+fingerprints enforce editorial drift only; native race/crash/transport/product
+assurance remains outside this repository. Host-channel Config4/RPC5 allocations
+are independently reviewed and must be retained at integration.
+
+Selector review rework adds a CLI5 remote attach override to Sections 13.4–13.5:
+`id:SESSION_UUID` and closed `--expect-selection` values reach the owner without
+NAME re-resolution. Publication witnesses compose source selection, initiator
+revalidation, transport operand and exact owner admission with same-name and
+UUID-shaped-name collisions. This does not execute SSH or a product CLI.
+
+The normative action/boundary matrix drives 56 pairs, each with stable, stale,
+revoked, failed-read and forged-plan vectors. The source gate checks both matrix
+and case membership. Bootstrap vectors carry complete original intents and
+Lease1 records, canonical self digests, Session/Workspace records and identity
+bindings. Full legacy Session/Workspace schema coverage remains in its existing
+gates; this selector evaluator verifies their digests and bootstrap bindings.
+Mutations independently narrow each declared action/boundary and the new route
+and representation predicates, refreshing editorial hashes where applicable.
+Runtime fencing, host authentication, original-input provenance and fsync/crash
+recovery remain unknown, not accepted through these synthetic fixtures.
+
+The sibling remote-log route also forwards an explicit durable ID under CLI5,
+retaining emitter/cursor scope and filtering same-name collisions by UUID.
+Its historical NAME/Result1 transport bytes remain unchanged under CLI1–4.
+
+`selector_inventory.Inventory`, adopted from independently accepted gate
+TASK-260908-2131b6, owns source-derived action, member and composed route scope.
+`validate_selector.validate` audits its witnesses and executes the same committed
+fixtures through `remote_attach` and `remote_logs` from both public entries.
+There are 26 scoped rows (18 before splitting log initial/cursor continuation),
+41 shapes per row and 1066 exact witnesses, plus 224 adjacent composed remote
+vectors (65 selection/transport/lease/emitter/cursor witnesses plus the 159
+invocation-binding divergence witnesses above).
+All 16 changed and missing plan facts, revocation, forged provenance flags and
+failed/partial/malformed local/remote reads are represented with the other end
+valid. The five former separator cases are removed; 1797 source cases remain (1638 plus
+159 composed invocation-to-plan binding divergence witnesses: per-endpoint
+actions, peer/null destinations, resolved session/record/source, literal
+selector and derived source alias; initial, cursor, pre-effect, fencing,
+projection, retry and transport-resume contexts with single-endpoint and
+both-ends-agreeing vectors; cross-endpoint equality never counts).
+
+`test_selector_composition.py` drives the public entries with 156 caller,
+108 generic and 56 adjacent mutations, plus four independent partial-local
+transport-resume attacks (logs caller restricted to cursor continuation).
+Named semantic forbidden success is required for a kill; source-pin failure or
+traceback is insufficient. Eight evidence/neutral controls include removing both
+a case and its declared ID, forged expectations, source-scope drift, missing
+caller and missing/malformed/unreadable fixtures. CI executes both suites.
+These counts bound the finite synthetic registry, not all possible predicates.
+Seven recovery pairs belong to generic actions; no attach/log recovery phase is
+invented. Runtime transport, temporal phase crossing and authority remain unknown.

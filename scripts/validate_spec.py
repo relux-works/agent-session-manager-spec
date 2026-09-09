@@ -18,6 +18,7 @@ import sys
 import tomllib
 from collections.abc import Iterator
 
+from validate_selector import validate as validate_selector
 from validate_host_channel import validate as validate_host_channel
 from validate_directory import validate as validate_directory
 from validate_terminal_backend import validate as validate_terminal_backend
@@ -44,11 +45,11 @@ PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
 # specification revision must deliberately replace this bounded map after its
 # semantic checks and expected-red suite have been reviewed.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "4315415822b0278d790868c767f92eb02ea93ffd8e96e1cc91719cd9dfc61100",
-    "README.md": "f84da52ef39e69280e7ccee6156b36c51720b244d10349019783602c95407bbf",
+    "SPEC.md": "74504539fb43c28ae3450622bc1002e643f116cd3e14df4567a882231e90896b",
+    "README.md": "6bf51c4b200201dbdbcc37ff7140467ae8e2568b706c24d10cddd36eebc8d82a",
     "CONTRIBUTING.md": "6e15028248b1d85a470beea4ca626f4769bdbab009580ad85612b140a350f833",
-    "CHANGELOG.md": "9f61e0eee5ec56a1f601d8cb74b73c2a006c404c90d78a7617b650d6e7f906fd",
-    "RELEASE_NOTES.md": "bd62f047f8abd69da5d244cb3eb799104706b3a67a1c4dd5e2b5631a43c499e9",
+    "CHANGELOG.md": "6bd1fbe32eedb7cd80c8f6059c6a9864ebf55447a58d71f691ab5718a1fc0951",
+    "RELEASE_NOTES.md": "d1c91cebc9a253e2dc21af3bf94aeab25f1bc55c3eed46ac10a23ff8e987044d",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"
@@ -90,7 +91,7 @@ EXPECTED_HANDWRITTEN_PLANTUML = {
 }
 
 FROZEN_ACCEPTED_INPUT_SHA256 = {
-    "STANDALONE_TO_AX_TRACEABILITY.md": "af32e2f17ca43af7caf1d2ba585745d87b559a0f7070d8e0b517567eeb2a9a6e",
+    "STANDALONE_TO_AX_TRACEABILITY.md": "864e37c424c169b80a61f9d85e12737432f211d10f805b5ca952e208dd210f1d",
     "diagrams/README.md": "cb17e97eaee86dcaf1f8daa16765964a81cf544fc3988b8d2ed795ff9b464acf",
     "diagrams/plantuml/cloning_components.puml": "50e728af2fddbc5f3b161d661068fc33c4fe341884c4c28a8ea541c24577118a",
     "diagrams/plantuml/cloning_transaction.puml": "aadeb780d4cbbe129059dd327bd67b42c1947e13660143f7b91a06c59c99887f",
@@ -2257,6 +2258,8 @@ def main() -> int:
     failed += terminal_backend_ledger["terminal_backend_failed_groups"]
     passed += terminal_backend_ledger["terminal_backend_gate_classes"] - terminal_backend_ledger["terminal_backend_failed_groups"]
     ledger.update(terminal_backend_ledger)
+
+    errors.extend(validate_selector(ROOT, text, canonical))
 
     host_errors, host_ledger = validate_host_channel(ROOT, text)
     errors.extend(host_errors)

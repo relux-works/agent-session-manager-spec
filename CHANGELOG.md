@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Prepare source-qualified Session selector 1.0.0, CLI Result 5.0.0 and Error
+  1.4.0 with exact first-at aliases and durable id:UUID selection.
+- Bind and revalidate source/configuration/record/lease facts; preserve bare
+  precedence and all historical closed contracts.
+- Refuse unrepresentable public summaries and reconcile interrupted creation
+  only from original durable bootstrap inputs. No invented owner or lease.
+- Add source-only publication vectors and narrowing mutation tests. No AX
+  implementation, platform acceptance, or release tag is delivered here.
 - Prepared mutual TLS 1.3 over SSH with dedicated enrolled host credentials,
   exact certificate/UUID/hello binding, and no preauthentication dispatch.
 - Added Config 4.0.0, Mesh RPC 5.0.0, Host Channel 1.0.0 and Host Trust Store

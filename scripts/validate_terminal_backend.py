@@ -99,7 +99,7 @@ NORMATIVE_SECTIONS = {
     "Configuration 3.0.0": ("### 6.5 Configuration 3.0.0 TerminalBackend extension", "### 6.6 Configuration 4.0.0 host-channel migration", "dff8850845bc45aa7545800b4d07e43e622387b142e6fb5984ae4a79fbedf199"),
     "Provider Protocol 3.0.0": ("### 7.A Provider Protocol 3.0.0 Terminal Instance binding", "### 7.8 Companion Session Adapter protocol", "f869ddaf9cc67d69b9561a3cfac3903320447b4c4fd71fe951346bd24f196108"),
     "Mesh RPC 4.0.0": ("### 11.9 Mesh RPC 4.0.0 TerminalBackend evidence replication", "### 11.10 Host Channel 1.0.0 and Mesh RPC 5.0.0", "d1d12504f6350a7c89b983cb6759f35328f1c6694b7af77620ff0b9e7cc37ba6"),
-    "CLI Result 4.0.0": ("### 14.6 CLI Result 4.0.0 TerminalBackend surfaces", "## 15.", "9809e30fc2b78b61dd5ca8c17042394da44e3decb0a58fb1b028386ea9669299"),
+    "CLI Result 4.0.0": ("### 14.6 CLI Result 4.0.0 TerminalBackend surfaces", "### 14.7 Session selector 1.0.0 and CLI Result 5.0.0", "9809e30fc2b78b61dd5ca8c17042394da44e3decb0a58fb1b028386ea9669299"),
     "Structured Error 1.3.0": ("#### Structured Error 1.3.0 TerminalBackend codes", "## 16. Security and threat boundary", "9f3705da80de7cf566523e0cb9369fe5eb4c0f5669d16cb8c7bec02d88b25b84"),
 }
 HISTORICAL_SECTIONS = {

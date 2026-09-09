@@ -1,0 +1,138 @@
+{
+  "mode": "local",
+  "local": {
+    "board_dir": ".task-board"
+  },
+  "spawn": {
+    "max_parallel": 20,
+    "worktree_isolation": {
+      "integration_base_branch": "main",
+      "validation": {
+        "commands": [
+          "git diff --check"
+        ]
+      }
+    },
+    "preferred_agentic_system": {
+      "exclusive": "codex"
+    },
+    "ceilings": {
+      "contract_version": "spawn-policy-v4",
+      "codex": {
+        "entries": [
+          {
+            "criterion": "equal",
+            "model": "gpt-6-astra",
+            "reasoning_effort": "medium"
+          },
+          {
+            "criterion": "equal",
+            "model": "gpt-6-astra",
+            "reasoning_effort": "high"
+          }
+        ],
+        "resolution_model": "gpt-6-astra",
+        "adjustment_confirmation": "none",
+        "fast_mode": true
+      }
+    },
+    "workload_classes": {
+      "implementation": [
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high"
+        },
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "medium"
+        }
+      ],
+      "review": [
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high"
+        },
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "medium"
+        }
+      ],
+      "architecture": [
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high"
+        },
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "medium"
+        }
+      ],
+      "testing": [
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high"
+        },
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "medium"
+        }
+      ],
+      "documentation": [
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "medium"
+        },
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high"
+        }
+      ],
+      "mechanical": [
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "medium"
+        },
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high"
+        }
+      ],
+      "operations": [
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high"
+        },
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "medium"
+        }
+      ],
+      "unified": [
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high"
+        },
+        {
+          "runtime": "codex",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "medium"
+        }
+      ]
+    }
+  }
+}

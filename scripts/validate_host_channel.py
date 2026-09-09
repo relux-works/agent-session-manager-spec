@@ -142,10 +142,12 @@ def validate(root: pathlib.Path, spec: str) -> tuple[list[str], dict[str, int]]:
         need("HC-MIGRATE", len(rows) == 1 and urn in rows[0] and f'<code>{version}</code>' in rows[0], f"registry missing {title} {version}")
     legacy_rows = []
     for line in registry.splitlines():
-        if not line.startswith('| ') or line.startswith(('| Host Channel |', '| Host Trust Store |')):
+        if not line.startswith('| ') or line.startswith(('| Host Channel |', '| Host Trust Store |', '| Session selector |')):
             continue
         line = line.replace(', <code>4.0.0</code> for mutual host authentication', '')
         line = line.replace(', <code>5.0.0</code> for authenticated host dispatch', '')
+        line = line.replace(', <code>1.4.0</code> for selector-capable CLI failures', '')
+        line = line.replace(', <code>5.0.0</code> for source-qualified selection and authoritative summaries', '')
         legacy_rows.append(line)
     need("HC-MIGRATE", hashlib.sha256('\n'.join(legacy_rows).encode()).hexdigest() == "739618336efef1857eeeb268b5bda1d43f80a7cb3ca8326d3ed9449dde05fe40", "historical v0.5.0 registry projection changed")
     need("HC-HELLO", 'with only the containing <code>protocol_version</code> and <code>contracts.rpc</code> changed to <code>5.0.0</code> and <code>["5.0.0"]</code>' in section, "RPC-5 map delta must preserve exact RPC-4 shape")
