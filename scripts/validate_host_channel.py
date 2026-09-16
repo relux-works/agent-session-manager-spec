@@ -148,6 +148,11 @@ def validate(root: pathlib.Path, spec: str) -> tuple[list[str], dict[str, int]]:
         line = line.replace(', <code>5.0.0</code> for authenticated host dispatch', '')
         line = line.replace(', <code>1.4.0</code> for selector-capable CLI failures', '')
         line = line.replace(', <code>5.0.0</code> for source-qualified selection and authoritative summaries', '')
+        line = line.replace(', <code>2.1.0</code> and <code>3.1.0</code> for <code>SpawnPlan.stdin</code> and <code>resume.launch_plan</code>', '')
+        line = line.replace(', <code>1.1.0</code> for the nine-name capability registry', '')
+        line = line.replace(', <code>1.1.0</code> for the nine-key capability response', '')
+        line = line.replace(', <code>3.1.0</code> for the optional Launch Stdin member', '')
+        line = line.replace(', <code>1.5.0</code> for caller launch-plan failures', '')
         legacy_rows.append(line)
     need("HC-MIGRATE", hashlib.sha256('\n'.join(legacy_rows).encode()).hexdigest() == "739618336efef1857eeeb268b5bda1d43f80a7cb3ca8326d3ed9449dde05fe40", "historical v0.5.0 registry projection changed")
     need("HC-HELLO", 'with only the containing <code>protocol_version</code> and <code>contracts.rpc</code> changed to <code>5.0.0</code> and <code>["5.0.0"]</code>' in section, "RPC-5 map delta must preserve exact RPC-4 shape")
@@ -162,7 +167,7 @@ def validate(root: pathlib.Path, spec: str) -> tuple[list[str], dict[str, int]]:
     need("fixture", _closed(data, ['fixture', 'specification_version', 'evidence_kind', 'versions', 'certificate_profile', 'cases']), "closed fixture root mismatch")
     if not isinstance(data, dict):
         return errors, {"host_channel_families": len(gates), "host_channel_covered": 0, "host_channel_vectors": 0}
-    need("fixture", data.get('fixture') == 'ax-host-channel-conformance-v1' and data.get('specification_version') == '0.6.0' and data.get('evidence_kind') == 'synthetic_contract_vectors_not_runtime', 'fixture discriminator/assurance mismatch')
+    need("fixture", data.get('fixture') == 'ax-host-channel-conformance-v1' and data.get('specification_version') == '0.7.0' and data.get('evidence_kind') == 'synthetic_contract_vectors_not_runtime', 'fixture discriminator/assurance mismatch')
     need("HC-MIGRATE", _exact(data.get('versions'), VERSIONS), "exact independent versions mismatch")
     need("HC-CERT", _exact(data.get('certificate_profile'), PROFILE), "certificate issuance profile mismatch")
     cases = data.get('cases')

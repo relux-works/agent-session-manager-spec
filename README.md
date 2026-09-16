@@ -1,29 +1,31 @@
-# Agent Session Manager (`ax`) v0.6.0 — Specification Repository
+# Agent Session Manager (`ax`) v0.7.0 — Specification Repository
 
 | Field | Value |
 | --- | --- |
 | Public command | `ax` |
-| Prepared specification revision | `v0.6.0` — unpublished |
+| Prepared specification revision | `v0.7.0` — unpublished |
 | Repository | `relux-works/agent-session-manager-spec` |
 | Default branch | `main` |
 | License | MIT |
 | Normative contract | [`SPEC.md`](SPEC.md) |
 | Status | Specification only — no `ax` product binary in this repository |
 
-> This repository prepares the normative contract for Agent Session Manager v0.6.0; no v0.6.0 release tag is published by this work. It specifies behavior; it does not implement `ax`. Publishing the specification does not claim that any future product acceptance matrix has passed. See [SPEC.md §1](SPEC.md#1-conformance-language-and-scope), [§19](SPEC.md#19-ax-implementation-conformance-and-product-release), and [§20](SPEC.md#20-specification-publication-and-governance).
+> This repository prepares the normative contract for Agent Session Manager v0.7.0; no v0.7.0 release tag is published by this work. It specifies behavior; it does not implement `ax`. Publishing the specification does not claim that any future product acceptance matrix has passed. See [SPEC.md §1](SPEC.md#1-conformance-language-and-scope), [§19](SPEC.md#19-ax-implementation-conformance-and-product-release), and [§20](SPEC.md#20-specification-publication-and-governance).
 
-> **Retained baseline:** v0.5.0 adds the independently versioned TerminalBackend
-> contract family over immutable v0.4.3 history. AX retains all session and
-> ownership authority; tmux remains the mandatory Unix target; Superlogical is
-> future-only and unavailable. Existing release tags are not moved.
-
-> **Prepared v0.6.0 deltas:** source-qualified selectors with durable `id:`
+> **Retained baseline:** v0.6.0 adds source-qualified selectors with durable `id:`
 > selection, execution revalidation and authoritative summary refusals
 > ([SPEC §14.7](SPEC.md#147-session-selector-100-and-cli-result-500)), plus the
 > mutually authenticated host channel over SSH ([SPEC §6.6](SPEC.md#66-configuration-400-host-channel-migration)
-> and [§11.10](SPEC.md#1110-host-channel-100-and-mesh-rpc-500)). Bare selection
-> and closed historical contracts are preserved. No release tag or AX product
-> implementation is created by this source revision.
+> and [§11.10](SPEC.md#1110-host-channel-100-and-mesh-rpc-500)), over the
+> v0.5.0 TerminalBackend family and immutable v0.4.3 history. Bare selection
+> and closed historical contracts are preserved. Existing release tags are not moved.
+
+> **Prepared v0.7.0 deltas:** caller-supplied launch plans via `ax start
+> --launch-plan` ([SPEC §14.1](SPEC.md#141-command-surface)): a closed Launch
+> Plan request 1.0.0 document in `argv` or `argv_suffix` form, validated before
+> any Session Record exists, with `caller_launch_plan` plugin gating and
+> refuse-on-drift resume/fork. No release tag or AX product implementation is
+> created by this source revision.
 
 ## Read first
 
@@ -58,7 +60,7 @@ There is no permanent public TCP listener. The Config-4 remote entry point is `a
 
 ## Mutually authenticated host channel
 
-Prepared v0.6.0 adds Config `4.0.0`, Mesh RPC `5.0.0`, Host Channel `1.0.0`
+Published v0.6.0 adds Config `4.0.0`, Mesh RPC `5.0.0`, Host Channel `1.0.0`
 and Host Trust Store `1.0.0`. TLS 1.3 mutual authentication runs over the SSH
 byte stream; the verified enrolled certificate maps to one host UUID and each
 hello must match it before application dispatch. Enrollment is explicit and
@@ -94,7 +96,7 @@ changes ownership. Every backend ultimately runs exactly
 an AX-owned private runtime directory, dedicated `tmux -S` server, no ambient
 server reuse, and functional macOS Aqua/provider-auth evidence. `ax.conpty`
 remains the native-Windows built-in without a tmux-equivalent durability claim.
-Superlogical is unavailable, non-normative, and future-only: v0.6.0 reserves no
+Superlogical is unavailable, non-normative, and future-only: v0.7.0 reserves no
 Superlogical ID and claims no API, SDK, support, compatibility, or conformance.
 
 These are specification targets, not implementation-availability claims. This
@@ -120,7 +122,7 @@ Support is not inferred from a provider name, a successful probe, or self-minted
 
 ## Session Directory and continuation boundary
 
-The Session Directory namespace retained in v0.6.0 is `ax sessions`, with the closed leaves `list`, `inspect`, `lineage`, `scan`, `enrich`, `jobs`, `plan`, `continue`, `operation`, `attach`, and `doctor`. Agents use the same typed engine through `ax sessions q`, `ax sessions grep`, and `ax sessions m`; they must not scrape TUI text. Existing `ax list`, `ax status`, and `ax session clone` retain their v0.3 meanings. See [SPEC.md §14.5](SPEC.md#145-session-directory-cli-result-3-query-and-tui).
+The Session Directory namespace retained in v0.7.0 is `ax sessions`, with the closed leaves `list`, `inspect`, `lineage`, `scan`, `enrich`, `jobs`, `plan`, `continue`, `operation`, `attach`, and `doctor`. Agents use the same typed engine through `ax sessions q`, `ax sessions grep`, and `ax sessions m`; they must not scrape TUI text. Existing `ax list`, `ax status`, and `ax session clone` retain their v0.3 meanings. See [SPEC.md §14.5](SPEC.md#145-session-directory-cli-result-3-query-and-tui).
 
 ```shell
 ax sessions list
@@ -181,7 +183,7 @@ projections only; it never changes ownership or launches a runtime.
 
 ## Installation and status caveat
 
-This is a **specification-only** repository preparing `v0.6.0`. There is no `ax` binary or TerminalBackend implementation to install, no provider runtime requirement to validate or publish the spec, no stable public TerminalBackend SDK, and no Section 19 product-conformance result implied by publication. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20.2](SPEC.md#202-publication-gate).
+This is a **specification-only** repository preparing `v0.7.0`. There is no `ax` binary or TerminalBackend implementation to install, no provider runtime requirement to validate or publish the spec, no stable public TerminalBackend SDK, and no Section 19 product-conformance result implied by publication. See [SPEC.md §1.5](SPEC.md#15-normative-contract-registry), [§19.5](SPEC.md#195-ax-implementation-release-acceptance-rule), and [§20.2](SPEC.md#202-publication-gate).
 
 To work with the spec:
 
@@ -362,7 +364,7 @@ Change the profile with `ax session set-profile NAME standard|yolo`, which requi
 
 Peers are explicitly allowlisted in `~/.config/ax/config.toml` (or the platform-equivalent directory — see [SPEC.md §3.2](SPEC.md#32-platform-paths) and [§6](SPEC.md#6-configuration-contract)) with stable host ID, Tailscale/OpenSSH endpoint, platform, and workspace-root mappings. Tailscale discovery may suggest hosts but may not auto-authorize them. Transport is Tailscale SSH or ordinary OpenSSH; the remote side is `ax rpc serve --stdio`; no permanent public TCP listener is required. See [SPEC.md §11.1](SPEC.md#111-transport-and-peer-authentication).
 
-The project owner does not require payload encryption at rest. The spec must not claim default snapshot encryption — and this README does not. SSH protects transport. The security boundary remains a trusted project mesh. `mesh.payload_encryption` must be `none` in `v0.6.0`; any other value fails as unsupported. See [SPEC.md §6.3](SPEC.md#63-field-constraints) and [§16.1](SPEC.md#161-trusted-mesh-model).
+The project owner does not require payload encryption at rest. The spec must not claim default snapshot encryption — and this README does not. SSH protects transport. The security boundary remains a trusted project mesh. `mesh.payload_encryption` must be `none` in `v0.7.0`; any other value fails as unsupported. See [SPEC.md §6.3](SPEC.md#63-field-constraints) and [§16.1](SPEC.md#161-trusted-mesh-model).
 
 Never replicated: credentials/tokens, SSH private keys, environment secrets, live PIDs, sockets, tmux server sockets, transient locks, machine-local authentication state, or the live SQLite database file (rebuildable derived index). Opaque durable history may contain historical path/PID facts as inert bytes required for native resume, but they are not current authority. See [SPEC.md §2.2](SPEC.md#22-global-invariants), [§10-§11](SPEC.md#10-immutable-records-blobs-manifests-and-tombstones), and [§16.2](SPEC.md#162-mandatory-exclusions).
 
@@ -403,7 +405,7 @@ Capabilities are `native_resume`, `portable_store`, `managed_pty`, `appserver`, 
 Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-contracts) and [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates)):
 
 - **Pi 0.73.1** has no YOLO flag; both `ax` profiles map to `default_unrestricted_tool_set` but remain distinct `ax` authority — see [§2.4](SPEC.md#24-execution-profiles).
-- **Qwen** has no direct `ax-provider-qwen` claim in `v0.6.0`; task-board prompt-mode bundles only — see [§8.2](SPEC.md#82-native-store-contract-matrix).
+- **Qwen** has no direct `ax-provider-qwen` claim in `v0.7.0`; task-board prompt-mode bundles only — see [§8.2](SPEC.md#82-native-store-contract-matrix).
 - **Muse** and **Antigravity** unknowns in [Appendix B](SPEC.md#appendix-b-explicit-provider-version-gates) (store, cron, resume, import, quiesce, backend realm, checkpoint, Windows behavior) remain gated and disabled.
 - **WSL2 and native Windows are never collapsed** into one row — an adapter accepted in WSL2 does not establish native Windows support. See [§8.4](SPEC.md#84-providerplatform-matrix).
 - Known resume surfaces: Codex `codex resume UUID`; Pi `--session <path|id>` / `--continue` / `--resume` / `--session-dir`; Gemini UUID/session import; Muse `muse resume UUID`; Antigravity `agy --conversation <id>` / continue. See settled decisions § Providers and native stores and [SPEC.md §7](SPEC.md#7-provider-plugin-protocol).
@@ -412,7 +414,7 @@ Selected caveats (non-exhaustive — see [§8](SPEC.md#8-provider-and-platform-c
 
 ```
 .
-├── SPEC.md                          # normative v0.6.0 contract (only normative source)
+├── SPEC.md                          # normative v0.7.0 contract (only normative source)
 ├── README.md                        # this file — operator summary with links to SPEC
 ├── CONTRIBUTING.md                  # contributor workflow (traceability, diagrams, versioning, signing)
 ├── STANDALONE_TO_AX_TRACEABILITY.md # non-normative standalone migration index
@@ -485,7 +487,7 @@ Provider binaries are not required to validate or publish this specification. Pr
 
 The validator compares LF-normalized SHA-256 digests for the five reviewed public claim documents (`SPEC.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and `RELEASE_NOTES.md`). This is a bounded content-integrity control, not general natural-language theorem proving. A specification revision must intentionally update the digest map in `scripts/validate_spec.py` after reviewing the changed prose and mutation coverage. The semantic gate validates the Section 13.13 recovery outcomes, Section 13.14 cloning contracts, Directory conformance, the eight historical v0.4.3 roadmap/terminal-realm safety classes, and the independently versioned TerminalBackend fixture. Focused expected-red mutations must fail with actionable diagnostics.
 
-The prepared `v0.6.0` publication gate freezes the candidate public claim documents, validates the retained crash/restart and cloning semantics, Directory and historical v0.4.3 roadmap/terminal-realm conformance, and the TerminalBackend contract, then runs focused expected-red mutations with actionable diagnostics. Every command below must exit `0`; a nonzero result is a gate failure, never publication evidence. This does not relax [SPEC.md §20.2](SPEC.md#202-publication-gate).
+The prepared `v0.7.0` publication gate freezes the candidate public claim documents, validates the retained crash/restart and cloning semantics, Directory and historical v0.4.3 roadmap/terminal-realm conformance, and the TerminalBackend contract, then runs focused expected-red mutations with actionable diagnostics. Every command below must exit `0`; a nonzero result is a gate failure, never publication evidence. This does not relax [SPEC.md §20.2](SPEC.md#202-publication-gate).
 
 ### Exact validation commands
 
@@ -534,7 +536,7 @@ Sources live in `diagrams/c4/*.dsl` (Structurizr) and `diagrams/plantuml/*.puml`
 
 ## License and release target
 
-The repository is intended for public release under the **MIT License**, default branch `main`. The initial specification release was `v0.1.0`; the retained published baseline is `v0.5.0` and the prepared, unpublished revision is `v0.6.0`. Existing release tags remain immutable; the accepted v0.3 baseline remains cloning authority without asserting that a particular historical tag exists. The signing and authorship metadata — author `Ivan Oparin <oparin@me.com>`, SSH key `~/.ssh/ivanopcode`, SSH-signed commit and annotated tag with local signature verification, no AI `Co-Authored-By` trailer, and explicitly authorized signed branch/PR delivery with separate parent-owned release publication — are normative in [SPEC.md §20](SPEC.md#20-specification-publication-and-governance) and summarized in [CONTRIBUTING.md](CONTRIBUTING.md#signing-release-and-attribution).
+The repository is intended for public release under the **MIT License**, default branch `main`. The initial specification release was `v0.1.0`; the retained published baseline is `v0.6.0` and the prepared, unpublished revision is `v0.7.0`. Existing release tags remain immutable; the accepted v0.3 baseline remains cloning authority without asserting that a particular historical tag exists. The signing and authorship metadata — author `Ivan Oparin <oparin@me.com>`, SSH key `~/.ssh/ivanopcode`, SSH-signed commit and annotated tag with local signature verification, no AI `Co-Authored-By` trailer, and explicitly authorized signed branch/PR delivery with separate parent-owned release publication — are normative in [SPEC.md §20](SPEC.md#20-specification-publication-and-governance) and summarized in [CONTRIBUTING.md](CONTRIBUTING.md#signing-release-and-attribution).
 
 ## Contract map
 

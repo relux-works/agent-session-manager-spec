@@ -1,6 +1,6 @@
 {
   "fixture": "ax-host-channel-conformance-v1",
-  "specification_version": "0.6.0",
+  "specification_version": "0.7.0",
   "evidence_kind": "synthetic_contract_vectors_not_runtime",
   "versions": {
     "configuration": "4.0.0",

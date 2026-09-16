@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Public, repository-only validation for AX v0.6.0.
+"""Public, repository-only validation for AX v0.7.0.
 
 Incorporates both retained validators (validate_spec_contracts + validate_second_rework)
 and adds publication/metadata, recovery, cloning, Directory, historical v0.4.3
@@ -26,7 +26,7 @@ from validate_terminal_backend import validate as validate_terminal_backend
 from validate_v043 import validate as validate_v043
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CURRENT_RELEASE = "0.6.0"
+CURRENT_RELEASE = "0.7.0"
 SPEC = ROOT / "SPEC.md"
 README = ROOT / "README.md"
 CONTRIBUTING = ROOT / "CONTRIBUTING.md"
@@ -47,11 +47,11 @@ PUBLIC_CLAIM_DOCUMENTS = [SPEC, README, CONTRIBUTING, CHANGELOG, RELEASE_NOTES]
 # specification revision must deliberately replace this bounded map after its
 # semantic checks and expected-red suite have been reviewed.
 FROZEN_RELEASE_DOCUMENT_SHA256 = {
-    "SPEC.md": "837a77445cd27ad06518d18cb34dd0c19a80c15e4c2470224d96cd0df3977c89",
-    "README.md": "6bf51c4b200201dbdbcc37ff7140467ae8e2568b706c24d10cddd36eebc8d82a",
-    "CONTRIBUTING.md": "6e15028248b1d85a470beea4ca626f4769bdbab009580ad85612b140a350f833",
-    "CHANGELOG.md": "6bd1fbe32eedb7cd80c8f6059c6a9864ebf55447a58d71f691ab5718a1fc0951",
-    "RELEASE_NOTES.md": "d1c91cebc9a253e2dc21af3bf94aeab25f1bc55c3eed46ac10a23ff8e987044d",
+    "SPEC.md": "c6b2fe64ee79ed697a96ed27a1679c80b8ee1eba137feb99e7738b4da289ddcf",
+    "README.md": "d802a8437f75d534826d1b9a08b675199b8babadbdb0548825dbc7d1778c2f26",
+    "CONTRIBUTING.md": "9c5ddc17d77c373cc2841c7fd5b8759115415a2f36172755e973dd42671a48e8",
+    "CHANGELOG.md": "73ce20ae0e7c259db16a425e2678b24851bb22b9daa5fdc75bf7980061f9fa13",
+    "RELEASE_NOTES.md": "7f9081120833fd15b3070891781d509abc83270890dd524aaae58851445060f5",
 }
 RESEARCH = ROOT / ".research" / "260819_muse-antigravity-native-store-contracts.md"
 C4_WORKSPACE = ROOT / "diagrams" / "c4" / "workspace.dsl"

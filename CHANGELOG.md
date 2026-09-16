@@ -5,6 +5,38 @@ All notable changes to the Agent Session Manager specification will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.7.0] - Unreleased
+
+### Added
+
+- Prepared the Launch Plan request contract
+  (`urn:ax:schema:launch-plan-request` `1.0.0`, curator-spec Decision 0013)
+  with `ax start --launch-plan FILE|-` in `argv` and `argv_suffix` forms,
+  closed-shape validation before any Session Record exists, and the
+  `launch_plan_invalid` refusal under Structured Error `1.5.0`.
+- Added the Session Record `3.1.0` optional Launch Stdin member, the
+  `ax.launch-plan-request` Session Record extension key with the four
+  `works.relux.curator.*` environment provenance keys, and the planning-role
+  `launch` step with recorded-argv determinism.
+- Added Provider Protocol `2.1.0`/`3.1.0` `SpawnPlan.stdin` and
+  `resume.launch_plan` members with the `caller_launch_plan` and
+  `stdin_resume_replay` capabilities, and Provider manifest/probe `1.1.0`
+  with the nine-name capability registry (`1.0.0` readers keep accepting
+  seven names).
+- Added refuse-on-`environment_drift` resume/fork gating (refuse by default
+  when `system-modules` is true, warn-and-continue otherwise) and the
+  Curator naming answer: the umbrella CLI exposes this specification's
+  implementation as `curator session` through its external-subcommand
+  convention, adding no `ax` command, flag, or semantics. No AX
+  implementation, platform acceptance, or release tag is delivered here.
+
+### Compatibility
+
+- Retained published v0.6.0 and earlier contracts, fixtures and tag objects.
+  CLI Result stays at `5.0.0`; the `--launch-plan` grammar row adds a flag
+  spelling only. A plugin without `caller_launch_plan` never receives a
+  caller plan; deployments without a caller-plan composer are unaffected.
+
 ## [v0.6.0] - Unreleased
 
 ### Added

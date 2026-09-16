@@ -424,7 +424,7 @@ def validate(root: Path, spec: str, canonical):
             errors.append('selector: normative case inventory mismatch')
         if not families or {case['family'] for case in cases} != families:
             errors.append('selector: normative family coverage mismatch')
-        if data['contract'] != policy['version'] or data['specification_version'] != '0.6.0':
+        if data['contract'] != policy['version'] or data['specification_version'] != '0.7.0':
             errors.append('selector: fixture version mismatch')
         # Source pins are explicit editorial drift guards, not execution proof.
         for start, end, digest in data['prose_sections']:

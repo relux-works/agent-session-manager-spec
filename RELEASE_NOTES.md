@@ -1,8 +1,42 @@
-# Agent Session Manager (`ax`) Specification v0.6.0 — prepared, unpublished
+# Agent Session Manager (`ax`) Specification v0.7.0 — prepared, unpublished
 
-This prepared minor revision combines two approved source deltas with no
-release tag. The selector delta adds Session selector 1.0.0, CLI Result 5.0.0
-and Structured Error 1.4.0. Literal first-at qualification accepts exact
+This prepared minor revision adds caller-supplied launch plans over immutable
+v0.6.0 history with no release tag. `ax start --launch-plan FILE|-` accepts a
+closed Launch Plan request 1.0.0 document in `argv` or `argv_suffix` form,
+validated before any Session Record exists; violations refuse with the new
+`launch_plan_invalid` code under Structured Error 1.5.0. Session Record 3.1.0
+adds the optional Launch Stdin member, Provider Protocol 2.1.0 and 3.1.0 carry
+`SpawnPlan.stdin` with `resume.launch_plan` replay behind the
+`caller_launch_plan` and `stdin_resume_replay` capabilities, and Provider
+manifest/probe 1.1.0 carry the nine-name capability registry while 1.0.0
+readers keep accepting seven names. CLI Result stays at 5.0.0. Historical
+contracts and release tags stay immutable.
+
+These are specification artifacts only: this repository has no `ax` product
+binary, no executed provider deployment or platform conformance result, and no
+AX implementation, platform acceptance, or release tag. Synthetic fixtures and
+source mutations validate the contract package, not live provider behavior,
+key custody, or product runtime behavior. The parent coordinates publication
+after all constituent Stories pass review and land. This work does not create
+a v0.7.0 release tag.
+
+Resume and fork refuse on `environment_drift` by default when the recorded
+`system-modules` provenance is true and warn otherwise; the Curator umbrella
+names this specification's implementation `curator session` with no new `ax`
+surface. See SPEC Sections 5.1, 7.3–7.5, 13.1, 13.10, 14.1 and 15.3 for the
+launch-plan contract, Section 19.4 `AC-LAUNCH-003` for acceptance, and Appendix
+A.12 for the curator-spec Decision 0013 traceability.
+
+Publication evidence: `./run_validation.sh`, `./scripts/test_expected_red.sh`,
+`python3 scripts/test_selector_publication.py`, the host-channel publication
+gate, and the launch-plan fixture gate; measured source-only coverage and
+mutation bounds are reported by those commands. SPEC remains authoritative.
+
+## Retained v0.6.0 release notes
+
+This minor revision combines two approved source deltas. The selector delta
+adds Session selector 1.0.0, CLI Result 5.0.0 and Structured Error 1.4.0.
+Literal first-at qualification accepts exact
 configured aliases; explicit id:UUID bypasses name precedence. Plans bind
 source, record, configuration and lease facts and revalidate before effects.
 Public summaries require real initial leases and observations; record-only
@@ -20,8 +54,8 @@ binary, no executed TLS deployment or platform conformance result, and no AX
 implementation, platform acceptance, or release tag. Synthetic fixtures and
 source mutations validate the contract package, not key custody, live
 revocation, or product runtime behavior. The parent coordinates publication
-after all constituent Stories pass review and land. This work does not create
-a v0.6.0 release tag.
+after all constituent Stories pass review and land. The v0.6.0 release tag was
+published separately by the parent after landing.
 
 The host profile authenticates enrolled-key possession. Copied keys and
 compromised local accounts are outside physical-host assurance; revocation must
@@ -159,5 +193,5 @@ source.
 
 Selector review refinements freeze the CLI5 remote attach expectation operand,
 real action/boundary revalidation matrix, and concrete BootstrapIntent/Lease1
-conformance. Historical CLI1–4 routes remain version-bound. Prepared v0.6.0 is
-source publication only; no product implementation or release tag is asserted.
+conformance. Historical CLI1–4 routes remain version-bound. The v0.6.0 revision
+is source publication only; no product implementation is asserted.

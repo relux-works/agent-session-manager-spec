@@ -7,7 +7,7 @@ The full gate is normative in [SPEC.md §20.2](SPEC.md#202-publication-gate). In
 1. Verify a clean checkout contains `SPEC.md`, `README.md`, `CONTRIBUTING.md`, diagram sources and rendered SVGs, `VERSION`, `CHANGELOG`, release notes, and `LICENSE` (MIT).
 2. Run the accepted validation entry point as a standalone process and retain its real exit code.
 3. Explicitly verify that the validator does not require an `ax` binary, provider runtime, platform lane, or any [§19](SPEC.md#19-ax-implementation-conformance-and-product-release) result.
-4. Verify `VERSION`, current document metadata, changelog and release notes identify prepared `v0.6.0`; verify every existing release tag is unchanged. There is no preparation tag.
+4. Verify `VERSION`, current document metadata, changelog and release notes identify prepared `v0.7.0`; verify every existing release tag is unchanged. There is no preparation tag.
 5. Run the semantic crash/restart gate and focused expected-red mutations; weakening the three outcomes, boundary registry, evidence, owner uniqueness, or native-identity preservation must produce an actionable diagnostic.
 6. Create signed commits for the reviewed scope and publish a feature branch/PR under explicit delivery authorization.
 7. Obtain a real review verdict and required green checks on the exact signed head; never impersonate independent approval or bypass protection.
@@ -21,14 +21,14 @@ Explicit delivery authorization permits automation to stage the reviewed scope, 
 ### Signing
 
 - **Author**: `Ivan Oparin <oparin@me.com>` — this is the commit author for the release commit. No AI `Co-Authored-By` trailer is included.
-- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Delivery commits must be signed with this key. If the parent later publishes an annotated release tag `v0.6.0`, that tag must also be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
+- **Signing key**: `~/.ssh/ivanopcode` (SSH signing key). Delivery commits must be signed with this key. If the parent later publishes an annotated release tag `v0.7.0`, that tag must also be signed with this key. The repository's Git config must set `gpg.format ssh`, `user.signingkey ~/.ssh/ivanopcode`, `commit.gpgsign true`, and `tag.gpgsign true`.
 - **Delivery authority**: explicit user authorization permits signed branch/PR delivery after review and checks. Release tags are separate parent-owned publication; preparation creates no tag.
 - Verify committed signatures locally; verify a release tag only when the parent has actually published one:
 
 ```shell
 git log --show-signature -1
 # Parent only, after actual release publication (not preparation):
-git tag --verify v0.6.0
+git tag --verify v0.7.0
 ```
 
 ### AI attribution policy

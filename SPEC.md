@@ -1,8 +1,8 @@
-# Agent Session Manager (<code>ax</code>) v0.6.0 Normative Specification
+# Agent Session Manager (<code>ax</code>) v0.7.0 Normative Specification
 
 | Field | Value |
 | --- | --- |
-| Specification release | <code>v0.6.0</code> (prepared, unpublished) |
+| Specification release | <code>v0.7.0</code> (prepared, unpublished) |
 | Document status | Prepared specification revision; no product implementation assurance |
 | Public command | <code>ax</code> |
 | Repository | <code>relux-works/agent-session-manager-spec</code> |
@@ -12,7 +12,7 @@
 | Required release signature | SSH signing key <code>~/.ssh/ivanopcode</code> |
 
 This document is the normative, implementation-ready contract for Agent Session
-Manager v0.6.0. It specifies behavior; it does not implement <code>ax</code>.
+Manager v0.7.0. It specifies behavior; it does not implement <code>ax</code>.
 Provider facts explicitly marked conditional, unknown, or unsupported are
 version gates, not permission to invent parity.
 
@@ -56,7 +56,7 @@ trusted, allowlisted mesh of computers. It MUST let an operator:
     AX ownership, workspace, transfer, materialization, cloning, and terminal
     authority.
 
-The specified v0.6.0 product is a Go CLI, optional per-user background service, provider
+The specified v0.7.0 product is a Go CLI, optional per-user background service, provider
 plugin host, terminal supervisor, SSH RPC client/server, and Go-native
 replication engine. It is not:
 
@@ -113,16 +113,16 @@ version-specific acceptance test resolves the difference.
 ### 1.5 Normative contract registry
 
 Every independently consumed contract has an independent Semantic Version.
-The following registry is the prepared v0.6.0 registry; no release tag is created. Historical
+The following registry is the prepared v0.7.0 registry; no release tag is created. Historical
 objects, including every v0.4.3 object and fixture, remain readable and
 immutable; a version shown here never widens an earlier version in place.
 
 | Contract | Schema identifier | Version |
 | --- | --- | --- |
 | Configuration | <code>urn:ax:schema:config</code> | <code>1.0.0</code>, <code>2.0.0</code> for directory-capable installations, <code>3.0.0</code> for TerminalBackend selection and policy, <code>4.0.0</code> for mutual host authentication |
-| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor |
-| Provider manifest | <code>urn:ax:schema:provider-manifest</code> | <code>1.0.0</code> |
-| Provider probe | <code>urn:ax:schema:provider-probe</code> | <code>1.0.0</code> |
+| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor, <code>2.1.0</code> and <code>3.1.0</code> for <code>SpawnPlan.stdin</code> and <code>resume.launch_plan</code> |
+| Provider manifest | <code>urn:ax:schema:provider-manifest</code> | <code>1.0.0</code>, <code>1.1.0</code> for the nine-name capability registry |
+| Provider probe | <code>urn:ax:schema:provider-probe</code> | <code>1.0.0</code>, <code>1.1.0</code> for the nine-key capability response |
 | Terminal Backend protocol | <code>urn:ax:protocol:terminal-backend</code> | <code>1.0.0</code> |
 | Terminal Backend manifest | <code>urn:ax:schema:terminal-backend-manifest</code> | <code>1.0.0</code> |
 | Terminal Backend probe | <code>urn:ax:schema:terminal-backend-probe</code> | <code>1.0.0</code> |
@@ -138,7 +138,7 @@ immutable; a version shown here never widens an earlier version in place.
 | Mesh RPC | <code>urn:ax:protocol:rpc</code> | <code>2.0.0</code>, <code>3.0.0</code> for directory replication, <code>4.0.0</code> for sanitized TerminalBackend evidence replication, <code>5.0.0</code> for authenticated host dispatch |
 | Host Channel | <code>urn:ax:transport:host-channel</code> | <code>1.0.0</code> |
 | Host Trust Store | <code>urn:ax:schema:host-trust-store</code> | <code>1.0.0</code> |
-| Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone targets, <code>3.0.0</code> for unified creation provenance |
+| Session record | <code>urn:ax:schema:session-record</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone targets, <code>3.0.0</code> for unified creation provenance, <code>3.1.0</code> for the optional Launch Stdin member |
 | Launch Plan request | <code>urn:ax:schema:launch-plan-request</code> | <code>1.0.0</code> |
 | Session event | <code>urn:ax:schema:session-event</code> | <code>1.0.0</code>, <code>2.0.0</code> for clone lifecycle, <code>3.0.0</code> for adoption and move lifecycle, <code>4.0.0</code> for Terminal Instance bindings |
 | Lease record | <code>urn:ax:schema:lease</code> | <code>1.0.0</code> |
@@ -155,7 +155,7 @@ immutable; a version shown here never widens an earlier version in place.
 | Clone materialization recovery state (journal variant) | <code>urn:ax:schema:materialization-journal</code> | <code>3.0.0</code> |
 | Task-board bridge | <code>urn:ax:protocol:task-board-bridge</code> | <code>1.0.0</code> |
 | Task-board bundle | <code>urn:ax:schema:task-board-bundle</code> | <code>1.0.0</code> |
-| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for cloning, <code>1.2.0</code> for directory surfaces, <code>1.3.0</code> for TerminalBackend surfaces, <code>1.4.0</code> for selector-capable CLI failures |
+| Structured error | <code>urn:ax:schema:error</code> | <code>1.0.0</code>, <code>1.1.0</code> for cloning, <code>1.2.0</code> for directory surfaces, <code>1.3.0</code> for TerminalBackend surfaces, <code>1.4.0</code> for selector-capable CLI failures, <code>1.5.0</code> for caller launch-plan failures |
 | Observation event | <code>urn:ax:schema:observation</code> | <code>1.0.0</code> |
 | CLI result | <code>urn:ax:schema:cli-result</code> | <code>1.0.0</code>, <code>2.0.0</code> for <code>session.clone.*</code>, <code>3.0.0</code> for <code>sessions.*</code> commands, <code>4.0.0</code> for TerminalBackend commands and generalized start/resume results, <code>5.0.0</code> for source-qualified selection and authoritative summaries |
 | Clone Raw Object Manifest | <code>urn:ax:schema:clone-raw-object-manifest</code> | <code>1.0.0</code> |
@@ -187,9 +187,11 @@ immutable; a version shown here never widens an earlier version in place.
 The exact historical v0.4.3 registry is the table above with the Session selector row absent, with Host Channel and
 Host Trust Store absent, with the five Terminal
 Backend contract rows and the Launch Plan request row absent and with exactly
-these six rows pinned to their
+these nine rows pinned to their
 then-active versions: Configuration <code>1.0.0,2.0.0</code>; Provider protocol
-<code>2.0.0</code>; Mesh RPC <code>2.0.0,3.0.0</code>; Session event
+<code>2.0.0</code>; Provider manifest <code>1.0.0</code>; Provider probe
+<code>1.0.0</code>; Mesh RPC <code>2.0.0,3.0.0</code>; Session record
+<code>1.0.0,2.0.0,3.0.0</code>; Session event
 <code>1.0.0,2.0.0,3.0.0</code>; Structured error
 <code>1.0.0,1.1.0,1.2.0</code>; and CLI result
 <code>1.0.0,2.0.0,3.0.0</code>. Every other row, identifier, version, order,
@@ -198,24 +200,35 @@ substitution is permitted when validating v0.4.3 history. The v0.5.0 release
 activates the five Terminal Backend contracts plus Configuration
 <code>3.0.0</code>, Provider Protocol <code>3.0.0</code>, Mesh RPC
 <code>4.0.0</code>, Session Event <code>4.0.0</code>, CLI Result
-<code>4.0.0</code>, and Structured Error <code>1.3.0</code>. The proposed
-revision carrying Section 14.1 <code>ax start --launch-plan</code> adds the
-Launch Plan request row (the caller-supplied plan document) and activates no
-other row; the compatible minor consequences it proposes for existing rows
-(Sections 5.1, 7.3, 7.5, and 15.3) are the <code>ax</code> maintainer's
-decision and are not entered here until that decision is made.
+<code>4.0.0</code>, and Structured Error <code>1.3.0</code>. The prepared
+v0.7.0 revision carrying Section 14.1 <code>ax start --launch-plan</code> adds the
+Launch Plan request row (the caller-supplied plan document) and records the
+maintainer's compatible-minor decisions for the existing rows it touches
+(Sections 5.1, 7.3, 7.5, and 15.3): Session Record <code>3.1.0</code> for the
+optional Launch Stdin member, Provider Protocol <code>2.1.0</code> and
+<code>3.1.0</code> for <code>SpawnPlan.stdin</code> and
+<code>resume.launch_plan</code>, Provider manifest and Provider probe
+<code>1.1.0</code> for the nine-name registry with <code>1.0.0</code> readers
+still accepting seven names, and Structured Error <code>1.5.0</code> for
+<code>launch_plan_invalid</code>. CLI Result stays at <code>5.0.0</code>: the
+Section 14.1 grammar row adds a flag spelling only, success keeps the
+<code>start</code> body, and the one new failure code is a Structured Error
+value carried by the 1.5.0 minor.
 
 The exact historical v0.5.0 registry is the table above with the Session selector row absent, with Host Channel and
-Host Trust Store absent, Configuration limited to 1.0.0/2.0.0/3.0.0 and Mesh
-RPC limited to 2.0.0/3.0.0/4.0.0. Every other row is unchanged. The prepared
-v0.6.0 selector delta is Session selector 1.0.0, CLI Result 5.0.0 and
-Structured Error 1.4.0; the prepared v0.6.0 authentication delta is
+Host Trust Store absent, with the Launch Plan request row absent, Configuration limited to 1.0.0/2.0.0/3.0.0, Mesh
+RPC limited to 2.0.0/3.0.0/4.0.0, Provider protocol limited to 2.0.0/3.0.0, Provider manifest and Provider probe
+limited to 1.0.0, Session record limited to 1.0.0/2.0.0/3.0.0, and Structured error limited to 1.0.0/1.1.0/1.2.0/1.3.0.
+Every other row is unchanged. The v0.6.0 selector delta is Session selector 1.0.0, CLI Result 5.0.0 and
+Structured Error 1.4.0; the v0.6.0 authentication delta is
 Configuration 4.0.0, Mesh RPC 5.0.0, Host Channel 1.0.0 and Host Trust Store
 1.0.0. Configuration 3 and RPC 4 are already occupied; the selector delta
 allocates neither Configuration 4 nor RPC 5. Session Record, Event, Lease and
 Directory Query/Plan versions do not change for selection. New selector plans
 are local, never RPC hello keys, replicated records, or Directory Continuation
-Plan extensions. No published tag is changed.
+Plan extensions. The prepared v0.7.0 launch-plan delta adds the Launch Plan request 1.0.0 row and activates
+Session Record 3.1.0, Provider Protocol 2.1.0 and 3.1.0, Provider manifest 1.1.0, Provider probe 1.1.0, and
+Structured Error 1.5.0; CLI Result stays at 5.0.0. No published tag is changed.
 
 No contract version is implied by the <code>ax</code> executable version.
 Section 17 defines compatibility and migration. Independent versioning means
@@ -1533,9 +1546,10 @@ byte-identical to a v0.5.0 record and keeps its identity; a writer MUST NOT
 emit the member as null. A resume does not replay <code>stdin</code> by
 default; Section 7.5 <code>stdin_resume_replay</code> governs replay.
 Attaching keyboard input after a payload is not specified in this revision.
-The optional member is a compatible addition; whether it ships as Session
-Record <code>1.1.0</code> or is admitted under <code>1.0.0</code> is the
-<code>ax</code> maintainer's decision recorded with this revision.
+The optional member is a compatible addition recorded as Session Record
+<code>3.1.0</code>: the current row ends at <code>3.0.0</code>, so the Launch
+Stdin member ships as the <code>3.1.0</code> minor, never as <code>1.1.0</code>
+and never widened into <code>1.0.0</code> in place.
 
 Arguments MUST contain only sanitized provider/task-board arguments. Secret
 values, inline credential-bearing URLs, response files containing secrets, and
@@ -2876,12 +2890,12 @@ logging.
 ### 7.3 Provider Manifest
 
 The <code>manifest</code> operation requires an empty body and returns
-<code>urn:ax:schema:provider-manifest</code> version <code>1.0.0</code>:
+<code>urn:ax:schema:provider-manifest</code> version <code>1.1.0</code>:
 
 ~~~json
 {
   "schema": "urn:ax:schema:provider-manifest",
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "provider_id": "pi",
   "display_name": "Pi",
   "plugin_version": "0.1.0",
@@ -2925,23 +2939,26 @@ The manifest is closed and every displayed member is required.
 unique non-empty subset of the four platform enums; <code>operations</code> is
 the ordered registry shown in Section 7.5 with no duplicates; and
 <code>capability_names</code> is the exact nine-name ordered registry shown.
-The manifest declares possible surfaces, not runtime availability.
+That nine-name shape is version <code>1.1.0</code>; the <code>1.0.0</code>
+shape is the same object with <code>capability_names</code> exactly the
+first seven names shown, in order. The manifest declares possible surfaces,
+not runtime availability.
 
 The eighth and ninth names, <code>caller_launch_plan</code> and
 <code>stdin_resume_replay</code>, are appended in that order by the revision
 carrying Section 14.1 <code>--launch-plan</code>; Section 7.5 defines what
-each declares. Manifest schema consequence for the <code>ax</code>
-maintainer's decision: a reader of Provider manifest <code>1.0.0</code>
+each declares. Manifest schema consequence, decided for this revision: a
+reader of Provider manifest <code>1.0.0</code>
 validates <code>capability_names</code> as the exact seven-name registry and
 rejects a nine-name manifest, and a Provider probe <code>1.0.0</code> response
-carries exactly seven capability keys. The revision therefore proposes
+carries exactly seven capability keys. The revision therefore ships
 Provider manifest and Provider probe <code>1.1.0</code> — a compatible minor
 that adds two registry names and widens the Section 7.5 <code>probe</code>
 request bound and the Section 14.2 <code>SessionSummary</code> capability
 bound to nine (Section 17.1) — with <code>1.0.0</code> readers continuing to
-accept seven-name manifests; the maintainer may instead retain
-<code>1.0.0</code> with the registry widened in place. The Section 1.5 rows
-record the choice when the revision lands. A plugin that declares neither
+accept seven-name manifests; <code>1.0.0</code> is not widened in place
+because closed-shape readers would reject nine names. The Section 1.5 rows
+record the decision. A plugin that declares neither
 name is unaffected.
 
 ### 7.4 Capability result
@@ -2949,12 +2966,12 @@ name is unaffected.
 The <code>probe</code> operation body contains platform, architecture,
 provider executable path, and requested capability names. Its response MUST
 identify the exact provider version and emit every known capability using
-<code>urn:ax:schema:provider-probe</code> version <code>1.0.0</code>:
+<code>urn:ax:schema:provider-probe</code> version <code>1.1.0</code>:
 
 ~~~json
 {
   "schema": "urn:ax:schema:provider-probe",
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "provider_id": "pi",
   "provider_version": "0.73.1",
   "platform": "macos",
@@ -3023,6 +3040,8 @@ The probe object is closed and every displayed member is required.
 <code>provider_version</code> is a 1–128 character exact version string,
 architecture is <code>amd64</code> or <code>arm64</code>, and
 <code>capabilities</code> contains exactly the nine requested registry keys.
+That nine-key shape is version <code>1.1.0</code>; a <code>1.0.0</code>
+response carries exactly the first seven keys, in registry order.
 Each capability value contains exactly <code>status</code>,
 <code>enabled</code>, <code>evidence</code>, and a 0–2,048 character
 <code>detail</code>. <code>warnings</code> is a sorted, unique array of at most
@@ -3133,10 +3152,9 @@ member, not a Curator one. A plugin that declares neither capability and a
 deployment without a caller-plan composer are unaffected: <code>stdin</code>
 is absent, no record carries <code>ax.launch-plan-request</code>, and the
 new <code>resume</code> member is the record's plan the plugin already
-received at launch. The members are compatible additions; the revision
-proposes Provider Protocol <code>2.1.0</code> and <code>3.1.0</code> for
-<code>SpawnPlan.stdin</code> and <code>resume.launch_plan</code>, and the
-<code>ax</code> maintainer decides the numbering.
+received at launch. The members are compatible additions recorded as
+Provider Protocol <code>2.1.0</code> and <code>3.1.0</code> for
+<code>SpawnPlan.stdin</code> and <code>resume.launch_plan</code>.
 
 The <code>root-id</code> grammar is
 <code>[a-z][a-z0-9_-]{0,63}</code>. Capture authorities are sorted by
@@ -11418,7 +11436,7 @@ ax pane SESSION_ID
 ax rpc serve --stdio
 ~~~
 
-Prepared v0.6.0 additionally defines the internal invocation
+Prepared v0.7.0 additionally defines the internal invocation
 <code>ax rpc serve --stdio --host-channel 1.0.0</code>, exclusively with
 Configuration 4.0.0 (Sections 6.6 and 11.10). The flag is accepted only on
 <code>rpc serve --stdio</code>, exactly once with the literal value
@@ -15294,9 +15312,10 @@ It sits in exit class 2 alongside <code>invalid_arguments</code>; its
 <code>details</code> map carries <code>field</code> (the JSON member name at
 fault) and, for the Section 7.7 profile-flag refusal,
 <code>reason: "profile_flag"</code> and <code>argv_index</code>. It is a
-compatible minor addition under the rule above, proposed as Structured Error
-<code>1.4.0</code> retaining the exact 1.3 shape and every prior mapping; the
-<code>ax</code> maintainer decides the numbering. A secret-rule violation in
+compatible minor addition under the rule above, recorded as Structured Error
+<code>1.5.0</code> retaining the exact 1.4 shape and every prior mapping
+(<code>1.4.0</code> is the v0.6.0 selector-capable CLI failure version and is
+not reused). A secret-rule violation in
 a caller document keeps the existing <code>secret_policy_violation</code>
 (exit 16), a plugin without <code>caller_launch_plan</code> keeps
 <code>capability_unavailable</code> (exit 6), a Section 13.10 drift refusal
@@ -15534,11 +15553,14 @@ prompts, credentials, terminal output, or raw environment values.
 
 ### 17.1 Semantic-version rules
 
-Prepared specification v0.6.0 is a minor revision over immutable v0.5.0.
-Section 6.6 and Section 11.10 define the new containing contracts and explicit
-migration; every prior closed shape, fixture and release tag remains intact.
-RPC 5 binds Error 1.3.0 without adding an error or hello-map key. This prepared
-revision is not a statement that a v0.6.0 tag has been published.
+Prepared specification v0.7.0 is a minor revision over immutable v0.6.0.
+The v0.6.0 revision added the Section 6.6 and Section 11.10 containing
+contracts with explicit migration; RPC 5 binds Error 1.3.0 without adding an
+error or hello-map key. This revision adds the Launch Plan request contract
+with its compatible-minor consequences (Sections 5.1, 7.3–7.5, 13.1, 13.10,
+14.1, and 15.3); every prior closed shape, fixture and release tag remains
+intact. This prepared revision is not a statement that a v0.7.0 tag has been
+published.
 
 Each contract in Section 1.5 versions independently:
 
@@ -16193,17 +16215,17 @@ it MUST NOT claim that the unimplemented runtime cases passed.
 
 ### 20.1 Repository and release
 
-For the prepared v0.6.0 revision, explicit user authorization permits signed
+For the prepared v0.7.0 revision, explicit user authorization permits signed
 branch/PR delivery after real review and green checks, superseding the legacy
 manual-command workflow for commits and pushes. The parent coordinates
 release publication only after all constituent Stories are accepted and landed.
-This preparation MUST NOT create a release tag or claim a published v0.6.0
+This preparation MUST NOT create a release tag or claim a published v0.7.0
 release. A later release requires its own accepted publication evidence.
 
 The specification repository MUST be public at
 <code>relux-works/agent-session-manager-spec</code>, use <code>main</code> as
 the default branch, and carry the MIT License. The prepared revision is
-<code>v0.6.0</code>, not an already published release. Existing release tags are
+<code>v0.7.0</code>, not an already published release. Existing release tags are
 immutable history and
 MUST NOT be moved or rewritten. The v0.3.0 specification baseline remains the
 normative cloning authority whether consumed from its release package or the
@@ -16233,7 +16255,7 @@ a commit co-author.
 ### 20.2 Publication gate
 
 This section governs the <code>agent-session-manager-spec</code> repository's
-prepared specification revision <code>v0.6.0</code>, not an <code>ax</code> executable
+prepared specification revision <code>v0.7.0</code>, not an <code>ax</code> executable
 release. The publication task MUST:
 
 1. verify a clean checkout contains SPEC, public operator/contributor guides,
@@ -16245,7 +16267,7 @@ release. The publication task MUST:
    <code>ax</code> binary, provider runtime, platform lane, or any Section 19
    product-conformance result;
 4. verify <code>VERSION</code>, current document metadata, changelog, release
-   notes, and the proposed tag all say <code>v0.6.0</code>, while every existing
+   notes, and the proposed tag all say <code>v0.7.0</code>, while every existing
    historical tag remains unchanged;
 5. run the semantic crash/restart gate and its focused expected-red mutations;
    validation MUST emit an actionable diagnostic when the three-outcome
@@ -16409,7 +16431,7 @@ not a prerequisite for that publication.
 | No duplicate owner or silent fresh native session | Section 13.13 rejects two live/authoritative owners, unfenced continuation presented as safe recovery, new-session launch, fresh native handles/manager references, blank relabeling, and realm substitution. |
 | Runtime conformance acceptance | Section 19.4 <code>AC-CRASH-001</code> executes every applicable boundary with exact classification and evidence. |
 | Specification publication acceptance and mutation gate | Section 20.2 <code>SPEC-PUB-CRASH-001</code> requires semantic validation plus an actionable focused expected-red mutation. |
-| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version from immutable history and introduce changed closed shapes only under independent versions; Section 20.1 identifies prepared <code>v0.6.0</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
+| Release metadata and wire compatibility | Sections 1.5 and 17 retain every wire-contract version from immutable history and introduce changed closed shapes only under independent versions; Section 20.1 identifies prepared <code>v0.7.0</code>, preserves every existing historical tag, and does not claim an absent tag exists. |
 
 ### A.9 Cross-environment cloning traceability
 
@@ -16512,7 +16534,7 @@ traceability, not a second definition.
 | 5 — refuse-on-drift by default when <code>system-modules</code> is true; warn-and-continue otherwise; strict mode stays; failed resolution stays distinct | Section 13.10 |
 | 6 — <code>fragment-digest</code> over CCJ-1 canonical bytes of the parsed fragment | Section 5.1 |
 | 7 — the <code>ax start --launch-plan</code> grammar row, exclusivity, document shape, validation, <code>launch_plan_invalid</code>, and the profile-flag rule; the <code>curator session</code> note stands | Sections 14.1 and 15.3 |
-| 8 — the version proposal, the new error code, the Section 1.5 row, the Appendix D catalog and fixture, and these traceability rows | Sections 1.5 and 15.3, Appendix A.1, Appendix D, <code>fixtures/launch_plan_request_conformance.json</code>; the version is proposed in the pull request only |
+| 8 — the recorded versions, the new error code, the Section 1.5 rows, the Appendix D catalog and fixture, and these traceability rows | Sections 1.5 and 15.3, Appendix A.1, Appendix D, <code>fixtures/launch_plan_request_conformance.json</code>; Session Record 3.1.0, Provider Protocol 2.1.0 and 3.1.0, Provider manifest and probe 1.1.0, Structured Error 1.5.0, Launch Plan request 1.0.0, CLI Result unchanged at 5.0.0 |
 
 ## Appendix B. Explicit provider version gates
 
@@ -16624,9 +16646,9 @@ display-language label.
 | --- | --- | --- |
 | Host Channel / Host Trust Store | Sections 6.6 and 11.10; host_channel_conformance.json | Missing/forged credential, wrong role/UUID/hello, duplicate mapping, stale generation, idle revocation, rollback, legacy fallback, replicated keys; cover all ten gate families and Section 11.10.5 field obligations with token-preserving scope changes and regenerated-table behavior tests |
 | Configuration | Sections 6.2, 6.4, and 6.5 TOML plus Section 3.2 path registry | Add root <code>unknown_root</code>; add secret value or raw backend command/environment; set unsafe SSH host-key bypass; exercise all flags/environment values plus empty and unknown <code>AX_*</code> cases; reject Config-2 directory bounds, Config-3 duplicate/unknown/backend-policy/trust violations, restore fallback, silent major rewrite, or downgrade mutation |
-| Provider protocol | Section 7.2 envelopes, every Section 7.5 row, and Section 7.A v3 descriptor | Mismatch request ID; success with both body/error; operation/body tag mismatch; stale/mismatched Terminal Instance binding; v2 projection of a non-built-in ID; compatible/major/invalid-first-output Error binding fixtures |
-| Provider manifest | Section 7.3 with all fifteen operations and the nine-name capability registry | Remove <code>capture</code> or one transaction operation; add, omit, or reorder a capability name; duplicate provider ID discovery remains fatal |
-| Provider probe | Section 7.4 | Set <code>enabled=true</code> on conditional/unknown/unsupported; omit one requested capability |
+| Provider protocol | Section 7.2 envelopes, every Section 7.5 row (2.1.0/3.1.0 caller-plan members included), and Section 7.A v3 descriptor | Mismatch request ID; success with both body/error; operation/body tag mismatch; stale/mismatched Terminal Instance binding; v2 projection of a non-built-in ID; caller-plan <code>stdin</code>/<code>launch_plan</code> omission, rewrite, or replay without the declared capability; compatible/major/invalid-first-output Error binding fixtures |
+| Provider manifest | Section 7.3 with all fifteen operations and the 1.1.0 nine-name capability registry | Remove <code>capture</code> or one transaction operation; add, omit, or reorder a capability name; a 1.0.0 reader rejecting a seven-name manifest; nine capability names under a 1.0.0 manifest; duplicate provider ID discovery remains fatal |
+| Provider probe | Section 7.4 with the 1.1.0 nine-key response | Set <code>enabled=true</code> on conditional/unknown/unsupported; omit one requested capability; nine capability keys under a 1.0.0 response |
 | Launch Plan request | Section 14.1 exact document in both forms and the Section 13.1 <code>LAUNCH-PLAN-*</code> cases, bound to <code>fixtures/launch_plan_request_conformance.json</code> | Unknown member, schema, or version; both or neither of <code>argv</code>/<code>argv_suffix</code>; <code>argv</code> with <code>--profile yolo</code>; a provider <code>yolo</code> flag or documented alias in a caller element; a secret literal or payload; an over-bound <code>stdin</code>; extensions that with the <code>ax</code> and Curator keys exceed the Section 1.6 bound; a plugin without <code>caller_launch_plan</code>; a planning/launch argv mismatch |
 | Terminal Backend protocol | Sections 4.B–4.C envelope and all ten operation rows | Unknown operation/member; lost-result retry with changed bootstrap key; mutation without AX authorization/capability; attach ownership change; stale generation; restore fallback; raw provider entry point |
 | Terminal Backend manifest | Section 4.B exact manifest | Invalid/duplicate ID; AX namespace misuse; executable substitution; implementation/protocol/conformance drift; unknown or unproven static capability |
@@ -16638,7 +16660,7 @@ display-language label.
 | Session Adapter probe | Section 7.8 exact probe table with all fifteen capabilities | Omit a capability; report an unrequested tuple; mismatch manifest, executable, provider, candidate kind, or environment version |
 | Directory Node protocol/request/response/manifest | Section 7.9 envelopes, exact manifest, and every operation row | Omit/reorder/add an operation or capability; request/body or response/body mismatch; changed idempotent mutation; escaped native authority; compatible/major/unframed Error 1.2 behavior |
 | Mesh RPC | Sections 11.2–11.3 v2, Section 11.8 v3, and Section 11.9 v4 | Send non-hello first; mismatch nonce; advertise an <code>error</code> key; change the exact 24-key v3 or 25-key v4 map; omit/duplicate/relabel a namespace member; admit Binding/runtime/credential data to backend evidence; violate 6/7/8 cardinality; coerce v2/v3/v4 or embedded record versions |
-| Session Record | Section 5.1 direct/task-board major 1, clone major 2, and unified major 3 provenance | Cross-tag field leakage; reuse source Session/provider identity; carry final facts at creation; admit a major at the wrong Provider/clone/adoption boundary |
+| Session Record | Section 5.1 direct/task-board major 1, clone major 2, and unified major 3 provenance with the 3.1 Launch Stdin member | Cross-tag field leakage; reuse source Session/provider identity; carry final facts at creation; admit a major at the wrong Provider/clone/adoption boundary; a null <code>stdin</code> member |
 | Session Event | Section 5.2 major-1 envelope and major-4 Terminal Instance payloads, Section 13.14.5 major-2 clone payloads, and Section 13.15 major-3 adoption/move payloads | Payload/tag mismatch; lease sequence gap; profile/source mismatch; bootstrap or receipt nullability mismatch; cross-major payload leakage; native reference/instance/generation in v4 replicated payload; attach ownership event; source-release event before committed target |
 | Lease Record | Section 5.3 | Epoch 4 with null predecessor; epoch jump; checkpoint from another session |
 | Checkpoint Record | Section 5.4 and <code>CP-N1..N4</code> | Both persistence IDs null/non-null; unsafe boundary published as validated |
@@ -16654,7 +16676,7 @@ display-language label.
 | Clone materialization recovery state (journal variant) | Section 13.14.4 complete clone-only Journal 3 and every phase row | Journal-2 field inheritance; early, missing, or changed immutable clone fact; rollback token omitted before finalize; committed and rolled-back results together; phase/fact/nullability mismatch |
 | Task-board bridge | Section 9.2 launch pair, safe-boundary pair, and every operation row | Internal/new retry operation ID; unsafe proof marked safe; changed lost-response retry; graceful stop without token; force stop with token; compatible/major/invalid-first-output Error binding fixtures |
 | Task-board bundle | Section 9.3 primary, prompt, and profile-changed projections plus exact archive member set | <code>TB-BUNDLE-*</code> goal/binding/projection/profile mutations; full-digest leaf, wrong shard, missing/extra/directory member, noncanonical JSON, or blob mismatch |
-| Structured Error | Section 15.1 versions 1.0/1.1 and Section 15.3 versions 1.2/1.3 bindings | Unknown top-level member; nesting depth 5; secret canary in details; wrong Error version for its statically bound protocol/command; compatible/major/unframed input; every directory and TerminalBackend literal code-to-exit mismatch |
+| Structured Error | Section 15.1 versions 1.0/1.1, Section 15.3 versions 1.2/1.3/1.4 bindings, and the Section 15.3 1.5 caller launch-plan code | Unknown top-level member; nesting depth 5; secret canary in details; wrong Error version for its statically bound protocol/command; compatible/major/unframed input; every directory and TerminalBackend literal code-to-exit mismatch; a <code>launch_plan_invalid</code> code bound to Error 1.4 or earlier |
 | Observation Event | Section 18.1 and its listed negative fixtures | Partial/failure without error; incomplete counts; unsafe integer |
 | CLI Result | Sections 14.1–14.3 Result 1/2 rows, Section 14.5 Result 3 directory rows, and Section 14.6 Result 4 TerminalBackend rows | Command/body tag mismatch; wrong null top-level IDs; false success invariant; cross-major tag leakage; archive carrying a target Session; directory mutation without exact plan/operation/receipt; legacy projection of an unknown backend; raw local runtime/credential/native data in list/show/doctor |
 | Clone Raw Object Manifest | Section 13.14.1 exact raw-manifest table and entry closure | Add forbidden <code>bundle_id</code> or source generation; mismatch descriptor/blob/byte count; omit or add an included Capture Item |

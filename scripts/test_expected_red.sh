@@ -19,7 +19,7 @@ if [ "$#" -ne 0 ]; then
   RANGED=1
 fi
 
-echo "=== Expected-red mutation suite for v0.6.0 (including immutable v0.4.3 history) ==="
+echo "=== Expected-red mutation suite for v0.7.0 (including immutable v0.4.3 history) ==="
 echo "Each mutation creates an isolated fixture copy, proves validator exits nonzero with actionable diagnostic,"
 echo "and never mutates the working tree."
 echo ""
@@ -816,25 +816,25 @@ echo ""
 echo "Mutation 47: Active API-token replication wording outside the semantic phrase set"
 FIX=$(fixture_copy "release-baseline-token-copy")
 printf '\nThe mesh copies API tokens to every authorized peer.\n' >> "$FIX/CONTRIBUTING.md"
-expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.6.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects active token-copy wording" "CONTRIBUTING.md: frozen v0.7.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 48: Imperative live-SQLite replication-unit wording"
 FIX=$(fixture_copy "release-baseline-sqlite-imperative")
 printf '\nUse the live SQLite database as the replication unit.\n' >> "$FIX/CHANGELOG.md"
-expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.6.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects imperative SQLite wording" "CHANGELOG.md: frozen v0.7.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 49: Qwen task-board independence expressed as no dependency"
 FIX=$(fixture_copy "release-baseline-qwen-no-need")
 printf '\nQwen sessions do not need task-board in v0.2.1.\n' >> "$FIX/README.md"
-expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.6.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Qwen no-dependency wording" "README.md: frozen v0.7.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 50: Muse cross-host portability expressed as support"
 FIX=$(fixture_copy "release-baseline-muse-supports-portability")
 printf '\nMuse cron.db supports safe cross-host portability.\n' >> "$FIX/RELEASE_NOTES.md"
-expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.6.0 release baseline mismatch" "$FIX" "./run_validation.sh"
+expect_fail "frozen release baseline rejects Muse portability wording" "RELEASE_NOTES.md: frozen v0.7.0 release baseline mismatch" "$FIX" "./run_validation.sh"
 
 echo ""
 echo "Mutation 51: Mesh materialize.prepare loses caller operation ID"
@@ -934,8 +934,8 @@ python3 -c "
 import pathlib
 p=pathlib.Path('$FIX/SPEC.md')
 t=p.read_text()
-old='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor |'
-new='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>1.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor |'
+old='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>2.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor, <code>2.1.0</code> and <code>3.1.0</code> for <code>SpawnPlan.stdin</code> and <code>resume.launch_plan</code> |'
+new='| Provider protocol | <code>urn:ax:protocol:provider</code> | <code>1.0.0</code>, <code>3.0.0</code> for the Terminal Instance descriptor, <code>2.1.0</code> and <code>3.1.0</code> for <code>SpawnPlan.stdin</code> and <code>resume.launch_plan</code> |'
 assert old in t
 p.write_text(t.replace(old, new, 1))
 "
@@ -1564,13 +1564,13 @@ echo ""
 echo "Mutation 105: Internal v0.3.0 task ownership ID leaks into public docs"
 FIX=$(fixture_copy "clone-public-internal-task-id")
 printf '\nGate owner: TASK-260826-example.\n' >> "$FIX/README.md"
-expect_fail "public package must not expose active internal task ownership" "stale/internal v0.6.0 publication marker" "$FIX"
+expect_fail "public package must not expose active internal task ownership" "stale/internal v0.7.0 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 106: Stale v0.2.1 diagram-ledger wording returns"
 FIX=$(fixture_copy "clone-stale-diagram-ledger")
 printf '\nUses the unchanged v0.2.1 SHA-256 ledger.\n' >> "$FIX/diagrams/README.md"
-expect_fail "diagram docs must describe the historical v0.4.3 ledger" "stale/internal v0.6.0 publication marker" "$FIX"
+expect_fail "diagram docs must describe the historical v0.4.3 ledger" "stale/internal v0.7.0 publication marker" "$FIX"
 
 echo ""
 echo "Mutation 107: Target derivation mutates the source provider identity after digest refresh"
@@ -3006,6 +3006,36 @@ path.write_text(text.replace(old, "<code>capability_names</code> is the exact se
 PY
 refresh_frozen_spec_digest "$FIX"
 expect_fail "capability registry reverted to seven names" "SPEC semantic marker missing (nine-name registry)" "$FIX"
+
+FIX=$(fixture_copy "launch-plan-manifest-version-relabel")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = '"schema": "urn:ax:schema:provider-manifest",\n  "schema_version": "1.1.0",'
+if text.count(old) != 1:
+    raise SystemExit("manifest example version cardinality mismatch")
+path.write_text(text.replace(old, '"schema": "urn:ax:schema:provider-manifest",\n  "schema_version": "1.0.0",', 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "nine-name manifest relabeled to 1.0.0" "manifest/probe version boundary" "$FIX"
+
+FIX=$(fixture_copy "launch-plan-probe-version-relabel")
+python3 - "$FIX" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) / "SPEC.md"
+text = path.read_text(encoding="utf-8")
+old = '"schema": "urn:ax:schema:provider-probe",\n  "schema_version": "1.1.0",'
+if text.count(old) != 1:
+    raise SystemExit("probe example version cardinality mismatch")
+path.write_text(text.replace(old, '"schema": "urn:ax:schema:provider-probe",\n  "schema_version": "1.0.0",', 1), encoding="utf-8")
+PY
+refresh_frozen_spec_digest "$FIX"
+expect_fail "nine-name probe relabeled to 1.0.0" "manifest/probe version boundary" "$FIX"
 
 echo ""
 echo "=========================================="

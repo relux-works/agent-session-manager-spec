@@ -11,7 +11,10 @@ planning-role ``launch`` call and to the step-4 ``launch`` against the
 persisted record -- and a step-4 answer that differs from the planning answer
 is refused with ``provider_protocol_error``. The fixture's provider profile
 mappings must equal the Section 7.7 table, and the SPEC prose must retain the
-semantic markers the gate depends on.
+semantic markers the gate depends on. The gate also enforces the Section 7.3
+manifest/probe version boundary on the normative JSON examples: a 1.0.0
+object carries exactly the seven-name registry, a 1.1.0 object exactly the
+nine-name registry.
 """
 
 from __future__ import annotations
@@ -20,7 +23,7 @@ import base64
 import binascii
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +38,25 @@ GATE_CLASSES = [
     "positive_cases",
     "negative_cases",
     "coverage",
+    "manifest_probe_versions",
 ]
+MANIFEST_SCHEMA = "urn:ax:schema:provider-manifest"
+PROBE_SCHEMA = "urn:ax:schema:provider-probe"
+# Section 7.3 ordered capability registry. Provider manifest and probe 1.0.0
+# carry exactly the first seven names; the 1.1.0 minor appends the two
+# caller-plan names in this order. 1.0.0 is never widened in place.
+CAPABILITY_REGISTRY_NINE = [
+    "native_resume",
+    "portable_store",
+    "managed_pty",
+    "appserver",
+    "task_board_primary",
+    "prompt_spawn",
+    "native_goal_binding",
+    "caller_launch_plan",
+    "stdin_resume_replay",
+]
+CAPABILITY_REGISTRY_SEVEN = CAPABILITY_REGISTRY_NINE[:7]
 DOCUMENT_MEMBERS = {"schema", "schema_version", "argv", "argv_suffix", "env_names", "env_literals", "stdin", "extensions"}
 CASE_KEYS = {"id", "provider", "profile", "plugin_declares_caller_launch_plan", "document", "expected"}
 NEGATIVE_KEYS = {"id", "provider", "profile", "plugin_declares_caller_launch_plan", "document", "expected_error", "expected_details", "mutation"}
@@ -265,6 +286,69 @@ def _profile_table(spec: str) -> dict[str, list[str]]:
     return table
 
 
+def _json_fences(spec: str) -> Iterator[tuple[int, str]]:
+    """Yield (1-based line, body) of each terminated ``~~~json`` fence."""
+    lines = spec.splitlines()
+    index = 0
+    while index < len(lines):
+        if lines[index] != "~~~json":
+            index += 1
+            continue
+        start = index + 2
+        index += 1
+        body: list[str] = []
+        while index < len(lines) and lines[index] != "~~~":
+            body.append(lines[index])
+            index += 1
+        if index < len(lines):
+            yield start, "\n".join(body)
+        index += 1
+
+
+def manifest_probe_version_errors(spec: str) -> list[str]:
+    """Enforce the Section 7.3 manifest/probe version boundary.
+
+    Every normative ``provider-manifest``/``provider-probe`` JSON example
+    labeled ``1.0.0`` must carry exactly the seven-name registry and every
+    one labeled ``1.1.0`` exactly the nine-name registry. A nine-name object
+    labeled ``1.0.0`` is refused. Malformed JSON and other schema versions
+    belong to other gates and are skipped here.
+    """
+    errors: list[str] = []
+    seen = {MANIFEST_SCHEMA: 0, PROBE_SCHEMA: 0}
+    for line, source in _json_fences(spec):
+        try:
+            value = json.loads(source)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(value, dict) or value.get("schema") not in seen:
+            continue
+        schema = value["schema"]
+        seen[schema] += 1
+        version = value.get("schema_version")
+        if schema == MANIFEST_SCHEMA:
+            names: object = value.get("capability_names")
+        else:
+            capabilities = value.get("capabilities")
+            names = list(capabilities) if isinstance(capabilities, dict) else capabilities
+        if version == "1.0.0":
+            if names != CAPABILITY_REGISTRY_SEVEN:
+                errors.append(
+                    f"line {line}: manifest/probe version boundary: {schema} 1.0.0 "
+                    f"carries exactly the seven-name registry, got {names!r}"
+                )
+        elif version == "1.1.0":
+            if names != CAPABILITY_REGISTRY_NINE:
+                errors.append(
+                    f"line {line}: manifest/probe version boundary: {schema} 1.1.0 "
+                    f"carries exactly the nine-name registry, got {names!r}"
+                )
+    for schema, count in seen.items():
+        if count == 0:
+            errors.append(f"manifest/probe version boundary: no {schema} JSON example found")
+    return errors
+
+
 def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tuple[list[str], dict[str, int]]:
     errors: list[str] = []
     ledger = {
@@ -292,6 +376,9 @@ def validate(root: Path, spec: str, canonical: Callable[[object], bytes]) -> tup
 
     for label, marker in SPEC_MARKERS.items():
         need("spec_markers", marker in spec, f"SPEC semantic marker missing ({label}): {marker!r}")
+
+    for detail in manifest_probe_version_errors(spec):
+        need("manifest_probe_versions", False, detail)
 
     mappings = data.get("profile_mappings", {})
     base_argv = data.get("base_argv", {})
