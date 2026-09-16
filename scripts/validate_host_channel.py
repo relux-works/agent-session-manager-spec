@@ -142,7 +142,7 @@ def validate(root: pathlib.Path, spec: str) -> tuple[list[str], dict[str, int]]:
         need("HC-MIGRATE", len(rows) == 1 and urn in rows[0] and f'<code>{version}</code>' in rows[0], f"registry missing {title} {version}")
     legacy_rows = []
     for line in registry.splitlines():
-        if not line.startswith('| ') or line.startswith(('| Host Channel |', '| Host Trust Store |', '| Session selector |')):
+        if not line.startswith('| ') or line.startswith(('| Host Channel |', '| Host Trust Store |', '| Session selector |', '| Launch Plan request |')):
             continue
         line = line.replace(', <code>4.0.0</code> for mutual host authentication', '')
         line = line.replace(', <code>5.0.0</code> for authenticated host dispatch', '')
